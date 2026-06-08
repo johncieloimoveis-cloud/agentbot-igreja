@@ -1,0 +1,47 @@
+SHEEPCARE
+
+Supabase 
+
+church id
+90e649c3-13ea-4fdc-a1c8-f352ef794b20
+
+senha 
+Jesuscristo3278@
+
+Anon Key API
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZnl3a2VoaXF4cWpucnVjdHl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDQyODUsImV4cCI6MjA5NTk4MDI4NX0.FFV0EQHppJDqqn_b-4OkrkzZnXJqYHG8j_ENdp8lQ1k
+
+Service_role API (secret)
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZnl3a2VoaXF4cWpucnVjdHl5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDQwNDI4NSwiZXhwIjoyMDk1OTgwMjg1fQ.o9JjD6j416BHhpebmNzMqPq4aHnCL0j_6z65K_egKsg
+
+URL
+
+https://hdfywkehiqxqjnructyy.supabase.co/rest/v1/
+
+https://supabase.com/dashboard/project/hdfywkehiqxqjnructyy
+
+USUÁRIO
+johndeltavideo@gmail.com
+Aep3278@
+
+UID 
+be943d7b-adc9-4f3d-8b16-5f753e99e6fd
+
+CHURCH
+ID DA CHURCH
+90e649c3-13ea-4fdc-a1c8-f352ef794b20
+
+INSERT INTO users (id, church_id, email, full_name, role_id, is_active)
+VALUES (
+  'be943d7b-adc9-4f3d-8b16-5f753e99e6fd
+',
+  '90e649c3-13ea-4fdc-a1c8-f352ef794b20
+',
+  'johndeltavideo@gmail.com
+',
+  'Administrador',
+  (SELECT id FROM roles WHERE name = 'admin'),
+  true
+);

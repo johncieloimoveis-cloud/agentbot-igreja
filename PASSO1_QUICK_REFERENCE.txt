@@ -1,0 +1,85 @@
+═══════════════════════════════════════════════════════════════════
+ SHEEPCARE - PASSO 1 QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════
+
+⚡ VERSÃO RÁPIDA - Execute em sequência:
+
+1. VERIFICAR PRÉ-REQUISITOS:
+   $ node --version          (esperado: v18+)
+   $ npm --version           (esperado: v9+)
+
+2. ABRIR TERMINAL NA PASTA SHEEPCARE
+
+3. INSTALAR DEPENDÊNCIAS:
+   $ npm install
+
+   Aguarde: 30 segundos a 3 minutos
+   Resultado esperado: "added 500 packages in 45s"
+
+4. CRIAR ARQUIVO .env.local:
+
+   macOS/Linux:
+   $ cp .env.example .env.local
+
+   Windows PowerShell:
+   > Copy-Item .env.example .env.local
+
+5. PRONTO! (ainda sem Supabase)
+
+   O arquivo .env.local foi criado com valores placeholder.
+   Você preenche com as chaves do Supabase depois (Passo 2).
+
+═══════════════════════════════════════════════════════════════════
+
+✓ CHECKLIST PASSO 1:
+
+[ ] Node.js v18+ instalado
+[ ] npm v9+ instalado
+[ ] Terminal aberto na pasta SHEEPCARE
+[ ] npm install completado com sucesso
+[ ] Pasta node_modules/ criada (~500 arquivos)
+[ ] Arquivo .env.local criado
+[ ] Arquivo .env.local contém as variáveis (mesmo que placeholder)
+
+═══════════════════════════════════════════════════════════════════
+
+🔄 SE DEU ERRO:
+
+"npm: command not found"
+  → Reinstalar Node.js em https://nodejs.org
+
+"EACCES permission denied" (Mac/Linux)
+  → Usar: sudo npm install
+
+"ERESOLVE unable to resolve dependency tree"
+  → Usar: npm install --legacy-peer-deps
+
+Terminal travado
+  → Pressionar: Ctrl + C
+
+═══════════════════════════════════════════════════════════════════
+
+⏭️ PRÓXIMO PASSO:
+
+Quando npm install completar com sucesso:
+→ Prosseguir para PASSO 2 (Configurar Supabase)
+→ Veja: SETUP_CHECKLIST.md ou README.md
+
+═══════════════════════════════════════════════════════════════════
+
+📚 DOCUMENTAÇÃO:
+
+Guia completo detalhado:
+  → GUIA_SETUP_LOCAL_DETALHADO.md
+
+Exemplos de terminal:
+  → PASSO1_EXEMPLOS_TERMINAL.md
+
+Checklist completo:
+  → SETUP_CHECKLIST.md
+
+═══════════════════════════════════════════════════════════════════
+
+Tempo estimado: 5-10 minutos ⏱️
+
+Status: ✅ PASSO 1 COMPLETO quando npm install termina com sucesso

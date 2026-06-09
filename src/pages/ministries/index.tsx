@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getMinistries } from '@/services/ministries';
-import { Plus, Users, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Users, Trash2 } from 'lucide-react';
 
 interface Ministry {
   id: string;

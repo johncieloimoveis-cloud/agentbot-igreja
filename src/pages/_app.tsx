@@ -8,12 +8,10 @@ import '@/styles/globals.css';
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
     // Aplicar tema escuro por padrão
     document.documentElement.classList.add('dark');
-    setIsDarkMode(true);
     setMounted(true);
   }, []);
 

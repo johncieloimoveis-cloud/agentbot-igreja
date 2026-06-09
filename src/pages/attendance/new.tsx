@@ -15,6 +15,7 @@ export default function NewAttendanceEvent() {
     event_type: 'culto',
     event_date: new Date().toISOString().split('T')[0],
     event_time: '19:00',
+    description: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

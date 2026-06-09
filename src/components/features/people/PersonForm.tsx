@@ -28,6 +28,11 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
     defaultValues: initialData,
   });
 
+  // Type guards for error messages
+  const fullNameError = typeof errors.full_name?.message === 'string' ? errors.full_name.message : undefined;
+  const emailError = typeof errors.email?.message === 'string' ? errors.email.message : undefined;
+  const statusError = typeof errors.status?.message === 'string' ? errors.status.message : undefined;
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
       {/* Nome completo */}
@@ -41,7 +46,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Digite o nome completo"
         />
-        {errors.full_name?.message && <p className="text-red-500 text-sm mt-1">{errors.full_name.message}</p>}
+        {fullNameError && <p className="text-red-500 text-sm mt-1">{fullNameError}</p>}
       </div>
 
       {/* Email */}
@@ -55,7 +60,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="exemplo@email.com"
         />
-        {errors.email?.message && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+        {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
       </div>
 
       {/* Telefone e WhatsApp */}
@@ -102,7 +107,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           <option value="transferred">Transferido</option>
           <option value="leader">Liderança</option>
         </select>
-        {errors.status?.message && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
+        {statusError && <p className="text-red-500 text-sm mt-1">{statusError}</p>}
       </div>
 
       {/* Data de Nascimento */}

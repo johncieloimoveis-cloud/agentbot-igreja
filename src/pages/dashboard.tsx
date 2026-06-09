@@ -16,7 +16,14 @@ export default function Dashboard() {
   const { user, logout, loading } = useAuth();
   const [dashLoading, setDashLoading] = useState(false);
 
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<{
+    people: any;
+    groups: any;
+    ministries: any;
+    birthdays: any[];
+    recentVisitors: any[];
+    attendance: any;
+  }>({
     people: { total: 0, active_member: 0, visitor: 0, new_convert: 0, in_discipleship: 0, absent: 0, leader: 0 },
     groups: { total: 0 },
     ministries: { total: 0 },

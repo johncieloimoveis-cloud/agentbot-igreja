@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getAttendanceEvents } from '@/services/attendance';
-import { Plus, Calendar, Users } from 'lucide-react';
+import { Plus, Calendar } from 'lucide-react';
 
 interface AttendanceEvent {
   id: string;

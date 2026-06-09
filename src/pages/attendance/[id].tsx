@@ -6,7 +6,6 @@ import {
   getEventAttendances,
   recordAttendance,
   removeAttendance,
-  recordMultipleAttendances,
 } from '@/services/attendance';
 import { getPeople } from '@/services/people';
 import { CheckCircle, Circle, Trash2, Plus, Search, X } from 'lucide-react';

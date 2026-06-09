@@ -67,7 +67,8 @@ export default function NewAttendanceEvent() {
       router.push('/attendance');
     } catch (err) {
       console.error('Erro completo:', err);
-      setError(`Erro ao criar evento: ${err.message || 'Tente novamente.'}`);
+      const errorMessage = err instanceof Error ? err.message : 'Tente novamente.';
+      setError(`Erro ao criar evento: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

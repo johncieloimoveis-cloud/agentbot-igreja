@@ -41,7 +41,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Digite o nome completo"
         />
-        {errors.full_name && <p className="text-red-500 text-sm mt-1">{errors.full_name.message}</p>}
+        {errors.full_name?.message && <p className="text-red-500 text-sm mt-1">{errors.full_name.message}</p>}
       </div>
 
       {/* Email */}
@@ -55,7 +55,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="exemplo@email.com"
         />
-        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+        {errors.email?.message && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
       </div>
 
       {/* Telefone e WhatsApp */}
@@ -102,7 +102,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           <option value="transferred">Transferido</option>
           <option value="leader">Liderança</option>
         </select>
-        {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
+        {errors.status?.message && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
       </div>
 
       {/* Data de Nascimento */}

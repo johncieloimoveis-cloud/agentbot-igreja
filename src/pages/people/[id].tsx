@@ -33,7 +33,6 @@ export default function PersonDetail() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [leaders, setLeaders] = useState<any[]>([]);
   const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
-  const [leaderName, setLeaderName] = useState<string>('');
 
   useEffect(() => {
     if (!id) return;

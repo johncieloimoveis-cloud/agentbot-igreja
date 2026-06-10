@@ -1,5 +1,4 @@
 import { supabase } from '@/services/supabase';
-import { Person } from '@/services/people';
 
 // Criar visitante (cadastro rápido)
 export const createVisitor = async (

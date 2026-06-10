@@ -9,7 +9,7 @@ import {
   getGroupsReport,
   exportToCSV,
 } from '@/services/reports';
-import { Download, FileText, Users, Calendar, Heart, Users2 } from 'lucide-react';
+import { Download, Users, Calendar, Heart, Users2 } from 'lucide-react';
 
 export default function Reports() {
   const router = useRouter();

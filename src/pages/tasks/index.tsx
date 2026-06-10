@@ -9,7 +9,7 @@ interface Task {
   id: string;
   title: string;
   description?: string;
-  person?: { id: string; full_name: string };
+  person?: { id: string; full_name: string; phone?: string };
   status: string;
   priority: string;
   due_date?: string;

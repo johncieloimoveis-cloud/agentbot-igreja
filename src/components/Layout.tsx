@@ -9,12 +9,8 @@ import {
   Users,
   Users2,
   Calendar,
-  Heart,
   CheckSquare,
-  FileText,
   ChevronDown,
-  Bell,
-  Lock,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -57,17 +53,8 @@ export function Layout({ children }: LayoutProps) {
       icon: Users,
       href: '/people',
       submenu: [
-        { label: 'Lista de Pessoas', href: '/people' },
+        { label: 'Todas as Pessoas', href: '/people' },
         { label: 'Nova Pessoa', href: '/people/new' },
-      ],
-    },
-    {
-      id: 'visitors',
-      label: '👥 Visitantes',
-      icon: Users2,
-      href: '/visitors',
-      submenu: [
-        { label: 'Visitantes Recentes', href: '/visitors' },
       ],
     },
     {
@@ -76,18 +63,8 @@ export function Layout({ children }: LayoutProps) {
       icon: Users2,
       href: '/groups',
       submenu: [
-        { label: 'Lista de Grupos', href: '/groups' },
+        { label: 'Todos os Grupos', href: '/groups' },
         { label: 'Novo Grupo', href: '/groups/new' },
-      ],
-    },
-    {
-      id: 'ministries',
-      label: '🙏 Ministérios',
-      icon: Heart,
-      href: '/ministries',
-      submenu: [
-        { label: 'Lista de Ministérios', href: '/ministries' },
-        { label: 'Novo Ministério', href: '/ministries/new' },
       ],
     },
     {
@@ -96,7 +73,7 @@ export function Layout({ children }: LayoutProps) {
       icon: Calendar,
       href: '/attendance',
       submenu: [
-        { label: 'Eventos de Presença', href: '/attendance' },
+        { label: 'Eventos', href: '/attendance' },
         { label: 'Novo Evento', href: '/attendance/new' },
       ],
     },
@@ -108,33 +85,6 @@ export function Layout({ children }: LayoutProps) {
       submenu: [
         { label: 'Minhas Tarefas', href: '/tasks' },
         { label: 'Nova Tarefa', href: '/tasks/new' },
-      ],
-    },
-    {
-      id: 'reports',
-      label: '📈 Relatórios',
-      icon: FileText,
-      href: '/reports',
-      submenu: [],
-    },
-    {
-      id: 'announcements',
-      label: '📢 Avisos',
-      icon: Bell,
-      href: '/announcements',
-      submenu: [
-        { label: 'Mural de Avisos', href: '/announcements' },
-        { label: 'Novo Aviso', href: '/announcements/new' },
-      ],
-    },
-    {
-      id: 'users',
-      label: '🔐 Usuários',
-      icon: Lock,
-      href: '/users',
-      submenu: [
-        { label: 'Lista de Usuários', href: '/users' },
-        { label: 'Novo Usuário', href: '/users/new' },
       ],
     },
   ];

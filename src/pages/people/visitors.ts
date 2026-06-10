@@ -69,11 +69,11 @@ export const registerVisitReturn = async (
 
   if (fetchError) throw fetchError;
 
-  let notes = {};
+  let notes: any = { retornos: [] };
   try {
-    notes = JSON.parse(person.notes || '{}');
+    notes = JSON.parse(person.notes || '{"retornos": []}');
   } catch {
-    notes = {};
+    notes = { retornos: [] };
   }
 
   if (!notes.retornos) notes.retornos = [];

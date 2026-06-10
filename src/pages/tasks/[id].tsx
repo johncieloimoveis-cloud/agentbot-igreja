@@ -77,6 +77,11 @@ export default function TaskDetail() {
 
     setSaving(true);
     try {
+      if (!user) {
+        setError('Usuário não autenticado');
+        return;
+      }
+
       const { error: err } = await updateTask(id as string, {
         title: formData.title,
         description: formData.description || null,

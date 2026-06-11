@@ -1,10 +1,13 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 const personSchema = z.object({
   full_name: z.string().min(3, 'Nome obrigatório'),
   status: z.string().min(1, 'Status obrigatório'),
+  membresia: z.boolean().optional(),
+  eh_lider: z.boolean().optional(),
+  oficial: z.string().optional(),
   phone: z.any().optional(),
   whatsapp: z.any().optional(),
   email: z.any().optional(),
@@ -23,10 +26,20 @@ interface PersonFormProps {
 }
 
 export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<PersonFormData>({
+  const { register, handleSubmit, formState: { errors }, control, watch, setValue } = useForm<PersonFormData>({
     resolver: zodResolver(personSchema),
     defaultValues: initialData,
   });
+
+  // Watch para validação dinâmica
+  const ehLider = useWatch({ control, name: 'eh_lider' });
+  const oficial = useWatch({ control, name: 'oficial' });
+  const membresia = useWatch({ control, name: 'membresia' });
+
+  // Se é líder ou oficial, forçar membresia = true
+  if ((ehLider || (oficial && oficial !== 'NÃO')) && !membresia) {
+    setValue('membresia', true);
+  }
 
   // Type guards for error messages
   const fullNameError = typeof errors.full_name?.message === 'string' ? errors.full_name.message : undefined;
@@ -108,6 +121,58 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           <option value="leader">Liderança</option>
         </select>
         {statusError && <p className="text-red-500 text-sm mt-1">{statusError}</p>}
+      </div>
+
+      {/* Classificações */}
+      <div className="border-t border-gray-200 dark:border-slate-700 pt-6">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Classificações</h3>
+
+        {/* Membresia */}
+        <div className="mb-4">
+          <label className="flex items-center gap-3">
+            <input
+              {...register('membresia')}
+              type="checkbox"
+              disabled={ehLider || (oficial && oficial !== 'NÃO')}
+              className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              É membro {ehLider || (oficial && oficial !== 'NÃO') ? '(obrigatório - é líder ou oficial)' : ''}
+            </span>
+          </label>
+        </div>
+
+        {/* Líder */}
+        <div className="mb-4">
+          <label className="flex items-center gap-3">
+            <input
+              {...register('eh_lider')}
+              type="checkbox"
+              className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 cursor-pointer"
+            />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              É líder de grupo
+            </span>
+          </label>
+        </div>
+
+        {/* Oficial */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Posição Oficial
+          </label>
+          <select
+            {...register('oficial')}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="NÃO">Não possui posição oficial</option>
+            <option value="pastor">Pastor</option>
+            <option value="aspirante">Aspirante</option>
+            <option value="presbítero">Presbítero</option>
+            <option value="diácono">Diácono</option>
+            <option value="secretário">Secretário</option>
+          </select>
+        </div>
       </div>
 
       {/* Data de Nascimento */}

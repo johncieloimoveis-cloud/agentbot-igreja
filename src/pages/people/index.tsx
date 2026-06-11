@@ -10,6 +10,9 @@ interface Person {
   full_name: string;
   phone?: string;
   status: string;
+  membresia?: boolean;
+  eh_lider?: boolean;
+  oficial?: string;
 }
 
 export default function PeopleList() {
@@ -108,14 +111,14 @@ export default function PeopleList() {
               placeholder="Buscar por nome..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
         </div>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 md:w-48"
+          className="px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 md:w-48"
         >
           <option value="">Todos os status</option>
           <option value="visitor">Visitante</option>
@@ -151,18 +154,30 @@ export default function PeopleList() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Nome</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Telefone</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Membro</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Líder</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Oficial</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {people.map((person) => (
-                  <tr key={person.id} className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-700 transition-colors">
+                  <tr key={person.id} className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                     <td className="px-6 py-4 text-gray-950 dark:text-white font-medium">{person.full_name}</td>
                     <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{person.phone || '-'}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(person.status)}`}>
                         {getStatusLabel(person.status)}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {person.membresia ? '✓ Sim' : '✗ Não'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {person.eh_lider ? '✓ Sim' : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                      {person.oficial && person.oficial !== 'NÃO' ? person.oficial : '-'}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">

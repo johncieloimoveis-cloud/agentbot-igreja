@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
-import { getGroupMembers, removeGroupMember, updateGroup, deleteGroup, getGroup, addGroupMember } from '@/services/groups';
+import { getGroupMembers, removeGroupMember, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups } from '@/services/groups';
 import { getPeople } from '@/services/people';
 import { TrashIcon, Plus, Edit2, X, Search } from 'lucide-react';
 
@@ -20,6 +20,7 @@ interface Group {
   meeting_day?: string;
   meeting_time?: string;
   meeting_address?: string;
+  parent_group_id?: string;
 }
 
 export default function GroupDetail() {
@@ -40,11 +41,16 @@ export default function GroupDetail() {
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
 
+  const [allGroups, setAllGroups] = useState<any[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [parentGroup, setParentGroup] = useState<any>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     meeting_day: '',
     meeting_time: '',
     meeting_address: '',
+    parent_group_id: '',
   });
 
   useEffect(() => {
@@ -55,6 +61,8 @@ export default function GroupDetail() {
   const loadGroupData = async () => {
     setLoading(true);
     try {
+      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+
       // Carregar dados do grupo
       const { data: groupData, error: groupError } = await getGroup(id as string);
       if (groupError) throw groupError;
@@ -65,7 +73,21 @@ export default function GroupDetail() {
         meeting_day: groupData?.meeting_day || '',
         meeting_time: groupData?.meeting_time || '',
         meeting_address: groupData?.meeting_address || '',
+        parent_group_id: groupData?.parent_group_id || '',
       });
+
+      // Carregar todos os grupos (para dropdown de grupo pai)
+      const { data: groupsData, error: groupsError } = await getGroups(churchId);
+      if (groupsError) throw groupsError;
+      // Filtrar para não mostrar o grupo atual
+      const filteredGroups = (groupsData || []).filter((g: any) => g.id !== id);
+      setAllGroups(filteredGroups);
+
+      // Carregar grupo pai se existir
+      if (groupData?.parent_group_id) {
+        const { data: parentGroupData } = await getGroup(groupData.parent_group_id);
+        setParentGroup(parentGroupData);
+      }
 
       // Carregar membros
       const { data: membersData, error: membersError } = await getGroupMembers(id as string);
@@ -101,7 +123,11 @@ export default function GroupDetail() {
 
     setSaving(true);
     try {
-      const { error: err } = await updateGroup(id as string, formData);
+      const dataToSubmit = {
+        ...formData,
+        parent_group_id: formData.parent_group_id || null,
+      };
+      const { error: err } = await updateGroup(id as string, dataToSubmit);
       if (err) throw err;
 
       setIsEditing(false);
@@ -199,7 +225,7 @@ export default function GroupDetail() {
           {/* Seção de Detalhes/Edição */}
           {isEditing ? (
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 mb-6">
-              <h2 className="text-2xl font-bold mb-4">Editar Grupo</h2>
+              <h2 className="text-2xl font-bold text-gray-950 dark:text-white mb-4">Editar Grupo</h2>
               <form onSubmit={handleUpdateGroup} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -209,8 +235,26 @@ export default function GroupDetail() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Grupo Pai (Opcional)
+                  </label>
+                  <select
+                    value={formData.parent_group_id}
+                    onChange={(e) => setFormData({ ...formData, parent_group_id: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Nenhum (grupo raiz)</option>
+                    {allGroups.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -221,7 +265,7 @@ export default function GroupDetail() {
                     <select
                       value={formData.meeting_day}
                       onChange={(e) => setFormData({ ...formData, meeting_day: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
                       <option value="">Selecione</option>
                       <option value="segunda">Segunda</option>
@@ -242,7 +286,7 @@ export default function GroupDetail() {
                       type="time"
                       value={formData.meeting_time}
                       onChange={(e) => setFormData({ ...formData, meeting_time: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
                 </div>
@@ -255,7 +299,7 @@ export default function GroupDetail() {
                     type="text"
                     value={formData.meeting_address}
                     onChange={(e) => setFormData({ ...formData, meeting_address: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
 
@@ -280,8 +324,13 @@ export default function GroupDetail() {
           ) : (
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 mb-6">
               <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold">{group?.name}</h1>
+                <div className="flex-1">
+                  <h1 className="text-3xl font-bold text-gray-950 dark:text-white">{group?.name}</h1>
+                  {parentGroup && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      👥 Subgrupo de: <span className="font-semibold">{parentGroup.name}</span>
+                    </p>
+                  )}
                   {group?.meeting_day && (
                     <p className="text-gray-600 dark:text-gray-400 mt-2">
                       {group.meeting_day} às {group.meeting_time || 'Horário não definido'}
@@ -314,7 +363,7 @@ export default function GroupDetail() {
           {/* Seção de Membros */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Membros ({members.length})</h2>
+              <h2 className="text-2xl font-bold text-gray-950 dark:text-white">Membros ({members.length})</h2>
               <button
                 onClick={handleOpenAddForm}
                 className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"

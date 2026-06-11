@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
-import { createGroup } from '@/services/groups';
+import { createGroup, getGroups } from '@/services/groups';
 
 export default function NewGroup() {
   const router = useRouter();
@@ -11,9 +11,31 @@ export default function NewGroup() {
     meeting_day: '',
     meeting_time: '',
     meeting_address: '',
+    parent_group_id: '',
   });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadGroups();
+    }
+  }, [user]);
+
+  const loadGroups = async () => {
+    try {
+      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const { data, error: err } = await getGroups(churchId);
+      if (err) throw err;
+      setGroups(data || []);
+    } catch (err) {
+      console.error('Erro ao carregar grupos:', err);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +49,11 @@ export default function NewGroup() {
     setSaving(true);
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-      await createGroup(churchId, formData);
+      const dataToSubmit = {
+        ...formData,
+        parent_group_id: formData.parent_group_id || null,
+      };
+      await createGroup(churchId, dataToSubmit);
       router.push('/groups');
     } catch (err) {
       setError('Erro ao criar grupo');
@@ -68,6 +94,25 @@ export default function NewGroup() {
             className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="Ex: Grupo Centro"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Grupo Pai (Opcional)
+          </label>
+          <select
+            value={formData.parent_group_id}
+            onChange={(e) => setFormData({ ...formData, parent_group_id: e.target.value })}
+            disabled={loadingGroups}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+          >
+            <option value="">Nenhum (grupo raiz)</option>
+            {groups.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

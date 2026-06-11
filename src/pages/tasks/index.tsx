@@ -106,7 +106,7 @@ export default function TasksList() {
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="">Todas as tarefas</option>
           <option value="pending">Pendentes</option>

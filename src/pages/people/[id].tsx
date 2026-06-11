@@ -18,6 +18,9 @@ interface Person {
   city?: string;
   notes?: string;
   responsible_id?: string;
+  membresia?: boolean;
+  eh_lider?: boolean;
+  oficial?: string;
 }
 
 export default function PersonDetail() {
@@ -218,7 +221,7 @@ export default function PersonDetail() {
               <select
                 value={selectedLeader || ''}
                 onChange={(e) => setSelectedLeader(e.target.value || null)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">Sem líder</option>
                 {leaders

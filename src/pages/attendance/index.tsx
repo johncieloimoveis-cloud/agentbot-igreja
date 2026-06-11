@@ -90,7 +90,7 @@ export default function AttendanceList() {
         <select
           value={eventType}
           onChange={(e) => setEventType(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="">Todos os eventos</option>
           <option value="culto">⛪ Culto</option>

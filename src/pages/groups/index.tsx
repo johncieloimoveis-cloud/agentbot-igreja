@@ -10,6 +10,7 @@ interface Group {
   leader?: { full_name: string };
   meeting_day?: string;
   meeting_time?: string;
+  parent_group_id?: string;
 }
 
 export default function Groups() {
@@ -81,7 +82,11 @@ export default function Groups() {
               onClick={() => router.push(`/groups/${group.id}`)}
               className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer hover:shadow-md"
             >
-              <h3 className="font-bold text-lg">{group.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-lg text-gray-950 dark:text-white">
+                  {group.parent_group_id ? '└─ ' : '• '}{group.name}
+                </h3>
+              </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Líder: {group.leader?.full_name || 'Sem líder'}
               </p>

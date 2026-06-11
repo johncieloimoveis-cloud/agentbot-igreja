@@ -110,7 +110,7 @@ export default function NewAttendanceEvent() {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="Ex: Culto de Domingo, Estudo Bíblico..."
             />
           </div>
@@ -123,7 +123,7 @@ export default function NewAttendanceEvent() {
             <select
               value={formData.event_type}
               onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="culto">⛪ Culto</option>
               <option value="estudo_biblico">📖 Estudo Bíblico</option>
@@ -143,7 +143,7 @@ export default function NewAttendanceEvent() {
               type="date"
               value={formData.event_date}
               onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
@@ -156,7 +156,7 @@ export default function NewAttendanceEvent() {
               type="time"
               value={formData.event_time}
               onChange={(e) => setFormData({ ...formData, event_time: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 

@@ -124,16 +124,20 @@ export default function GroupDetail() {
     setSaving(true);
     try {
       const dataToSubmit = {
-        ...formData,
-        parent_group_id: formData.parent_group_id || null,
+        name: formData.name,
+        meeting_day: formData.meeting_day || null,
+        meeting_time: formData.meeting_time || null,
+        meeting_address: formData.meeting_address || null,
+        parent_group_id: formData.parent_group_id ? formData.parent_group_id : null,
       };
+      console.log('Atualizando grupo com dados:', dataToSubmit);
       const { error: err } = await updateGroup(id as string, dataToSubmit);
       if (err) throw err;
 
       setIsEditing(false);
       loadGroupData();
     } catch (error) {
-      console.error('Erro:', error);
+      console.error('Erro completo:', error);
       setError('Erro ao atualizar grupo');
     } finally {
       setSaving(false);

@@ -1,5 +1,11 @@
 SHEEPCARE
 
+https://agentbot-igreja.vercel.app/dashboard
+
+USUÁRIO
+johndeltavideo@gmail.com
+Aep3278@
+
 Supabase 
 
 church id
@@ -22,9 +28,6 @@ https://hdfywkehiqxqjnructyy.supabase.co/rest/v1/
 
 https://supabase.com/dashboard/project/hdfywkehiqxqjnructyy
 
-USUÁRIO
-johndeltavideo@gmail.com
-Aep3278@
 
 UID 
 be943d7b-adc9-4f3d-8b16-5f753e99e6fd

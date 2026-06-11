@@ -50,14 +50,18 @@ export default function NewGroup() {
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
       const dataToSubmit = {
-        ...formData,
-        parent_group_id: formData.parent_group_id || null,
+        name: formData.name,
+        meeting_day: formData.meeting_day || null,
+        meeting_time: formData.meeting_time || null,
+        meeting_address: formData.meeting_address || null,
+        parent_group_id: formData.parent_group_id ? formData.parent_group_id : null,
       };
+      console.log('Enviando dados:', dataToSubmit);
       await createGroup(churchId, dataToSubmit);
       router.push('/groups');
     } catch (err) {
       setError('Erro ao criar grupo');
-      console.error(err);
+      console.error('Erro completo:', err);
     } finally {
       setSaving(false);
     }

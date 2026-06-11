@@ -65,7 +65,7 @@ export default function NewGroup() {
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-950 dark:text-white bg-white dark:bg-slate-700"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="Ex: Grupo Centro"
           />
         </div>
@@ -78,7 +78,7 @@ export default function NewGroup() {
             <select
               value={formData.meeting_day}
               onChange={(e) => setFormData({ ...formData, meeting_day: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-950 dark:text-white bg-white dark:bg-slate-700"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Selecione</option>
               <option value="segunda">Segunda</option>
@@ -99,7 +99,7 @@ export default function NewGroup() {
               type="time"
               value={formData.meeting_time}
               onChange={(e) => setFormData({ ...formData, meeting_time: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-950 dark:text-white bg-white dark:bg-slate-700"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function NewGroup() {
             type="text"
             value={formData.meeting_address}
             onChange={(e) => setFormData({ ...formData, meeting_address: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-950 dark:text-white bg-white dark:bg-slate-700"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="Rua, número, complemento"
           />
         </div>

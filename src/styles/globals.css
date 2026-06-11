@@ -92,3 +92,26 @@ html.dark ::placeholder {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
+
+/* Input styling - melhor contrast */
+input,
+textarea,
+select {
+  color: #1f2937 !important;
+}
+
+html.dark input,
+html.dark textarea,
+html.dark select {
+  color: #f1f5f9 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}

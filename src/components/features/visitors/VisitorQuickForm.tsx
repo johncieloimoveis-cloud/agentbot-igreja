@@ -80,7 +80,7 @@ export function VisitorQuickForm({ onSubmit, loading }: VisitorQuickFormProps) {
           type="text"
           value={formData.full_name}
           onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Nome da pessoa"
         />
       </div>
@@ -94,7 +94,7 @@ export function VisitorQuickForm({ onSubmit, loading }: VisitorQuickFormProps) {
             type="tel"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="(11) 1234-5678"
           />
         </div>
@@ -106,7 +106,7 @@ export function VisitorQuickForm({ onSubmit, loading }: VisitorQuickFormProps) {
             type="tel"
             value={formData.whatsapp}
             onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="(11) 98765-4321"
           />
         </div>
@@ -119,7 +119,7 @@ export function VisitorQuickForm({ onSubmit, loading }: VisitorQuickFormProps) {
         <select
           value={formData.culto_evento}
           onChange={(e) => setFormData({ ...formData, culto_evento: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="">Selecione</option>
           <option value="culto_domingo">Culto Domingo</option>
@@ -137,7 +137,7 @@ export function VisitorQuickForm({ onSubmit, loading }: VisitorQuickFormProps) {
           type="text"
           value={formData.como_conheceu}
           onChange={(e) => setFormData({ ...formData, como_conheceu: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Ex: Convite de amigo"
         />
       </div>

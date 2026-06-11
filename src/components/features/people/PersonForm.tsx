@@ -43,7 +43,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
         <input
           {...register('full_name')}
           type="text"
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Digite o nome completo"
         />
         {fullNameError && <p className="text-red-500 text-sm mt-1">{fullNameError}</p>}
@@ -57,7 +57,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
         <input
           {...register('email')}
           type="email"
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="exemplo@email.com"
         />
         {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
@@ -72,7 +72,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           <input
             {...register('phone')}
             type="tel"
-            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="(11) 1234-5678"
           />
         </div>
@@ -83,7 +83,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           <input
             {...register('whatsapp')}
             type="tel"
-            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="(11) 98765-4321"
           />
         </div>
@@ -96,7 +96,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
         </label>
         <select
           {...register('status')}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="">Selecione um status</option>
           <option value="visitor">Visitante</option>
@@ -118,7 +118,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
         <input
           {...register('date_of_birth')}
           type="date"
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
 
@@ -130,7 +130,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
         <input
           {...register('address')}
           type="text"
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Rua, número, complemento"
         />
       </div>
@@ -143,7 +143,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
         <input
           {...register('city')}
           type="text"
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="São Paulo"
         />
       </div>
@@ -155,7 +155,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
         </label>
         <textarea
           {...register('notes')}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           rows={4}
           placeholder="Adicione observações sobre a pessoa..."
         />

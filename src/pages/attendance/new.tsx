@@ -83,13 +83,13 @@ export default function NewAttendanceEvent() {
       <div className="max-w-2xl mx-auto">
         <button
           onClick={() => router.back()}
-          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white mb-6"
         >
           ← Voltar
         </button>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Novo Evento de Presença</h1>
+          <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Novo Evento de Presença</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Crie um novo evento para registrar presenças</p>
         </div>
 

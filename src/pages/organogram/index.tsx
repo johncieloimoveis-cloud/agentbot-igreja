@@ -98,7 +98,7 @@ export default function Organogram() {
             className="flex-1 cursor-pointer hover:text-primary-600"
             onClick={() => router.push(`/people`)}
           >
-            <p className="font-semibold text-gray-900 dark:text-slate-100">{node.full_name}</p>
+            <p className="font-semibold text-gray-950 dark:text-white">{node.full_name}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{translateStatus(node.status)}</p>
           </div>
 
@@ -128,7 +128,7 @@ export default function Organogram() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-slate-100">Organograma 🏛️</h1>
+        <h1 className="text-4xl font-bold text-gray-950 dark:text-white">Organograma 🏛️</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">Estrutura hierárquica da sua igreja</p>
       </div>
 
@@ -159,7 +159,7 @@ export default function Organogram() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-300 dark:border-slate-700">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-4">Resumo</h3>
+            <h3 className="text-lg font-bold text-gray-950 dark:text-white mb-4">Resumo</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Níveis Hierárquicos</p>

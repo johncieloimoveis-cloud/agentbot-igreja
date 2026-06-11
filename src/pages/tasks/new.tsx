@@ -80,12 +80,12 @@ export default function NewTask() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-700 p-6">
       <div className="max-w-2xl mx-auto">
-        <button onClick={() => router.back()} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6">
+        <button onClick={() => router.back()} className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white mb-6">
           ← Voltar
         </button>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Nova Tarefa</h1>
+          <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Nova Tarefa</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Crie uma nova tarefa de acompanhamento</p>
         </div>
 

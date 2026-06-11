@@ -68,14 +68,14 @@ export default function AttendanceList() {
       {/* Botão Voltar */}
       <button
         onClick={() => router.back()}
-        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6"
+        className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white mb-6"
       >
         ← Voltar
       </button>
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Frequência</h1>
+        <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Frequência</h1>
         <button
           onClick={() => router.push('/attendance/new')}
           className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
@@ -133,7 +133,7 @@ export default function AttendanceList() {
                     <span className="text-2xl">
                       {getEventTypeLabel(event.event_type).split(' ')[0]}
                     </span>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                    <h3 className="text-xl font-bold text-gray-950 dark:text-white">
                       {getEventTypeLabel(event.event_type).slice(2)}
                     </h3>
                   </div>

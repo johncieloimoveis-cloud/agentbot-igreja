@@ -43,7 +43,7 @@ export default function NewGroup() {
     <div className="p-6 max-w-2xl mx-auto">
       <button
         onClick={() => router.back()}
-        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6"
+        className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white mb-6"
       >
         ← Voltar
       </button>
@@ -128,7 +128,7 @@ export default function NewGroup() {
 
       <button
         onClick={() => router.back()}
-        className="mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100"
+        className="mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white"
       >
         ← Voltar
       </button>

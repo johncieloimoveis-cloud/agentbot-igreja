@@ -39,7 +39,7 @@ export default function Login() {
           <div className="flex justify-center mb-4">
             <img src="/lobot-logo.svg" alt="AgentBot Igreja" className="w-24 h-24 rounded-lg shadow-md" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-2">AgentBot Igreja</h1>
+          <h1 className="text-3xl font-bold text-gray-950 dark:text-white mb-2">AgentBot Igreja</h1>
           <p className="text-gray-600 dark:text-gray-400">Gestão Inteligente de Pessoas da Igreja</p>
           <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">Powered by Lobot</p>
         </div>

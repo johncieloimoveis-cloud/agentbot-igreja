@@ -59,13 +59,13 @@ export default function NewPerson() {
       <div className="max-w-2xl mx-auto">
         <button
           onClick={() => router.back()}
-          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white mb-6"
         >
           ← Voltar
         </button>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Nova Pessoa</h1>
+          <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Nova Pessoa</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Preencha os dados da nova pessoa na igreja</p>
         </div>
 
@@ -80,7 +80,7 @@ export default function NewPerson() {
 
         <button
           onClick={() => router.back()}
-          className="mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 font-medium"
+          className="mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white font-medium"
         >
           ← Voltar
         </button>

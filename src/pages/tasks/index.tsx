@@ -86,12 +86,12 @@ export default function TasksList() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <button onClick={() => router.back()} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6">
+      <button onClick={() => router.back()} className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white mb-6">
         ← Voltar
       </button>
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Tarefas</h1>
+        <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Tarefas</h1>
         <button
           onClick={() => router.push('/tasks/new')}
           className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold px-4 py-2 rounded-lg"
@@ -156,7 +156,7 @@ export default function TasksList() {
                     )}
                   </button>
                   <div className="flex-1">
-                    <h3 className={`font-bold text-gray-900 dark:text-slate-100 ${task.status === 'completed' ? 'line-through' : ''}`}>
+                    <h3 className={`font-bold text-gray-950 dark:text-white ${task.status === 'completed' ? 'line-through' : ''}`}>
                       {task.title}
                     </h3>
                     {task.description && (

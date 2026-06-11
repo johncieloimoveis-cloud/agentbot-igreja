@@ -81,14 +81,14 @@ export default function PeopleList() {
       {/* Botão Voltar */}
       <button
         onClick={() => router.back()}
-        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6"
+        className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white mb-6"
       >
         ← Voltar
       </button>
 
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Pessoas</h1>
+        <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Pessoas</h1>
         <button
           onClick={() => router.push('/people/new')}
           className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
@@ -148,16 +148,16 @@ export default function PeopleList() {
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-700">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-slate-100">Nome</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-slate-100">Telefone</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-slate-100">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-slate-100">Ações</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Nome</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Telefone</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {people.map((person) => (
                   <tr key={person.id} className="border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:bg-slate-700 transition-colors">
-                    <td className="px-6 py-4 text-gray-900 dark:text-slate-100 font-medium">{person.full_name}</td>
+                    <td className="px-6 py-4 text-gray-950 dark:text-white font-medium">{person.full_name}</td>
                     <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{person.phone || '-'}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(person.status)}`}>

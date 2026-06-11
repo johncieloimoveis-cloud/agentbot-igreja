@@ -110,7 +110,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 dark:hover:text-gray-200 p-1"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white dark:hover:text-gray-200 p-1"
             >
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -189,7 +189,7 @@ export function Layout({ children }: LayoutProps) {
         {/* Header */}
         <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm sticky top-0 z-10">
           <div className="flex items-center justify-between px-6 py-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
+            <h2 className="text-2xl font-bold text-gray-950 dark:text-white">
               {menuItems.find((item) => isActive(item.href))?.label || 'SheepCare'}
             </h2>
             <div className="flex items-center gap-4">

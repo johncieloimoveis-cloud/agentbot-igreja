@@ -103,7 +103,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">{label}</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-slate-100 mt-2">{value}</p>
+          <p className="text-3xl font-bold text-gray-950 dark:text-white mt-2">{value}</p>
         </div>
         <Icon className="w-10 h-10 text-gray-400 dark:text-gray-500" />
       </div>
@@ -117,7 +117,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <img src="/lobot-logo.svg" alt="AgentBot Igreja" className="w-12 h-12 rounded-lg shadow-sm" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">AgentBot Igreja</h1>
+            <h1 className="text-2xl font-bold text-gray-950 dark:text-white">AgentBot Igreja</h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">{user.email}</span>
@@ -136,7 +136,7 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-2">Dashboard 📊</h2>
+          <h2 className="text-3xl font-bold text-gray-950 dark:text-white mb-2">Dashboard 📊</h2>
           <p className="text-gray-600 dark:text-gray-400">Visão geral da sua igreja</p>
         </div>
 
@@ -203,7 +203,7 @@ export default function Dashboard() {
               <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Cake className="w-6 h-6 text-red-500" />
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100">Aniversariantes (7 dias)</h3>
+                  <h3 className="text-lg font-bold text-gray-950 dark:text-white">Aniversariantes (7 dias)</h3>
                 </div>
                 {stats.birthdays.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-center py-8 text-sm">Nenhum aniversariante</p>
@@ -211,7 +211,7 @@ export default function Dashboard() {
                   <div className="space-y-2">
                     {stats.birthdays.map((person: any) => (
                       <div key={person.id} className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded">
-                        <p className="font-medium text-gray-900 dark:text-slate-100 text-sm">{person.full_name}</p>
+                        <p className="font-medium text-gray-950 dark:text-white text-sm">{person.full_name}</p>
                         <p className="text-xs text-gray-600 dark:text-gray-400">
                           {new Date(person.date_of_birth).toLocaleDateString('pt-BR', {
                             month: 'short',
@@ -228,7 +228,7 @@ export default function Dashboard() {
               <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Users className="w-6 h-6 text-blue-500" />
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100">Visitantes Recentes (30 dias)</h3>
+                  <h3 className="text-lg font-bold text-gray-950 dark:text-white">Visitantes Recentes (30 dias)</h3>
                 </div>
                 {stats.recentVisitors.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-center py-8 text-sm">Nenhum visitante recente</p>
@@ -236,7 +236,7 @@ export default function Dashboard() {
                   <div className="space-y-2">
                     {stats.recentVisitors.slice(0, 5).map((visitor: any) => (
                       <div key={visitor.id} className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded">
-                        <p className="font-medium text-gray-900 dark:text-slate-100 text-sm">{visitor.full_name}</p>
+                        <p className="font-medium text-gray-950 dark:text-white text-sm">{visitor.full_name}</p>
                         <p className="text-xs text-gray-600 dark:text-gray-400">
                           {new Date(visitor.created_at).toLocaleDateString('pt-BR')}
                         </p>
@@ -254,22 +254,22 @@ export default function Dashboard() {
 
             {/* Resumo */}
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-6">Resumo da Igreja</h3>
+              <h3 className="text-lg font-bold text-gray-950 dark:text-white mb-6">Resumo da Igreja</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-gray-50 dark:bg-slate-700 rounded">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{stats.people.absent}</p>
+                  <p className="text-2xl font-bold text-gray-950 dark:text-white">{stats.people.absent}</p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Afastados</p>
                 </div>
                 <div className="text-center p-4 bg-gray-50 dark:bg-slate-700 rounded">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{stats.people.leader}</p>
+                  <p className="text-2xl font-bold text-gray-950 dark:text-white">{stats.people.leader}</p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Líderes</p>
                 </div>
                 <div className="text-center p-4 bg-gray-50 dark:bg-slate-700 rounded">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{stats.attendance.total_events}</p>
+                  <p className="text-2xl font-bold text-gray-950 dark:text-white">{stats.attendance.total_events}</p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Eventos</p>
                 </div>
                 <div className="text-center p-4 bg-gray-50 dark:bg-slate-700 rounded">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{stats.attendance.average}</p>
+                  <p className="text-2xl font-bold text-gray-950 dark:text-white">{stats.attendance.average}</p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Frequência Média</p>
                 </div>
               </div>

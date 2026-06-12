@@ -7,9 +7,8 @@ import { Users, Plus } from 'lucide-react';
 interface Group {
   id: string;
   name: string;
-  leader?: { full_name: string };
-  meeting_day?: string;
-  meeting_time?: string;
+  leader?: { full_name: string } | null;
+  meetings?: Array<{ id: string; day_of_week: string; time: string; description?: string }>;
   parent_group_id?: string;
 }
 
@@ -88,14 +87,24 @@ export default function Groups() {
                 </h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Líder: {group.leader?.full_name || 'Sem líder'}
+                👤 Líder: {group.leader?.full_name || 'Sem líder'}
               </p>
-              {group.meeting_day && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {group.meeting_day} às {group.meeting_time}
-                </p>
+              {group.meetings && group.meetings.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {group.meetings.slice(0, 2).map((meeting) => (
+                    <p key={meeting.id} className="text-xs text-gray-600 dark:text-gray-400">
+                      📅 {meeting.day_of_week} às {meeting.time}
+                      {meeting.description && ` (${meeting.description})`}
+                    </p>
+                  ))}
+                  {group.meetings.length > 2 && (
+                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                      +{group.meetings.length - 2} reunião(ões) mais
+                    </p>
+                  )}
+                </div>
               )}
-              <div className="flex items-center gap-2 text-primary-600 mt-2">
+              <div className="flex items-center gap-2 text-primary-600 mt-3">
                 <Users className="w-4 h-4" />
                 <span>Ver detalhes</span>
               </div>

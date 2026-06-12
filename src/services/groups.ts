@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 export const getGroups = async (churchId: string) => {
   return supabase
     .from('groups')
-    .select('*, leader:leader_id(id, full_name), meetings:group_meetings(*)')
+    .select('*, meetings:group_meetings(*)')
     .eq('church_id', churchId)
     .eq('status', 'active')
     .order('name');

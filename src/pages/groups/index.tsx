@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getGroups } from '@/services/groups';
+import { supabase } from '@/services/supabase';
 import { Users, Plus } from 'lucide-react';
 
 interface Group {
@@ -39,7 +40,26 @@ export default function Groups() {
       console.log('Dados retornados:', data);
       console.log('Erro:', error);
       if (error) throw error;
-      setGroups(data || []);
+
+      // Buscar nomes dos líderes
+      if (data && data.length > 0) {
+        const groupsWithLeaders = await Promise.all(
+          (data || []).map(async (group: any) => {
+            if (group.leader_id) {
+              const { data: leader } = await supabase
+                .from('people')
+                .select('id, full_name')
+                .eq('id', group.leader_id)
+                .single();
+              return { ...group, leader };
+            }
+            return group;
+          })
+        );
+        setGroups(groupsWithLeaders);
+      } else {
+        setGroups(data || []);
+      }
     } catch (error) {
       console.error('Erro ao carregar:', error);
     } finally {

@@ -66,3 +66,26 @@ export const deleteGroup = async (groupId: string) => {
     .update({ status: 'inactive' })
     .eq('id', groupId);
 };
+
+export const addGroupMeeting = async (groupId: string, meeting: any) => {
+  return supabase
+    .from('group_meetings')
+    .insert({ group_id: groupId, ...meeting })
+    .select()
+    .single();
+};
+
+export const getGroupMeetings = async (groupId: string) => {
+  return supabase
+    .from('group_meetings')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('day_of_week');
+};
+
+export const deleteGroupMeeting = async (meetingId: string) => {
+  return supabase
+    .from('group_meetings')
+    .delete()
+    .eq('id', meetingId);
+};

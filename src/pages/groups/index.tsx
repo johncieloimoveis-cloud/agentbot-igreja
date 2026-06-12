@@ -99,32 +99,39 @@ export default function Groups() {
             <div
               key={group.id}
               onClick={() => router.push(`/groups/${group.id}`)}
-              className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer hover:shadow-md"
+              className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow cursor-pointer hover:shadow-md h-full flex flex-col"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-2">
                 <h3 className="font-bold text-lg text-gray-950 dark:text-white">
                   {group.parent_group_id ? '└─ ' : '• '}{group.name}
                 </h3>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                 👤 Líder: {group.leader?.full_name || 'Sem líder'}
               </p>
-              {group.meetings && group.meetings.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {group.meetings.slice(0, 2).map((meeting) => (
+
+              {group.meetings && group.meetings.length > 0 ? (
+                <div className="mt-2 mb-3 space-y-1 flex-grow">
+                  {group.meetings.slice(0, 3).map((meeting) => (
                     <p key={meeting.id} className="text-xs text-gray-600 dark:text-gray-400">
                       📅 {meeting.day_of_week} às {meeting.time}
-                      {meeting.description && ` (${meeting.description})`}
+                      {meeting.description && ` · ${meeting.description}`}
                     </p>
                   ))}
-                  {group.meetings.length > 2 && (
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                      +{group.meetings.length - 2} reunião(ões) mais
+                  {group.meetings.length > 3 && (
+                    <p className="text-xs text-gray-500 dark:text-gray-500 pt-1">
+                      +{group.meetings.length - 3} reunião(ões) mais
                     </p>
                   )}
                 </div>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2 mb-3 flex-grow">
+                  Sem reuniões agendadas
+                </p>
               )}
-              <div className="flex items-center gap-2 text-primary-600 mt-3">
+
+              <div className="flex items-center gap-2 text-primary-600 mt-auto">
                 <Users className="w-4 h-4" />
                 <span>Ver detalhes</span>
               </div>

@@ -93,18 +93,29 @@ export default function NewGroup() {
         leader_id: formData.leader_id,
       };
 
+      console.log('1. Enviando dados do grupo:', dataToSubmit);
       const { data: groupData, error: groupError } = await createGroup(churchId, dataToSubmit);
-      if (groupError) throw groupError;
+      console.log('2. Resposta createGroup:', { data: groupData, error: groupError });
+
+      if (groupError) {
+        console.error('3. Erro ao criar grupo:', groupError);
+        throw groupError;
+      }
+
+      console.log('4. Grupo criado com ID:', groupData.id);
 
       // Adicionar reuniões
       for (const meeting of meetings) {
-        await addGroupMeeting(groupData.id, {
+        console.log('5. Adicionando reunião:', meeting);
+        const { error: meetingError } = await addGroupMeeting(groupData.id, {
           day_of_week: meeting.day_of_week,
           time: meeting.time,
           description: meeting.description || null,
         });
+        if (meetingError) console.error('Erro ao adicionar reunião:', meetingError);
       }
 
+      console.log('6. Redirecionando para /groups');
       router.push('/groups');
     } catch (err) {
       setError('Erro ao criar grupo');

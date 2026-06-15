@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
-import { getHierarchyTree, getLeaderStats } from '@/services/organogram';
+import { getGroupHierarchyTree, getGroupLeaderStats } from '@/services/organogram';
 import { ChevronDown, ChevronRight, Users } from 'lucide-react';
 
 interface TreeNode {
   id: string;
-  full_name: string;
+  name: string;
+  leader?: { id: string; full_name: string } | null;
   status: string;
   children: TreeNode[];
 }
@@ -32,15 +33,15 @@ export default function Organogram() {
     setLoading(true);
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-      const { data, error } = await getHierarchyTree(churchId);
+      const { data, error } = await getGroupHierarchyTree(churchId);
       if (error) throw error;
       setTree(data || []);
 
-      // Carregar stats para alguns líderes
+      // Carregar stats para os grupos
       if (data) {
         const statsMap: { [key: string]: any } = {};
         for (const node of data) {
-          const stat = await getLeaderStats(node.id);
+          const stat = await getGroupLeaderStats(node.id);
           statsMap[node.id] = stat;
         }
         setStats(statsMap);
@@ -57,19 +58,6 @@ export default function Organogram() {
       ...prev,
       [nodeId]: !prev[nodeId],
     }));
-  };
-
-  const translateStatus = (status: string): string => {
-    const translations: { [key: string]: string } = {
-      visitor: 'Visitante',
-      active_member: 'Membro Ativo',
-      new_convert: 'Novo Convertido',
-      in_discipleship: 'Em Discipulado',
-      absent: 'Afastado',
-      transferred: 'Transferido',
-      leader: 'Liderança',
-    };
-    return translations[status] || status;
   };
 
   const TreeNode = ({ node, depth = 0 }: { node: TreeNode; depth?: number }) => {
@@ -96,17 +84,19 @@ export default function Organogram() {
 
           <div
             className="flex-1 cursor-pointer hover:text-primary-600"
-            onClick={() => router.push(`/people`)}
+            onClick={() => router.push(`/groups/${node.id}`)}
           >
-            <p className="font-semibold text-gray-950 dark:text-white">{node.full_name}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{translateStatus(node.status)}</p>
+            <p className="font-semibold text-gray-950 dark:text-white">👥 {node.name}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {node.leader ? `Líder: ${node.leader.full_name}` : 'Sem líder designado'}
+            </p>
           </div>
 
-          {nodeStat && nodeStat.direct_reports > 0 && (
+          {nodeStat && nodeStat.direct_subgroups > 0 && (
             <div className="flex items-center gap-1 bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded">
               <Users className="w-4 h-4 text-primary-600 dark:text-primary-400" />
               <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
-                {nodeStat.direct_reports}
+                {nodeStat.direct_subgroups}
               </span>
             </div>
           )}
@@ -139,15 +129,15 @@ export default function Organogram() {
         </div>
       ) : tree.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg shadow">
-          <p className="text-gray-500 dark:text-gray-400 text-lg">Nenhuma hierarquia definida ainda</p>
+          <p className="text-gray-500 dark:text-gray-400 text-lg">Nenhum grupo cadastrado ainda</p>
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
-            Defina líderes nas páginas de pessoas para visualizar o organograma
+            Crie grupos e defina a hierarquia para visualizar o organograma
           </p>
           <button
-            onClick={() => router.push('/people')}
+            onClick={() => router.push('/groups/new')}
             className="mt-4 text-primary-600 hover:underline font-medium"
           >
-            Ir para Pessoas
+            Criar Novo Grupo
           </button>
         </div>
       ) : (
@@ -162,17 +152,17 @@ export default function Organogram() {
             <h3 className="text-lg font-bold text-gray-950 dark:text-white mb-4">Resumo</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Níveis Hierárquicos</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Níveis de Grupos</p>
                 <p className="text-3xl font-bold text-primary-600 mt-2">
                   {Math.max(...tree.map(() => 1))}+
                 </p>
               </div>
               <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Líderes Principais</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Grupos Principais</p>
                 <p className="text-3xl font-bold text-primary-600 mt-2">{tree.length}</p>
               </div>
               <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total de Pessoas</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total de Grupos</p>
                 <p className="text-3xl font-bold text-primary-600 mt-2">
                   {tree.reduce((sum, node) => sum + 1 + (stats[node.id]?.total_team || 0), 0)}
                 </p>

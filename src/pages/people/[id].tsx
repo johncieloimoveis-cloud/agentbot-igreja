@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
-import { getPerson, updatePerson, deletePerson, getPeople } from '@/services/people';
-import { updatePersonLeader } from '@/services/organogram';
-import { AlertCircle, Trash2, Users } from 'lucide-react';
+import { getPerson, updatePerson, deletePerson } from '@/services/people';
+import { AlertCircle, Trash2 } from 'lucide-react';
 
 interface Person {
   id: string;
@@ -17,7 +16,6 @@ interface Person {
   address?: string;
   city?: string;
   notes?: string;
-  responsible_id?: string;
   membresia?: boolean;
   eh_lider?: boolean;
   oficial?: string;
@@ -34,13 +32,10 @@ export default function PersonDetail() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [leaders, setLeaders] = useState<any[]>([]);
-  const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     loadPerson();
-    loadLeaders();
   }, [id]);
 
   const loadPerson = async () => {
@@ -49,40 +44,11 @@ export default function PersonDetail() {
       const { data, error: err } = await getPerson(id as string);
       if (err) throw err;
       setPerson(data);
-      setSelectedLeader(data?.responsible_id || null);
     } catch (err) {
       console.error('Erro:', err);
       setError('Erro ao carregar pessoa');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadLeaders = async () => {
-    try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-      const { data, error: err } = await getPeople(churchId);
-      if (err) throw err;
-      setLeaders(data || []);
-    } catch (err) {
-      console.error('Erro:', err);
-    }
-  };
-
-  const handleUpdateLeader = async () => {
-    try {
-      setError('');
-      setSaving(true);
-      const { error: err } = await updatePersonLeader(id as string, selectedLeader);
-      if (err) throw err;
-      setSuccess('Líder atualizado com sucesso!');
-      loadPerson();
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      console.error('Erro:', err);
-      setError('Erro ao atualizar líder');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -197,54 +163,6 @@ export default function PersonDetail() {
           onSubmit={handleSubmit}
           loading={saving}
         />
-
-        {/* Seção de Líder/Supervisor */}
-        <div className="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="w-6 h-6 text-primary-600" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100">Líder/Supervisor</h3>
-          </div>
-
-          {person.responsible_id && (
-            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-700">
-                Líder atual: <strong>{leaders.find((l) => l.id === person.responsible_id)?.full_name || 'Desconhecido'}</strong>
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Selecionar Líder
-              </label>
-              <select
-                value={selectedLeader || ''}
-                onChange={(e) => setSelectedLeader(e.target.value || null)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">Sem líder</option>
-                {leaders
-                  .filter((l) => l.id !== person.id)
-                  .map((leader) => (
-                    <option key={leader.id} value={leader.id}>
-                      {leader.full_name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            {selectedLeader !== person.responsible_id && (
-              <button
-                onClick={handleUpdateLeader}
-                disabled={saving}
-                className="w-full px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-medium rounded-lg transition-colors"
-              >
-                {saving ? 'Atualizando...' : 'Atualizar Líder'}
-              </button>
-            )}
-          </div>
-        </div>
 
         <div className="mt-6 flex gap-4">
           <button

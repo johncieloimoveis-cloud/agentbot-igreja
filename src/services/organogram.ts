@@ -11,24 +11,26 @@ export const getPersonWithLeader = async (personId: string) => {
   return { data, error };
 };
 
-// Listar todos os líderes da church
+// Listar todos os líderes da church (excluindo deletadas)
 export const getLeaders = async (churchId: string) => {
   const { data, error } = await supabase
     .from('people')
     .select('id, full_name, status')
     .eq('church_id', churchId)
     .in('status', ['leader', 'active_member'])
+    .neq('status', 'inactive')
     .order('full_name');
 
   return { data, error };
 };
 
-// Obter pessoas lideradas por um líder
+// Obter pessoas lideradas por um líder (excluindo deletadas)
 export const getPeopleLedBy = async (leaderId: string) => {
   const { data, error } = await supabase
     .from('people')
     .select('id, full_name, status, photo_url')
     .eq('responsible_id', leaderId)
+    .eq('is_active', true)
     .order('full_name');
 
   return { data, error };
@@ -46,11 +48,12 @@ export const updatePersonLeader = async (personId: string, leaderId: string | nu
 
 // Obter hierarquia completa (árvore de líderes)
 export const getHierarchyTree = async (churchId: string) => {
-  // Buscar todas as pessoas
+  // Buscar todas as pessoas (excluindo deletadas)
   const { data: allPeople, error } = await supabase
     .from('people')
     .select('id, full_name, responsible_id, status')
     .eq('church_id', churchId)
+    .eq('is_active', true)
     .order('full_name');
 
   if (error) return { error };
@@ -98,12 +101,13 @@ export const getPersonHierarchyLevel = async (personId: string): Promise<number>
   return level + 1;
 };
 
-// Contar pessoas lideradas (diretas e indiretas)
+// Contar pessoas lideradas (diretas e indiretas, excluindo deletadas)
 export const countTeamSize = async (leaderId: string): Promise<number> => {
   const { data: directReports, error } = await supabase
     .from('people')
     .select('id')
-    .eq('responsible_id', leaderId);
+    .eq('responsible_id', leaderId)
+    .eq('is_active', true);
 
   if (error) return 0;
 
@@ -118,12 +122,13 @@ export const countTeamSize = async (leaderId: string): Promise<number> => {
   return total;
 };
 
-// Obter estatísticas de um líder
+// Obter estatísticas de um líder (excluindo deletadas)
 export const getLeaderStats = async (leaderId: string) => {
   const { data: directReports } = await supabase
     .from('people')
     .select('id, status')
-    .eq('responsible_id', leaderId);
+    .eq('responsible_id', leaderId)
+    .eq('is_active', true);
 
   const teamSize = await countTeamSize(leaderId);
 

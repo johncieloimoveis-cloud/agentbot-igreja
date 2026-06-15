@@ -1,0 +1,360 @@
+Crie um sistema completo de gerenciamento de pessoas para igreja, responsivo para uso em PC, tablet e celular.
+
+Nome provisório do sistema: SheepCare – Gestão de Pessoas da Igreja.
+
+OBJETIVO
+Desenvolver um sistema tipo CRM pastoral para ajudar a igreja a cadastrar, acompanhar, cuidar e se comunicar com membros, visitantes, novos convertidos, líderes, ministérios e grupos pequenos/GCEUs.
+
+PLATAFORMAS
+O sistema deve funcionar:
+- No computador, com layout de dashboard administrativo;
+- No celular, com interface simples, rápida e responsiva;
+- Preferencialmente como PWA, permitindo acesso pelo navegador e instalação no celular.
+
+PERFIS DE USUÁRIO
+Criar controle de acesso com permissões diferentes:
+
+1. Administrador geral
+- Acesso total ao sistema.
+- Gerencia usuários, permissões, configurações e relatórios.
+
+2. Pastor / liderança principal
+- Acesso aos dados gerais da igreja.
+- Acompanha membros, visitantes, discipulado, afastados e relatórios pastorais.
+
+3. Secretaria
+- Cadastra e atualiza pessoas.
+- Gera listas, relatórios e aniversariantes.
+
+4. Líder de GCEU / célula / pequeno grupo
+- Visualiza apenas os participantes do seu grupo.
+- Registra presença, pedidos de oração, visitas e observações.
+
+5. Líder de ministério
+- Visualiza e gerencia pessoas vinculadas ao seu ministério.
+
+FERRAMENTAS A SEREM USADAS
+N8N
+SUPABASE
+NETLIFY
+Z-API
+
+MÓDULOS PRINCIPAIS
+
+1. Cadastro de pessoas
+Criar cadastro completo com os seguintes campos:
+- Nome completo
+- Foto
+- Data de nascimento
+- Sexo
+- Estado civil
+- CPF, opcional
+- RG, opcional
+- Telefone
+- WhatsApp
+- E-mail
+- Endereço completo
+- Bairro
+- Cidade
+- Profissão
+- Escolaridade
+- Nome do cônjuge
+- Filhos
+- Responsável, quando menor de idade
+- Data do primeiro contato com a igreja
+- Como conheceu a igreja
+- Status da pessoa:
+  - visitante
+  - membro ativo
+  - novo convertido
+  - em discipulado
+  - afastado
+  - transferido
+  - liderança
+  - criança
+  - adolescente
+  - jovem
+- Observações gerais
+
+2. Visitantes
+Criar fluxo específico para visitantes:
+- Cadastro rápido pelo celular
+- Registro da data da visita
+- Quem convidou
+- Culto ou evento em que participou
+- Interesse em receber contato
+- Interesse em participar de GCEU
+- Interesse em estudo bíblico
+- Histórico de retornos
+- Botão para transformar visitante em membro ou novo convertido
+- Alerta para contato posterior
+
+3. Acompanhamento espiritual e pastoral
+Criar registros de acompanhamento:
+- Discipulado
+- Pedido de oração
+- Visita pastoral
+- Aconselhamento
+- Conversa com liderança
+- Novo convertido
+- Pessoa afastada
+- Necessidade social
+- Encaminhamento para ministério
+- Histórico de atendimentos
+- Campo de observação sigilosa, visível apenas para perfis autorizados
+
+4. GCEUs / células / pequenos grupos
+Criar módulo de pequenos grupos:
+- Cadastro do grupo
+- Nome do grupo
+- Líder
+- Vice-líder
+- Endereço de reunião
+- Dia da semana
+- Horário
+- Participantes
+- Visitantes do grupo
+- Presença por reunião
+- Pedidos de oração
+- Relatórios de crescimento
+- Pessoas ausentes
+- Alertas de ausência recorrente
+
+5. Frequência
+Criar controle de presença em:
+- Cultos
+- Escola bíblica
+- GCEUs
+- Reuniões de ministério
+- Eventos especiais
+
+A presença poderá ser registrada manualmente ou por lista rápida no celular.
+
+6. ministérios / ministérios
+Criar cadastro de ministérios:
+- Louvor
+- Infantil
+- Jovens
+- Intercessão
+- Ação social
+- Obreiros
+- Recepção
+- Ensino
+- Comunicação
+- Outros ministérios personalizáveis
+
+Cada pessoa poderá estar vinculada a um ou mais ministérios.
+
+7. Comunicação via WhatsApp
+O sistema deve usar WhatsApp para comunicações rápidas e tempestivas, quando necessário.
+
+Criar recursos para:
+- Abrir conversa individual pelo WhatsApp com uma pessoa cadastrada;
+- Gerar mensagens prontas para visitantes;
+- Gerar mensagens de aniversário;
+- Gerar mensagens para ausentes;
+- Gerar mensagens para líderes de GCEU;
+- Gerar mensagens para pedidos urgentes;
+- Gerar listas segmentadas para envio manual pelo WhatsApp;
+- Futuramente permitir integração com WhatsApp Business API.
+
+Importante:
+Na primeira versão, se a integração oficial com WhatsApp Business API for complexa, implementar ao menos abertura via link wa.me com mensagem pré-preenchida.
+
+Exemplos de mensagens automáticas:
+- “Olá, [nome], ficamos muito felizes com sua visita em nossa igreja. Gostaríamos de saber se podemos orar por você.”
+- “Olá, [nome], sentimos sua falta no último encontro do GCEU. Está tudo bem?”
+- “Olá, [nome], que Deus abençoe sua vida neste aniversário.”
+- “Olá, líder [nome], há pessoas do seu grupo com ausência recorrente. Verifique o relatório no sistema.”
+
+8. Alertas e tarefas
+Criar painel de tarefas:
+- Entrar em contato com visitante
+- Acompanhar novo convertido
+- Verificar pessoa ausente
+- Fazer visita pastoral
+- Encaminhar pedido de oração
+- Ligar para aniversariante
+- Convidar para GCEU
+- Atualizar cadastro incompleto
+
+Cada tarefa deve ter:
+- Pessoa relacionada
+- Responsável
+- Prioridade
+- Prazo
+- Status:
+  - pendente
+  - em andamento
+  - concluída
+  - cancelada
+
+9. Aniversariantes
+Criar módulo de aniversários:
+- Aniversariantes do dia
+- Aniversariantes da semana
+- Aniversariantes do mês
+- Botão para enviar mensagem por WhatsApp
+- Relatório mensal para secretaria ou liderança
+
+10. Dashboard
+Criar painel visual com:
+- Total de pessoas cadastradas
+- Total de membros ativos
+- Total de visitantes
+- Visitantes do mês
+- Novos convertidos
+- Pessoas em discipulado
+- Pessoas afastadas
+- GCEUs ativos
+- Frequência média
+- Aniversariantes próximos
+- Tarefas pendentes
+- Alertas importantes
+
+11. Relatórios
+Criar relatórios filtráveis por:
+- Status da pessoa
+- Faixa etária
+- Bairro
+- GCEU
+- ministério
+- Frequência
+- Visitantes por período
+- Novos convertidos
+- Pessoas afastadas
+- Aniversariantes
+- Pessoas sem WhatsApp
+- Cadastros incompletos
+
+Permitir exportação para PDF e Excel/CSV.
+
+12. Busca e filtros
+Criar busca rápida por:
+- Nome
+- Telefone
+- WhatsApp
+- Bairro
+- Status
+- GCEU
+- ministério
+
+REQUISITOS DE INTERFACE
+A interface deve ser:
+- Simples
+- Moderna
+- Limpa
+- Responsiva
+- Fácil para pessoas com pouco conhecimento técnico
+- Com menus grandes no celular
+- Com botões claros para ações rápidas
+
+No celular, priorizar:
+- Cadastro rápido
+- Busca de pessoas
+- Botão de WhatsApp
+- Registro de presença
+- Tarefas pendentes
+- Aniversariantes
+
+No computador, priorizar:
+- Dashboard
+- Relatórios
+- Gestão completa de cadastros
+- Configurações
+- Exportações
+
+REQUISITOS TÉCNICOS
+Desenvolver o sistema com:
+- Frontend responsivo
+- Backend com autenticação
+- Banco de dados relacional
+- Controle de permissões
+- API organizada
+- Código limpo e documentado
+- Estrutura preparada para expansão futura
+
+Sugestão de stack:
+- React ou Next.js no frontend
+- Supabase ou PostgreSQL no banco de dados
+- Autenticação por e-mail e senha
+- TailwindCSS para layout
+- PWA para instalação no celular
+
+BANCO DE DADOS
+Criar tabelas para:
+- users
+- people
+- roles
+- permissions
+- churches
+- groups
+- group_members
+- departments
+- department_members
+- attendance_events
+- attendance_records
+- pastoral_followups
+- prayer_requests
+- tasks
+- whatsapp_messages
+- birthdays
+- audit_logs
+
+SEGURANÇA E LGPD
+Como o sistema armazenará dados pessoais e informações sensíveis, implementar:
+- Login obrigatório
+- Permissões por perfil
+- Registro de ações importantes
+- Proteção de dados sensíveis
+- Campos sigilosos restritos
+- Possibilidade de excluir ou anonimizar cadastro
+- Backup
+- Aviso de consentimento para armazenamento de dados
+- Termo de uso e política de privacidade
+
+VERSÃO 1 - MVP
+Na primeira versão, entregar:
+
+1. Login
+2. Cadastro de pessoas
+3. Cadastro de visitantes
+4. Cadastro de GCEUs
+5. Cadastro de ministérios
+6. Registro de presença
+7. Tarefas de acompanhamento
+8. Aniversariantes
+9. Botão de WhatsApp com mensagem pré-preenchida
+10. Dashboard básico
+11. Relatórios básicos
+12. Layout responsivo para PC e celular
+
+EXPANSÕES FUTURAS
+Preparar o sistema para futuramente incluir:
+- Integração oficial com WhatsApp Business API
+- Inteligência artificial para sugerir acompanhamentos
+- App mobile nativo
+- Check-in por QR Code
+- Envio automático de mensagens
+- Integração com Google Agenda
+- Relatórios pastorais inteligentes
+- Gestão financeira da igreja
+- Gestão de eventos
+- Escola bíblica
+- Controle de voluntários
+- Escalas de ministérios
+
+ENTREGA ESPERADA
+Entregar:
+- Planejamento técnico
+- Estrutura de banco de dados
+- Telas principais
+- Fluxo de navegação
+- MVP funcional
+- Código organizado
+- Instruções de instalação
+- Instruções para configurar Supabase ou banco equivalente
+- Instruções para usar no PC e no celular
+
+IMPORTANTE
+O foco principal do sistema não é apenas cadastro, mas cuidado de pessoas. Portanto, todas as telas devem facilitar a ação pastoral: identificar quem precisa de contato, quem está ausente, quem visitou a igreja, quem está em discipulado e quem precisa ser acompanhado.

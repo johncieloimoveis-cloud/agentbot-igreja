@@ -129,28 +129,28 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
 
         {/* Membresia */}
         <div className="mb-4">
-          <label className="flex items-center gap-3">
+          <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg border-2 border-gray-200 dark:border-slate-600 cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 transition-colors">
             <input
               {...register('membresia')}
               type="checkbox"
               disabled={ehLider || (oficial && oficial !== 'NÃO')}
-              className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-6 h-6 accent-primary-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              É membro {ehLider || (oficial && oficial !== 'NÃO') ? '(obrigatório - é líder ou oficial)' : ''}
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">
+              É membro {ehLider || (oficial && oficial !== 'NÃO') ? '(obrigatório)' : ''}
             </span>
           </label>
         </div>
 
         {/* Líder */}
         <div className="mb-4">
-          <label className="flex items-center gap-3">
+          <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg border-2 border-gray-200 dark:border-slate-600 cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 transition-colors">
             <input
               {...register('eh_lider')}
               type="checkbox"
-              className="w-4 h-4 rounded border-gray-300 dark:border-slate-600 cursor-pointer"
+              className="w-6 h-6 accent-primary-600 cursor-pointer"
             />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">
               É líder de grupo
             </span>
           </label>

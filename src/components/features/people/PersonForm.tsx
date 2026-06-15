@@ -134,7 +134,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
               {...register('membresia')}
               type="checkbox"
               disabled={ehLider || (oficial && oficial !== 'NÃO')}
-              className="w-6 h-6 accent-primary-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-6 h-6 accent-blue-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">
               É membro {ehLider || (oficial && oficial !== 'NÃO') ? '(obrigatório)' : ''}

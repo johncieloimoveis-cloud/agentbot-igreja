@@ -55,7 +55,7 @@ export default function PeopleList() {
       active_member: 'bg-green-100 text-green-800',
       new_convert: 'bg-yellow-100 text-yellow-800',
       in_discipleship: 'bg-purple-100 text-purple-800',
-      absent: 'bg-gray-100 dark:bg-slate-800 text-gray-800',
+      absent: 'bg-slate-400 dark:bg-slate-600 text-slate-900 dark:text-white',
       transferred: 'bg-red-100 text-red-800',
       leader: 'bg-indigo-100 text-indigo-800',
     };

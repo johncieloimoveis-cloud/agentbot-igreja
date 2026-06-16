@@ -52,6 +52,7 @@ export default function PeopleList() {
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
       visitor: 'bg-blue-100 text-blue-800',
+      eventual: 'bg-orange-100 text-orange-800',
       active_member: 'bg-green-100 text-green-800',
       new_convert: 'bg-yellow-100 text-yellow-800',
       in_discipleship: 'bg-purple-100 text-purple-800',
@@ -65,6 +66,7 @@ export default function PeopleList() {
   const getStatusLabel = (status: string) => {
     const labels: { [key: string]: string } = {
       visitor: 'Visitante',
+      eventual: 'Eventual',
       active_member: 'Membro Ativo',
       new_convert: 'Novo Convertido',
       in_discipleship: 'Em Discipulado',
@@ -131,6 +133,7 @@ export default function PeopleList() {
         >
           <option value="">Todos os status</option>
           <option value="visitor">Visitante</option>
+          <option value="eventual">Eventual</option>
           <option value="active_member">Membro Ativo</option>
           <option value="new_convert">Novo Convertido</option>
           <option value="in_discipleship">Em Discipulado</option>

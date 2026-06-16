@@ -28,7 +28,7 @@ export const getPeople = async (
     .select('*')
     .eq('church_id', churchId)
     .eq('is_active', true)
-    .order('created_at', { ascending: false });
+    .order('full_name', { ascending: true });
 
   if (status) query = query.eq('status', status);
   if (search) query = query.ilike('full_name', `%${search}%`);

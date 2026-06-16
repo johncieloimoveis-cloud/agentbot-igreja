@@ -73,12 +73,16 @@ export const getUpcomingBirthdays = async (churchId: string, days: number = 7) =
       birthDate.getDate()
     );
 
+    // Normalizar datas para comparação (remover hora)
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const futureDateNormalized = new Date(futureDate.getFullYear(), futureDate.getMonth(), futureDate.getDate());
+
     // Se já passou este ano, próximo será no próximo ano
-    if (thisYearBirthday < today) {
+    if (thisYearBirthday < todayDate) {
       thisYearBirthday.setFullYear(thisYearBirthday.getFullYear() + 1);
     }
 
-    return thisYearBirthday >= today && thisYearBirthday <= futureDate;
+    return thisYearBirthday >= todayDate && thisYearBirthday <= futureDateNormalized;
   });
 
   return { data: birthdays };

@@ -163,6 +163,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
             <option value="Aspirante(a)">Aspirante(a)</option>
             <option value="Presbítero(a)">Presbítero(a)</option>
             <option value="Diácono(isa)">Diácono(isa)</option>
+            <option value="Missionário(a)">Missionário(a)</option>
             <option value="Secretário(a)">Secretário(a)</option>
           </select>
         </div>

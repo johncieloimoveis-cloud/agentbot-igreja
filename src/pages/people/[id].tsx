@@ -71,6 +71,8 @@ export default function PersonDetail() {
         address: data.address || undefined,
         city: data.city || undefined,
         notes: data.notes || undefined,
+        eh_lider: data.eh_lider || false,
+        oficial: data.oficial || 'NÃO',
       };
 
       const { error: err } = await updatePerson(person.id, cleanData);

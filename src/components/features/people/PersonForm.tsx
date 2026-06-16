@@ -159,11 +159,11 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
             className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="NÃO">Não possui posição oficial</option>
-            <option value="pastor">Pastor</option>
-            <option value="aspirante">Aspirante</option>
-            <option value="presbítero">Presbítero</option>
-            <option value="diácono">Diácono</option>
-            <option value="secretário">Secretário</option>
+            <option value="Pastor(a)">Pastor(a)</option>
+            <option value="Aspirante(a)">Aspirante(a)</option>
+            <option value="Presbítero(a)">Presbítero(a)</option>
+            <option value="Diácono(isa)">Diácono(isa)</option>
+            <option value="Secretário(a)">Secretário(a)</option>
           </select>
         </div>
       </div>

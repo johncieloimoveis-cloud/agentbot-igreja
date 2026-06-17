@@ -60,7 +60,7 @@ export const deleteUser = async (userId: string) => {
     .from('users')
     .select('role_id, roles:role_id(name)')
     .eq('id', userId)
-    .single();
+    .single() as any;
 
   if (fetchError) return { error: fetchError };
   const roleName = Array.isArray(user?.roles) ? user?.roles[0]?.name : user?.roles?.name;

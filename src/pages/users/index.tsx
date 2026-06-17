@@ -9,7 +9,7 @@ interface User {
   email: string;
   full_name?: string;
   role_id: string;
-  roles?: { id: string; name: string; description: string };
+  roles?: any;
   is_active: boolean;
   last_login?: string;
   created_at: string;
@@ -47,7 +47,7 @@ export default function UsersManagement() {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
       const { data, error: err } = await getUsers(churchId);
       if (err) throw err;
-      setUsers(data || []);
+      setUsers((data as User[]) || []);
     } catch (err) {
       setError('Erro ao carregar usuários');
       console.error(err);

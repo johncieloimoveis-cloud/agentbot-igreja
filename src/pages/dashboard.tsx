@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
+import { VersionBadge } from '@/components/VersionBadge';
 import {
   getPeopleStats,
   getGroupsStats,
@@ -112,15 +113,13 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+      <VersionBadge />
       {/* Header */}
       <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <img src="/lobot-logo.svg" alt="AgentBot Igreja" className="w-12 h-12 rounded-lg shadow-sm" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-950 dark:text-white">AgentBot Igreja</h1>
-              <p className="text-xs text-gray-400 dark:text-gray-500">v1.001</p>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-950 dark:text-white">AgentBot Igreja</h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">{user.email}</span>

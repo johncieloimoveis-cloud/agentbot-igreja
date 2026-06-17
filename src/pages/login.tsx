@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
+import { VersionBadge } from '@/components/VersionBadge';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
 
 export default function Login() {
@@ -33,6 +34,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
+      <VersionBadge />
       <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -40,7 +42,6 @@ export default function Login() {
             <img src="/lobot-logo.svg" alt="AgentBot Igreja" className="w-24 h-24 rounded-lg shadow-md" />
           </div>
           <h1 className="text-3xl font-bold text-gray-950 dark:text-white mb-2">AgentBot Igreja</h1>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">v1.001</p>
           <p className="text-gray-600 dark:text-gray-400">Gestão Inteligente de Pessoas da Igreja</p>
           <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">Powered by Lobot</p>
         </div>

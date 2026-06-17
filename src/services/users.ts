@@ -63,7 +63,8 @@ export const deleteUser = async (userId: string) => {
     .single();
 
   if (fetchError) return { error: fetchError };
-  if (user?.roles?.name === 'Arcanjo') {
+  const roleName = Array.isArray(user?.roles) ? user?.roles[0]?.name : user?.roles?.name;
+  if (roleName === 'Arcanjo') {
     return { error: new Error('Não é possível deletar um Arcanjo') };
   }
 

@@ -112,7 +112,6 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           <option value="in_discipleship">Em Discipulado</option>
           <option value="absent">Afastado</option>
           <option value="transferred">Transferido</option>
-          <option value="leader">Liderança</option>
         </select>
         {statusError && <p className="text-red-500 text-sm mt-1">{statusError}</p>}
       </div>

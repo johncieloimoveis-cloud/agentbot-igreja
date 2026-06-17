@@ -66,12 +66,9 @@ export const getUpcomingBirthdays = async (churchId: string, days: number = 7) =
   const birthdays = (data || []).filter((person: any) => {
     if (!person.date_of_birth) return false;
 
-    const birthDate = new Date(person.date_of_birth);
-    const thisYearBirthday = new Date(
-      today.getFullYear(),
-      birthDate.getMonth(),
-      birthDate.getDate()
-    );
+    // Parse a data ISO manualmente para evitar problemas de timezone
+    const [year, month, day] = person.date_of_birth.split('T')[0].split('-').map(Number);
+    const thisYearBirthday = new Date(today.getFullYear(), month - 1, day);
 
     // Normalizar datas para comparação (remover hora)
     const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());

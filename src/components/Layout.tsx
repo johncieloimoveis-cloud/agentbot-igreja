@@ -87,6 +87,15 @@ export function Layout({ children }: LayoutProps) {
         { label: 'Nova Tarefa', href: '/tasks/new' },
       ],
     },
+    {
+      id: 'users',
+      label: '👥 Usuários',
+      icon: Users,
+      href: '/users',
+      submenu: [
+        { label: 'Gestão de Usuários', href: '/users' },
+      ],
+    },
   ];
 
   const isActive = (href: string) => router.pathname === href || router.pathname.startsWith(href + '/');

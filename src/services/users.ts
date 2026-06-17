@@ -1,92 +1,120 @@
 import { supabase } from './supabase';
 
-export interface User {
-  id: string;
-  email: string;
-  full_name?: string;
-  role: 'admin' | 'pastor' | 'secretary' | 'group_leader' | 'ministry_leader';
-  church_id: string;
-  created_at: string;
-  updated_at: string;
-  last_login?: string;
-}
-
-export async function getUsers(churchId: string) {
-  return supabase
+// Listar usuários da church
+export const getUsers = async (churchId: string) => {
+  const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select(`
+      id,
+      email,
+      full_name,
+      role_id,
+      roles:role_id(id, name, description),
+      is_active,
+      last_login,
+      created_at
+    `)
     .eq('church_id', churchId)
     .order('created_at', { ascending: false });
-}
 
-export async function getUser(id: string) {
-  return supabase
+  if (error) return { error };
+  return { data };
+};
+
+// Obter usuário por ID
+export const getUser = async (userId: string) => {
+  const { data, error } = await supabase
     .from('users')
-    .select('*')
-    .eq('id', id)
+    .select(`
+      id,
+      email,
+      full_name,
+      role_id,
+      roles:role_id(id, name),
+      is_active,
+      created_at
+    `)
+    .eq('id', userId)
     .single();
-}
 
-export async function createUser(data: {
-  email: string;
-  full_name?: string;
-  role: 'admin' | 'pastor' | 'secretary' | 'group_leader' | 'ministry_leader';
-  church_id: string;
-}) {
-  return supabase
+  if (error) return { error };
+  return { data };
+};
+
+// Atualizar usuário
+export const updateUser = async (userId: string, updates: any) => {
+  const { data, error } = await supabase
     .from('users')
-    .insert([{
-      ...data,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }])
-    .select()
-    .single();
-}
+    .update(updates)
+    .eq('id', userId)
+    .select();
 
-export async function updateUser(
-  id: string,
-  data: {
-    full_name?: string;
-    role?: 'admin' | 'pastor' | 'secretary' | 'group_leader' | 'ministry_leader';
+  if (error) return { error };
+  return { data };
+};
+
+// Deletar usuário (apenas se não for Arcanjo)
+export const deleteUser = async (userId: string) => {
+  // Verificar se é Arcanjo
+  const { data: user, error: fetchError } = await supabase
+    .from('users')
+    .select('role_id, roles:role_id(name)')
+    .eq('id', userId)
+    .single();
+
+  if (fetchError) return { error: fetchError };
+  if (user?.roles?.name === 'Arcanjo') {
+    return { error: new Error('Não é possível deletar um Arcanjo') };
   }
-) {
-  return supabase
-    .from('users')
-    .update({
-      ...data,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select()
-    .single();
-}
 
-export async function deleteUser(id: string) {
-  return supabase
+  const { error } = await supabase
     .from('users')
     .delete()
-    .eq('id', id);
-}
+    .eq('id', userId);
 
-export function getRoleLabel(role: string): string {
-  const labels: { [key: string]: string } = {
-    admin: 'Administrador',
-    pastor: 'Pastor',
-    secretary: 'Secretário',
-    group_leader: 'Líder de Grupo',
-    ministry_leader: 'Líder de Ministério',
-  };
-  return labels[role] || role;
-}
+  if (error) return { error };
+  return { data: { success: true } };
+};
 
-export function getRoleBadgeColor(role: string): string {
-  const colors: { [key: string]: string } = {
-    admin: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-    pastor: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
-    secretary: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-    group_leader: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-    ministry_leader: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300',
-  };
-  return colors[role] || 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300';
-}
+// Convidar novo usuário (via email)
+export const inviteUser = async (email: string, full_name: string, roleId: string, churchId: string) => {
+  try {
+    const response = await fetch('/api/invite-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, full_name, roleId, churchId }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) return { error: new Error(data.message) };
+    return { data };
+  } catch (error) {
+    return { error };
+  }
+};
+
+// Obter role do usuário
+export const getUserRole = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('roles:role_id(name)')
+    .eq('id', userId)
+    .single();
+
+  if (error) return { error };
+  return { data: data?.roles?.name };
+};
+
+// Verificar se usuário é Arcanjo
+export const isArcanjo = async (userId: string) => {
+  const { data, error } = await getUserRole(userId);
+  if (error) return false;
+  return data === 'Arcanjo';
+};
+
+// Verificar se usuário é Querubim
+export const isQuerubim = async (userId: string) => {
+  const { data, error } = await getUserRole(userId);
+  if (error) return false;
+  return data === 'Querubim' || data === 'Arcanjo';
+};

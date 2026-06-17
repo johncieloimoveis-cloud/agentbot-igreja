@@ -117,10 +117,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <img src="/lobot-logo.svg" alt="AgentBot Igreja" className="w-12 h-12 rounded-lg shadow-sm" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-950 dark:text-white">AgentBot Igreja</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">v1.001</p>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-950 dark:text-white">AgentBot Igreja</h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">{user.email}</span>

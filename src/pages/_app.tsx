@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { Layout } from '@/components/Layout';
+import { VersionBadge } from '@/components/VersionBadge';
 import '@/styles/globals.css';
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -24,6 +25,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <AuthProvider>
+      <VersionBadge />
       {shouldShowLayout ? (
         <Layout>
           <Component {...pageProps} />

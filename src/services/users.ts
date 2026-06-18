@@ -100,10 +100,11 @@ export const getUserRole = async (userId: string) => {
     .from('users')
     .select('roles:role_id(name)')
     .eq('id', userId)
-    .single();
+    .single() as any;
 
   if (error) return { error };
-  return { data: data?.roles?.name };
+  const roleName = Array.isArray(data?.roles) ? data?.roles[0]?.name : data?.roles?.name;
+  return { data: roleName };
 };
 
 // Verificar se usuário é Arcanjo

@@ -3,26 +3,22 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getAttendanceEvents } from '@/services/attendance';
 import { Plus, Calendar } from 'lucide-react';
-
 interface AttendanceEvent {
   id: string;
   event_type: string;
   event_date: string;
   description?: string;
 }
-
 export default function AttendanceList() {
   const router = useRouter();
   const { user } = useAuth();
   const [events, setEvents] = useState<AttendanceEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [eventType, setEventType] = useState('');
-
   useEffect(() => {
     if (!user) return;
     loadEvents();
   }, [user, eventType]);
-
   const loadEvents = async () => {
     setLoading(true);
     try {
@@ -39,7 +35,6 @@ export default function AttendanceList() {
       setLoading(false);
     }
   };
-
   const getEventTypeLabel = (type: string) => {
     const labels: { [key: string]: string } = {
       culto: '⛪ Culto',
@@ -51,7 +46,6 @@ export default function AttendanceList() {
     };
     return labels[type] || type;
   };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
       weekday: 'short',
@@ -60,9 +54,7 @@ export default function AttendanceList() {
       year: 'numeric',
     });
   };
-
   if (!user) return null;
-
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* Botão Voltar */}
@@ -72,7 +64,6 @@ export default function AttendanceList() {
       >
         ← Voltar
       </button>
-
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Frequência</h1>
@@ -84,7 +75,6 @@ export default function AttendanceList() {
           Novo Evento
         </button>
       </div>
-
       {/* Filtro */}
       <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow mb-6">
         <select
@@ -101,7 +91,6 @@ export default function AttendanceList() {
           <option value="outro">📋 Outro</option>
         </select>
       </div>
-
       {/* Lista de Eventos */}
       {loading ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">

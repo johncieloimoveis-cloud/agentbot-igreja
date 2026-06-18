@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { getPeople } from '@/services/people';
 import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { Plus, Search, Upload } from 'lucide-react';
-
 interface Person {
   id: string;
   full_name: string;
@@ -12,7 +11,6 @@ interface Person {
   status: string;
   oficial?: string;
 }
-
 export default function PeopleList() {
   const router = useRouter();
   const { user } = useAuth();
@@ -20,24 +18,20 @@ export default function PeopleList() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     if (!user) return;
     loadPeople();
   }, [user, search, status]);
-
   const loadPeople = async () => {
     setLoading(true);
     try {
       // TODO: Obter church_id do user ou context
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20'; // Substitua pelo ID real
-      
       const { data, error } = await getPeople(
         churchId,
         status || undefined,
         search || undefined
       );
-      
       if (error) throw error;
       setPeople(data || []);
     } catch (error) {
@@ -46,7 +40,6 @@ export default function PeopleList() {
       setLoading(false);
     }
   };
-
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
       visitor: 'bg-blue-100 text-blue-800',
@@ -59,7 +52,6 @@ export default function PeopleList() {
     };
     return colors[status] || 'bg-gray-100 dark:bg-slate-800 text-gray-800';
   };
-
   const getStatusLabel = (status: string) => {
     const labels: { [key: string]: string } = {
       visitor: 'Visitante',
@@ -72,11 +64,9 @@ export default function PeopleList() {
     };
     return labels[status] || status;
   };
-
   if (!user) {
     return <div>Carregando...</div>;
   }
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Botão Voltar */}
@@ -86,7 +76,6 @@ export default function PeopleList() {
       >
         ← Voltar
       </button>
-
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Pessoas</h1>
@@ -107,7 +96,6 @@ export default function PeopleList() {
           </button>
         </div>
       </div>
-
       {/* Filtros */}
       <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow mb-6 flex flex-col md:flex-row gap-4">
         <div className="flex-1">
@@ -136,7 +124,6 @@ export default function PeopleList() {
           <option value="absent">Afastado</option>
         </select>
       </div>
-
       {/* Tabela */}
       {loading ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">

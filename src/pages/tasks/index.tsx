@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { getTasks, completeTask, deleteTask } from '@/services/tasks';
 import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { Plus, CheckCircle, Circle, Trash2, AlertCircle } from 'lucide-react';
-
 interface Task {
   id: string;
   title: string;
@@ -14,19 +13,16 @@ interface Task {
   priority: string;
   due_date?: string;
 }
-
 export default function TasksList() {
   const router = useRouter();
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('pending');
-
   useEffect(() => {
     if (!user) return;
     loadTasks();
   }, [user, status]);
-
   const loadTasks = async () => {
     setLoading(true);
     try {
@@ -40,7 +36,6 @@ export default function TasksList() {
       setLoading(false);
     }
   };
-
   const handleCompleteTask = async (taskId: string) => {
     try {
       await completeTask(taskId);
@@ -49,7 +44,6 @@ export default function TasksList() {
       console.error('Erro:', error);
     }
   };
-
   const handleDeleteTask = async (taskId: string) => {
     if (!confirm('Deletar esta tarefa?')) return;
     try {
@@ -59,7 +53,6 @@ export default function TasksList() {
       console.error('Erro:', error);
     }
   };
-
   const getPriorityColor = (priority: string) => {
     const colors: { [key: string]: string } = {
       high: 'bg-red-100 text-red-800',
@@ -68,7 +61,6 @@ export default function TasksList() {
     };
     return colors[priority] || 'bg-gray-100 dark:bg-slate-800 text-gray-800';
   };
-
   const getPriorityLabel = (priority: string) => {
     const labels: { [key: string]: string } = {
       high: 'Alta',
@@ -77,19 +69,15 @@ export default function TasksList() {
     };
     return labels[priority] || priority;
   };
-
   const isOverdue = (dueDate: string) => {
     return new Date(dueDate) < new Date() && new Date(dueDate).toDateString() !== new Date().toDateString();
   };
-
   if (!user) return null;
-
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <button onClick={() => router.back()} className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white mb-6">
         ← Voltar
       </button>
-
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Tarefas</h1>
         <button
@@ -100,7 +88,6 @@ export default function TasksList() {
           Nova Tarefa
         </button>
       </div>
-
       {/* Filtro */}
       <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow mb-6">
         <select
@@ -114,7 +101,6 @@ export default function TasksList() {
           <option value="completed">Concluídas</option>
         </select>
       </div>
-
       {/* Lista de Tarefas */}
       {loading ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">

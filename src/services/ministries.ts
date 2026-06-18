@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-
 // Listar ministérios
 export const getMinistries = async (churchId: string) => {
   return supabase
@@ -8,7 +7,6 @@ export const getMinistries = async (churchId: string) => {
     .eq('church_id', churchId)
     .order('name');
 };
-
 // Buscar um ministério específico
 export const getMinistry = async (ministryId: string) => {
   return supabase
@@ -17,7 +15,6 @@ export const getMinistry = async (ministryId: string) => {
     .eq('id', ministryId)
     .single();
 };
-
 // Criar novo ministério
 export const createMinistry = async (churchId: string, data: any) => {
   return supabase
@@ -29,7 +26,6 @@ export const createMinistry = async (churchId: string, data: any) => {
     .select()
     .single();
 };
-
 // Atualizar ministério
 export const updateMinistry = async (ministryId: string, data: any) => {
   return supabase
@@ -39,7 +35,6 @@ export const updateMinistry = async (ministryId: string, data: any) => {
     .select()
     .single();
 };
-
 // Deletar ministério
 export const deleteMinistry = async (ministryId: string) => {
   return supabase
@@ -47,7 +42,6 @@ export const deleteMinistry = async (ministryId: string) => {
     .delete()
     .eq('id', ministryId);
 };
-
 // Listar membros de um ministério
 export const getMinistryMembers = async (ministryId: string) => {
   return supabase
@@ -56,7 +50,6 @@ export const getMinistryMembers = async (ministryId: string) => {
     .eq('department_id', ministryId)
     .order('created_at');
 };
-
 // Adicionar pessoa a um ministério
 export const addMinistryMember = async (ministryId: string, personId: string) => {
   return supabase
@@ -68,7 +61,6 @@ export const addMinistryMember = async (ministryId: string, personId: string) =>
     .select()
     .single();
 };
-
 // Remover pessoa de um ministério
 export const removeMinistryMember = async (membershipId: string) => {
   return supabase
@@ -76,7 +68,6 @@ export const removeMinistryMember = async (membershipId: string) => {
     .delete()
     .eq('id', membershipId);
 };
-
 // Obter ministérios de uma pessoa
 export const getPersonMinistries = async (personId: string) => {
   return supabase

@@ -2,23 +2,19 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
-
 export default function Login() {
   const router = useRouter();
   const { login, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     if (!email || !password) {
       setError('Email e senha são obrigatórios');
       return;
     }
-
     try {
       await login(email, password);
       router.push('/dashboard');
@@ -30,7 +26,6 @@ export default function Login() {
       );
     }
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-lg shadow-xl p-8">
@@ -43,7 +38,6 @@ export default function Login() {
           <p className="text-gray-600 dark:text-gray-400">Gestão Inteligente de Pessoas da Igreja</p>
           <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">Powered by Lobot</p>
         </div>
-
         {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg flex items-start gap-3">
@@ -51,7 +45,6 @@ export default function Login() {
             <p className="text-red-800 dark:text-red-300 text-sm">{error}</p>
           </div>
         )}
-
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email */}
@@ -72,7 +65,6 @@ export default function Login() {
               />
             </div>
           </div>
-
           {/* Password */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -91,7 +83,6 @@ export default function Login() {
               />
             </div>
           </div>
-
           {/* Submit Button */}
           <button
             type="submit"
@@ -101,7 +92,6 @@ export default function Login() {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-
         {/* Info */}
         <div className="mt-6 p-4 bg-primary-50 border border-primary-200 rounded-lg">
           <p className="text-sm text-primary-700 mb-2">

@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createUserForLeader } from '@/services/userSync';
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const result = await createUserForLeader(
@@ -8,7 +7,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'fcf1e3dc-3908-4b1f-b2c4-65abea9a8d91',
       '90e649c3-13ea-4fdc-a1c8-f352ef794b20'
     );
-
     res.status(200).json({ 
       result,
       error: result.error ? result.error.message : null

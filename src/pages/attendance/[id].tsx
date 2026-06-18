@@ -9,41 +9,34 @@ import {
 } from '@/services/attendance';
 import { getPeople } from '@/services/people';
 import { CheckCircle, Circle, Trash2, Plus, Search, X } from 'lucide-react';
-
 interface Person {
   id: string;
   full_name: string;
   phone?: string;
 }
-
 interface AttendanceRecord {
   id: string;
   person: Person;
   attended: boolean;
   recorded_at: string;
 }
-
 export default function AttendanceDetail() {
   const router = useRouter();
   const { user } = useAuth();
   const { id } = router.query;
-
   const [event, setEvent] = useState<any>(null);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [error, setError] = useState('');
-
   const [availablePeople, setAvailablePeople] = useState<Person[]>([]);
   const [searchPeople, setSearchPeople] = useState('');
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
-
   useEffect(() => {
     if (!id) return;
     loadEventData();
   }, [id]);
-
   const loadEventData = async () => {
     setLoading(true);
     try {
@@ -51,7 +44,6 @@ export default function AttendanceDetail() {
       const { data: eventData, error: eventError } = await getAttendanceEvent(id as string);
       if (eventError) throw eventError;
       setEvent(eventData);
-
       // Carregar presenças
       const { data: attendancesData, error: attendancesError } = await getEventAttendances(
         id as string
@@ -65,20 +57,17 @@ export default function AttendanceDetail() {
       setLoading(false);
     }
   };
-
   const loadAvailablePeople = async () => {
     setLoadingPeople(true);
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
       const { data, error } = await getPeople(churchId, undefined, searchPeople || undefined);
       if (error) throw error;
-
       // Filtrar pessoas que já estão registradas
       const attendedPersonIds = attendances.map((a) => a.person.id);
       const filteredPeople = (data || []).filter(
         (person: any) => !attendedPersonIds.includes(person.id)
       );
-
       setAvailablePeople(filteredPeople);
     } catch (error) {
       console.error('Erro:', error);
@@ -87,13 +76,11 @@ export default function AttendanceDetail() {
       setLoadingPeople(false);
     }
   };
-
   const handleAddAttendance = async (personId: string) => {
     setAddingMember(true);
     try {
       const { error: err } = await recordAttendance(id as string, personId, true);
       if (err) throw err;
-
       setSearchPeople('');
       setShowAddForm(false);
       loadEventData();
@@ -104,10 +91,8 @@ export default function AttendanceDetail() {
       setAddingMember(false);
     }
   };
-
   const handleRemoveAttendance = async (attendanceId: string) => {
     if (!confirm('Remover este registro de presença?')) return;
-
     try {
       const { error: err } = await removeAttendance(attendanceId);
       if (err) throw err;
@@ -117,12 +102,10 @@ export default function AttendanceDetail() {
       setError('Erro ao remover presença');
     }
   };
-
   const handleOpenAddForm = () => {
     setShowAddForm(true);
     loadAvailablePeople();
   };
-
   const getEventTypeLabel = (type: string) => {
     const labels: { [key: string]: string } = {
       culto: '⛪ Culto',
@@ -134,7 +117,6 @@ export default function AttendanceDetail() {
     };
     return labels[type] || type;
   };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
       weekday: 'long',
@@ -145,9 +127,7 @@ export default function AttendanceDetail() {
       minute: '2-digit',
     });
   };
-
   if (!user) return null;
-
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Botão Voltar */}
@@ -157,7 +137,6 @@ export default function AttendanceDetail() {
       >
         ← Voltar
       </button>
-
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-6 flex justify-between items-center">
           <p className="text-red-700">{error}</p>
@@ -166,7 +145,6 @@ export default function AttendanceDetail() {
           </button>
         </div>
       )}
-
       {loading ? (
         <p className="text-gray-500">Carregando...</p>
       ) : (
@@ -185,7 +163,6 @@ export default function AttendanceDetail() {
               </div>
             </div>
           )}
-
           {/* Seção de Presenças */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-6">
@@ -200,7 +177,6 @@ export default function AttendanceDetail() {
                 Adicionar Presença
               </button>
             </div>
-
             {/* Formulário de Adicionar */}
             {showAddForm && (
               <div className="bg-white border border-gray-300 rounded-lg p-6 mb-6 shadow-sm">
@@ -213,7 +189,6 @@ export default function AttendanceDetail() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Buscar Pessoa
@@ -247,7 +222,6 @@ export default function AttendanceDetail() {
                     />
                   </div>
                 </div>
-
                 {loadingPeople ? (
                   <div className="text-center py-4">
                     <p className="text-gray-500">Buscando pessoas...</p>
@@ -282,7 +256,6 @@ export default function AttendanceDetail() {
                 )}
               </div>
             )}
-
             {/* Lista de Presenças */}
             {attendances.length === 0 ? (
               <p className="text-gray-500 text-center py-8">Nenhuma presença registrada</p>

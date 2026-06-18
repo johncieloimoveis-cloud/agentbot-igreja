@@ -4,19 +4,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { getTask, updateTask, deleteTask } from '@/services/tasks';
 import { getPeople } from '@/services/people';
 import { AlertCircle, Edit2, Trash2, X } from 'lucide-react';
-
 export default function TaskDetail() {
   const router = useRouter();
   const { user } = useAuth();
   const { id } = router.query;
-
   const [task, setTask] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [people, setPeople] = useState<any[]>([]);
-
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -25,19 +22,16 @@ export default function TaskDetail() {
     due_date: '',
     status: 'pending',
   });
-
   useEffect(() => {
     if (!id) return;
     loadTaskData();
     loadPeople();
   }, [id]);
-
   const loadTaskData = async () => {
     setLoading(true);
     try {
       const { data, error: err } = await getTask(id as string);
       if (err) throw err;
-
       setTask(data);
       setFormData({
         title: data?.title || '',
@@ -54,7 +48,6 @@ export default function TaskDetail() {
       setLoading(false);
     }
   };
-
   const loadPeople = async () => {
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
@@ -65,23 +58,19 @@ export default function TaskDetail() {
       console.error('Erro:', error);
     }
   };
-
   const handleUpdateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     if (!formData.title.trim()) {
       setError('Título da tarefa é obrigatório');
       return;
     }
-
     setSaving(true);
     try {
       if (!user) {
         setError('Usuário não autenticado');
         return;
       }
-
       const { error: err } = await updateTask(id as string, {
         title: formData.title,
         description: formData.description || null,
@@ -92,7 +81,6 @@ export default function TaskDetail() {
         status: formData.status,
       });
       if (err) throw err;
-
       setIsEditing(false);
       loadTaskData();
     } catch (error) {
@@ -102,10 +90,8 @@ export default function TaskDetail() {
       setSaving(false);
     }
   };
-
   const handleDeleteTask = async () => {
     if (!confirm('Deletar esta tarefa?')) return;
-
     try {
       const { error: err } = await deleteTask(id as string);
       if (err) throw err;
@@ -115,7 +101,6 @@ export default function TaskDetail() {
       setError('Erro ao deletar tarefa');
     }
   };
-
   const getPriorityColor = (priority: string) => {
     const colors: { [key: string]: string } = {
       high: 'bg-red-100 text-red-800',
@@ -124,7 +109,6 @@ export default function TaskDetail() {
     };
     return colors[priority] || 'bg-gray-100 dark:bg-slate-800 text-gray-800';
   };
-
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
       pending: 'bg-blue-100 text-blue-800',
@@ -133,7 +117,6 @@ export default function TaskDetail() {
     };
     return colors[status] || 'bg-gray-100 dark:bg-slate-800 text-gray-800';
   };
-
   const getStatusLabel = (status: string) => {
     const labels: { [key: string]: string } = {
       pending: 'Pendente',
@@ -142,15 +125,12 @@ export default function TaskDetail() {
     };
     return labels[status] || status;
   };
-
   if (!user) return null;
-
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <button onClick={() => router.back()} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6">
         ← Voltar
       </button>
-
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-6 flex justify-between items-center">
           <p className="text-red-700">{error}</p>
@@ -159,7 +139,6 @@ export default function TaskDetail() {
           </button>
         </div>
       )}
-
       {loading ? (
         <p className="text-gray-500 dark:text-gray-400">Carregando...</p>
       ) : isEditing ? (
@@ -177,7 +156,6 @@ export default function TaskDetail() {
                 className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Descrição
@@ -189,7 +167,6 @@ export default function TaskDetail() {
                 rows={3}
               />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -208,7 +185,6 @@ export default function TaskDetail() {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Prioridade
@@ -224,7 +200,6 @@ export default function TaskDetail() {
                 </select>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -237,7 +212,6 @@ export default function TaskDetail() {
                   className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Status
@@ -253,7 +227,6 @@ export default function TaskDetail() {
                 </select>
               </div>
             </div>
-
             <div className="flex gap-3 pt-4">
               <button
                 type="submit"
@@ -298,7 +271,6 @@ export default function TaskDetail() {
               </button>
             </div>
           </div>
-
           <div className="space-y-4">
             {task?.person && (
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -306,7 +278,6 @@ export default function TaskDetail() {
                 <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">{task.person.full_name}</p>
               </div>
             )}
-
             <div className="grid grid-cols-3 gap-4">
               <div className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Status</p>
@@ -314,14 +285,12 @@ export default function TaskDetail() {
                   {getStatusLabel(task?.status)}
                 </span>
               </div>
-
               <div className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Prioridade</p>
                 <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(task?.priority)}`}>
                   {task?.priority === 'high' ? 'Alta' : task?.priority === 'low' ? 'Baixa' : 'Média'}
                 </span>
               </div>
-
               {task?.due_date && (
                 <div className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Vencimento</p>

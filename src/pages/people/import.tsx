@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { parseVCF, ParsedContact, normalizePhone } from '@/utils/vcfParser';
 import { supabase } from '@/services/supabase';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
-
 export default function ImportPeople() {
   const router = useRouter();
   const { user } = useAuth();
@@ -16,20 +15,16 @@ export default function ImportPeople() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [step, setStep] = useState<'upload' | 'preview' | 'done'>('upload');
-
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
-
     if (!selectedFile.name.endsWith('.vcf')) {
       setError('Por favor, selecione um arquivo .vcf');
       return;
     }
-
     setFile(selectedFile);
     setError('');
     setLoading(true);
-
     try {
       const content = await selectedFile.text();
       const parsed = parseVCF(content);
@@ -44,7 +39,6 @@ export default function ImportPeople() {
       setLoading(false);
     }
   };
-
   const toggleContact = (idx: number) => {
     const newSelected = new Set(selectedIds);
     if (newSelected.has(idx)) {
@@ -54,27 +48,21 @@ export default function ImportPeople() {
     }
     setSelectedIds(newSelected);
   };
-
   const selectAll = () => {
     setSelectedIds(new Set(Array.from({ length: contacts.length }, (_, i) => i)));
   };
-
   const clearAll = () => {
     setSelectedIds(new Set());
   };
-
   const handleImport = async () => {
     if (!selectedIds.size) {
       setError('Selecione pelo menos um contato para importar');
       return;
     }
-
     setImporting(true);
     setError('');
-
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-
       // Preparar dados para inserção (apenas os selecionados)
       const dataToInsert = contacts
         .map((contact, idx) => ({
@@ -87,25 +75,20 @@ export default function ImportPeople() {
           is_active: true,
         }))
         .filter((_, idx) => selectedIds.has(idx));
-
       // Inserir em lotes de 100
       const batchSize = 100;
       let inserted = 0;
-
       for (let i = 0; i < dataToInsert.length; i += batchSize) {
         const batch = dataToInsert.slice(i, i + batchSize);
         const { error: insertError } = await supabase
           .from('people')
           .insert(batch);
-
         if (insertError) {
           console.error('Erro ao inserir lote:', insertError);
           throw insertError;
         }
-
         inserted += batch.length;
       }
-
       setSuccess(`✅ ${inserted} contatos importados com sucesso!`);
       setTimeout(() => router.push('/people'), 2000);
       setStep('done');
@@ -117,9 +100,7 @@ export default function ImportPeople() {
       setImporting(false);
     }
   };
-
   if (!user) return null;
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-700 p-6">
       <div className="max-w-4xl mx-auto">
@@ -128,7 +109,6 @@ export default function ImportPeople() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Importar Contatos</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Importe contatos do WhatsApp via arquivo VCF</p>
         </div>
-
         {/* Step 1: Upload */}
         {step === 'upload' && (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-8">
@@ -140,7 +120,6 @@ export default function ImportPeople() {
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Exporte seus contatos do Android e faça upload do arquivo .vcf
               </p>
-
               <input
                 type="file"
                 accept=".vcf"
@@ -156,14 +135,12 @@ export default function ImportPeople() {
                 {loading ? 'Processando...' : 'Escolher arquivo'}
               </label>
             </div>
-
             {error && (
               <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <p className="text-red-700">{error}</p>
               </div>
             )}
-
             {file && (
               <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg">
                 <p className="text-blue-700">
@@ -173,7 +150,6 @@ export default function ImportPeople() {
             )}
           </div>
         )}
-
         {/* Step 2: Preview */}
         {step === 'preview' && (
           <div className="space-y-6">
@@ -201,7 +177,6 @@ export default function ImportPeople() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">Com email</p>
                 </div>
               </div>
-
               {/* Botões de seleção */}
               <div className="flex gap-2 mt-6">
                 <button
@@ -218,7 +193,6 @@ export default function ImportPeople() {
                 </button>
               </div>
             </div>
-
             {/* Tabela de preview */}
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
               <div className="overflow-x-auto max-h-96 overflow-y-auto">
@@ -272,7 +246,6 @@ export default function ImportPeople() {
                 </table>
               </div>
             </div>
-
             {/* Botões */}
             <div className="flex gap-4">
               <button
@@ -295,7 +268,6 @@ export default function ImportPeople() {
             </div>
           </div>
         )}
-
         {/* Step 3: Done */}
         {step === 'done' && (
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-8 text-center">
@@ -307,7 +279,6 @@ export default function ImportPeople() {
             </p>
           </div>
         )}
-
         {/* Botão Voltar */}
         {step !== 'done' && (
           <button

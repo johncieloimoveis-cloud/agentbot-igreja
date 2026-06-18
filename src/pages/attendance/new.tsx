@@ -3,13 +3,11 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { createAttendanceEvent } from '@/services/attendance';
 import { AlertCircle } from 'lucide-react';
-
 export default function NewAttendanceEvent() {
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const [formData, setFormData] = useState({
     name: '',
     event_type: 'culto',
@@ -17,53 +15,42 @@ export default function NewAttendanceEvent() {
     event_time: '19:00',
     description: '',
   });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     if (!formData.name.trim()) {
       setError('Nome do evento é obrigatório');
       return;
     }
-
     if (!formData.event_type) {
       setError('Tipo de evento é obrigatório');
       return;
     }
-
     if (!formData.event_date) {
       setError('Data do evento é obrigatória');
       return;
     }
-
     setLoading(true);
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-
       const eventDateTime = formData.event_time
         ? `${formData.event_date}T${formData.event_time}:00`
         : `${formData.event_date}T00:00:00`;
-
       console.log('Enviando evento:', {
         event_type: formData.event_type,
         event_date: eventDateTime,
         description: formData.description || null,
       });
-
       const { data, error: err } = await createAttendanceEvent(churchId, {
         name: formData.name,
         event_type: formData.event_type,
         event_date: eventDateTime,
       });
-
       console.log('Resposta:', { data, err });
-
       if (err) {
         console.error('Erro do Supabase:', err);
         throw err;
       }
-
       router.push('/attendance');
     } catch (err) {
       console.error('Erro completo:', err);
@@ -73,11 +60,9 @@ export default function NewAttendanceEvent() {
       setLoading(false);
     }
   };
-
   if (!user) {
     return <div className="p-6">Carregando...</div>;
   }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-700 p-6">
       <div className="max-w-2xl mx-auto">
@@ -87,19 +72,16 @@ export default function NewAttendanceEvent() {
         >
           ← Voltar
         </button>
-
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Novo Evento de Presença</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Crie um novo evento para registrar presenças</p>
         </div>
-
         {error && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-red-700">{error}</p>
           </div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
           {/* Nome do Evento */}
           <div>
@@ -114,7 +96,6 @@ export default function NewAttendanceEvent() {
               placeholder="Ex: Culto de Domingo, Estudo Bíblico..."
             />
           </div>
-
           {/* Tipo de Evento */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -133,7 +114,6 @@ export default function NewAttendanceEvent() {
               <option value="outro">📋 Outro</option>
             </select>
           </div>
-
           {/* Data */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -146,7 +126,6 @@ export default function NewAttendanceEvent() {
               className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
-
           {/* Hora */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -159,7 +138,6 @@ export default function NewAttendanceEvent() {
               className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
-
           {/* Botões */}
           <div className="flex gap-3 pt-4">
             <button

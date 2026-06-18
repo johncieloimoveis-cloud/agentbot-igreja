@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-
 export interface Person {
   id: string;
   church_id: string;
@@ -16,7 +15,6 @@ export interface Person {
   created_at: string;
   updated_at: string;
 }
-
 // Listar pessoas
 export const getPeople = async (
   churchId: string,
@@ -29,13 +27,10 @@ export const getPeople = async (
     .eq('church_id', churchId)
     .eq('is_active', true)
     .order('full_name', { ascending: true });
-
   if (status) query = query.eq('status', status);
   if (search) query = query.ilike('full_name', `%${search}%`);
-
   return query;
 };
-
 // Criar pessoa
 export const createPerson = async (
   churchId: string,
@@ -50,7 +45,6 @@ export const createPerson = async (
     .select()
     .single();
 };
-
 // Atualizar pessoa
 export const updatePerson = async (id: string, data: Partial<Person>) => {
   return supabase
@@ -60,7 +54,6 @@ export const updatePerson = async (id: string, data: Partial<Person>) => {
     .select()
     .single();
 };
-
 // Deletar pessoa (soft delete)
 export const deletePerson = async (id: string) => {
   return supabase
@@ -68,7 +61,6 @@ export const deletePerson = async (id: string) => {
     .update({ is_active: false })
     .eq('id', id);
 };
-
 // Buscar uma pessoa
 export const getPerson = async (id: string) => {
   return supabase

@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-
 // Listar tarefas
 export const getTasks = async (churchId: string, status?: string) => {
   let query = supabase
@@ -7,12 +6,9 @@ export const getTasks = async (churchId: string, status?: string) => {
     .select('*, person:people(id, full_name)')
     .eq('church_id', churchId)
     .order('due_date', { ascending: true });
-
   if (status) query = query.eq('status', status);
-
   return query;
 };
-
 // Buscar uma tarefa específica
 export const getTask = async (taskId: string) => {
   return supabase
@@ -21,7 +17,6 @@ export const getTask = async (taskId: string) => {
     .eq('id', taskId)
     .single();
 };
-
 // Criar nova tarefa
 export const createTask = async (churchId: string, data: any) => {
   return supabase
@@ -34,7 +29,6 @@ export const createTask = async (churchId: string, data: any) => {
     .select()
     .single();
 };
-
 // Atualizar tarefa
 export const updateTask = async (taskId: string, data: any) => {
   return supabase
@@ -44,7 +38,6 @@ export const updateTask = async (taskId: string, data: any) => {
     .select()
     .single();
 };
-
 // Deletar tarefa
 export const deleteTask = async (taskId: string) => {
   return supabase
@@ -52,7 +45,6 @@ export const deleteTask = async (taskId: string) => {
     .delete()
     .eq('id', taskId);
 };
-
 // Marcar tarefa como concluída
 export const completeTask = async (taskId: string) => {
   return supabase
@@ -62,7 +54,6 @@ export const completeTask = async (taskId: string) => {
     .select()
     .single();
 };
-
 // Obter tarefas de uma pessoa
 export const getPersonTasks = async (personId: string) => {
   return supabase

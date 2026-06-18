@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getUsers, deleteUser, isArcanjo } from '@/services/users';
-import { Plus, Trash2, AlertCircle, Edit } from 'lucide-react';
+import { Plus, Trash2, AlertCircle } from 'lucide-react';
 
 interface User {
   id: string;
@@ -75,12 +75,18 @@ export default function UsersManagement() {
 
   const getRoleColor = (roleName: string) => {
     const colors: { [key: string]: string } = {
-      Arcanjo: 'bg-purple-100 text-purple-800',
-      Querubim: 'bg-blue-100 text-blue-800',
-      Serafim: 'bg-pink-100 text-pink-800',
-      Anjinho: 'bg-green-100 text-green-800',
+      Arcanjo: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+      Querubim: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+      Serafim: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+      Anjinho: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
     };
-    return colors[roleName] || 'bg-gray-100 text-gray-800';
+    return colors[roleName] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+  };
+
+  const getRoleName = (user: User) => {
+    if (user.roles?.name) return user.roles.name;
+    if (Array.isArray(user.roles) && user.roles[0]?.name) return user.roles[0].name;
+    return 'N/A';
   };
 
   if (loading) {
@@ -139,8 +145,8 @@ export default function UsersManagement() {
                     <td className="px-6 py-4 text-gray-950 dark:text-white font-medium">{u.full_name || '-'}</td>
                     <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{u.email}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(u.roles?.name || '')}`}>
-                        {u.roles?.name || 'N/A'}
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(getRoleName(u))}`}>
+                        {getRoleName(u)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
@@ -153,9 +159,26 @@ export default function UsersManagement() {
                           className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
                           title="Editar usuário"
                         >
-                          <Edit className="w-4 h-4" />
+                          ✏️
                         </button>
-                        {u.roles?.name !== 'Arcanjo' && (
+                        {getRoleName(u) !== 'Arcanjo' && (
                           <button
-                            onClick={() => handleDelete(u.id, u.roles?.name || '')}
-                            className="text-red-600 hover:text-red-700 
+                            onClick={() => handleDelete(u.id, getRoleName(u))}
+                            className="text-red-600 hover:text-red-700 font-medium transition-colors"
+                            title="Deletar usuário"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

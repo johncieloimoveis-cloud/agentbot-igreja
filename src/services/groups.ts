@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-
 export const getGroups = async (churchId: string) => {
   return supabase
     .from('groups')
@@ -19,7 +18,6 @@ export const createGroup = async (churchId: string, data: any) => {
     .select()
     .single();
 };
-
 export const getGroupMembers = async (groupId: string) => {
   return supabase
     .from('group_members')
@@ -27,7 +25,6 @@ export const getGroupMembers = async (groupId: string) => {
     .eq('group_id', groupId)
     .order('created_at');
 };
-
 export const addGroupMember = async (groupId: string, personId: string) => {
   return supabase
     .from('group_members')
@@ -35,14 +32,12 @@ export const addGroupMember = async (groupId: string, personId: string) => {
     .select()
     .single();
 };
-
 export const removeGroupMember = async (membershipId: string) => {
   return supabase
     .from('group_members')
     .delete()
     .eq('id', membershipId);
 };
-
 export const getGroup = async (groupId: string) => {
   return supabase
     .from('groups')
@@ -50,7 +45,6 @@ export const getGroup = async (groupId: string) => {
     .eq('id', groupId)
     .single();
 };
-
 export const updateGroup = async (groupId: string, data: any) => {
   return supabase
     .from('groups')
@@ -59,14 +53,12 @@ export const updateGroup = async (groupId: string, data: any) => {
     .select()
     .single();
 };
-
 export const deleteGroup = async (groupId: string) => {
   return supabase
     .from('groups')
     .update({ status: 'inactive' })
     .eq('id', groupId);
 };
-
 export const addGroupMeeting = async (groupId: string, meeting: any) => {
   return supabase
     .from('group_meetings')
@@ -74,7 +66,6 @@ export const addGroupMeeting = async (groupId: string, meeting: any) => {
     .select()
     .single();
 };
-
 export const getGroupMeetings = async (groupId: string) => {
   return supabase
     .from('group_meetings')
@@ -82,7 +73,6 @@ export const getGroupMeetings = async (groupId: string) => {
     .eq('group_id', groupId)
     .order('day_of_week');
 };
-
 export const deleteGroupMeeting = async (meetingId: string) => {
   return supabase
     .from('group_meetings')

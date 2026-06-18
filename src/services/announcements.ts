@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-
 export interface Announcement {
   id: string;
   church_id: string;
@@ -12,7 +11,6 @@ export interface Announcement {
   expires_at?: string;
   creator?: { full_name: string; email: string };
 }
-
 export async function getAnnouncements(churchId: string) {
   return supabase
     .from('announcements')
@@ -20,7 +18,6 @@ export async function getAnnouncements(churchId: string) {
     .eq('church_id', churchId)
     .order('created_at', { ascending: false });
 }
-
 export async function getAnnouncement(id: string) {
   return supabase
     .from('announcements')
@@ -28,7 +25,6 @@ export async function getAnnouncement(id: string) {
     .eq('id', id)
     .single();
 }
-
 export async function createAnnouncement(data: {
   church_id: string;
   title: string;
@@ -43,7 +39,6 @@ export async function createAnnouncement(data: {
     .select()
     .single();
 }
-
 export async function updateAnnouncement(
   id: string,
   data: {
@@ -63,7 +58,6 @@ export async function updateAnnouncement(
     .select()
     .single();
 }
-
 export async function deleteAnnouncement(id: string) {
   return supabase
     .from('announcements')

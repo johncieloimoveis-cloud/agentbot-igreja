@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
 import { getPerson, updatePerson, deletePerson } from '@/services/people';
 import { AlertCircle, Trash2 } from 'lucide-react';
-
 interface Person {
   id: string;
   full_name: string;
@@ -18,24 +17,20 @@ interface Person {
   notes?: string;
   oficial?: string;
 }
-
 export default function PersonDetail() {
   const router = useRouter();
   const { user } = useAuth();
   const { id } = router.query;
-
   const [person, setPerson] = useState<Person | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   useEffect(() => {
     if (!id) return;
     loadPerson();
   }, [id]);
-
   const loadPerson = async () => {
     try {
       setLoading(true);
@@ -49,14 +44,11 @@ export default function PersonDetail() {
       setLoading(false);
     }
   };
-
   const handleSubmit = async (data: PersonFormData) => {
     if (!person) return;
-
     setSaving(true);
     setError('');
     setSuccess('');
-
     try {
       // Limpar campos vazios
       const cleanData = {
@@ -71,10 +63,8 @@ export default function PersonDetail() {
         notes: data.notes || undefined,
         oficial: data.oficial || 'NÃO',
       };
-
       const { error: err } = await updatePerson(person.id, cleanData);
       if (err) throw err;
-
       setSuccess('Pessoa atualizada com sucesso!');
       setTimeout(() => router.push('/people'), 1500);
     } catch (err) {
@@ -84,17 +74,13 @@ export default function PersonDetail() {
       setSaving(false);
     }
   };
-
   const handleDelete = async () => {
     if (!person) return;
-
     setSaving(true);
     setError('');
-
     try {
       const { error: err } = await deletePerson(person.id);
       if (err) throw err;
-
       setSuccess('Pessoa deletada com sucesso!');
       setTimeout(() => router.push('/people'), 1500);
     } catch (err) {
@@ -104,11 +90,9 @@ export default function PersonDetail() {
       setSaving(false);
     }
   };
-
   if (!user) {
     return <div className="p-6">Carregando...</div>;
   }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-700 p-6 flex items-center justify-center">
@@ -119,7 +103,6 @@ export default function PersonDetail() {
       </div>
     );
   }
-
   if (!person) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-700 p-6 flex items-center justify-center">
@@ -135,7 +118,6 @@ export default function PersonDetail() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-700 p-6">
       <div className="max-w-2xl mx-auto">
@@ -143,26 +125,22 @@ export default function PersonDetail() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">{person.full_name}</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Editar informações da pessoa</p>
         </div>
-
         {error && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-red-700">{error}</p>
           </div>
         )}
-
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-green-700">{success}</p>
           </div>
         )}
-
         <PersonForm
           initialData={person}
           onSubmit={handleSubmit}
           loading={saving}
         />
-
         <div className="mt-6 flex gap-4">
           <button
             onClick={() => router.back()}
@@ -170,7 +148,6 @@ export default function PersonDetail() {
           >
             ← Voltar
           </button>
-
           <button
             onClick={() => setShowDeleteConfirm(true)}
             disabled={saving}
@@ -180,7 +157,6 @@ export default function PersonDetail() {
             Deletar
           </button>
         </div>
-
         {/* Modal de Confirmação de Deleção */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">

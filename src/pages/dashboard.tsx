@@ -10,12 +10,10 @@ import {
   getAverageAttendance,
 } from '@/services/dashboard';
 import { LogOut, Users, Users2, UserCheck, Calendar, TrendingUp, Cake, Heart } from 'lucide-react';
-
 export default function Dashboard() {
   const router = useRouter();
   const { user, logout, loading } = useAuth();
   const [dashLoading, setDashLoading] = useState(false);
-
   const [stats, setStats] = useState<{
     people: any;
     groups: any;
@@ -31,24 +29,20 @@ export default function Dashboard() {
     recentVisitors: [],
     attendance: { total_events: 0, average: 0 },
   });
-
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
-
   useEffect(() => {
     if (user) {
       loadDashboardData();
     }
   }, [user]);
-
   const loadDashboardData = async () => {
     setDashLoading(true);
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-
       const [peopleRes, groupsRes, ministriesRes, birthdaysRes, visitorsRes, attendanceRes] =
         await Promise.all([
           getPeopleStats(churchId),
@@ -58,7 +52,6 @@ export default function Dashboard() {
           getRecentVisitors(churchId, 30),
           getAverageAttendance(churchId),
         ]);
-
       setStats({
         people: peopleRes.data || stats.people,
         groups: groupsRes.data || stats.groups,
@@ -73,7 +66,6 @@ export default function Dashboard() {
       setDashLoading(false);
     }
   };
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -82,7 +74,6 @@ export default function Dashboard() {
       console.error('Erro ao fazer logout:', error);
     }
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-slate-900">
@@ -93,11 +84,9 @@ export default function Dashboard() {
       </div>
     );
   }
-
   if (!user) {
     return null;
   }
-
   const StatCard = ({ icon: Icon, label, value, color }: any) => (
     <div className={`bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-l-4 ${color}`}>
       <div className="flex items-center justify-between">
@@ -109,7 +98,6 @@ export default function Dashboard() {
       </div>
     </div>
   );
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
       {/* Header */}
@@ -131,7 +119,6 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome */}
@@ -139,7 +126,6 @@ export default function Dashboard() {
           <h2 className="text-3xl font-bold text-gray-950 dark:text-white mb-2">Dashboard 📊</h2>
           <p className="text-gray-600 dark:text-gray-400">Visão geral da sua igreja</p>
         </div>
-
         {dashLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
@@ -174,7 +160,6 @@ export default function Dashboard() {
                 color="border-purple-500"
               />
             </div>
-
             {/* Segunda linha */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <StatCard
@@ -196,7 +181,6 @@ export default function Dashboard() {
                 color="border-orange-500"
               />
             </div>
-
             {/* Informações Adicionais */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               {/* Aniversariantes */}
@@ -223,7 +207,6 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
-
               {/* Visitantes Recentes */}
               <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                 <div className="flex items-center gap-2 mb-4">
@@ -251,7 +234,6 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
-
             {/* Resumo */}
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
               <h3 className="text-lg font-bold text-gray-950 dark:text-white mb-6">Resumo da Igreja</h3>

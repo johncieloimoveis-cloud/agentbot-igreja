@@ -12,13 +12,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { data: allGroups, error } = await supabase
       .from('groups')
-      .select('leader_id, id, parent_group_id')
-      .eq('church_id', churchId);
+      .select('leader_id, id, parent_group_id, church_id');
 
     if (error) throw error;
 
-    // Filtrar apenas grupos com líder
-    const leaders = allGroups?.filter(g => g.leader_id) || [];
+    // Filtrar: apenas church correto E com líder
+    const leaders = (allGroups || []).filter(g =>
+      g.church_id === churchId && g.leader_id
+    );
 
     if (!leaders || leaders.length === 0) {
       return res.status(200).json({ message: 'Nenhum lider encontrado', results: [] });

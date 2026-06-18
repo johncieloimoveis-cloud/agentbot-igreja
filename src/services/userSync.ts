@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { randomUUID } from 'crypto';
 
 export const determineUserRole = async (groupId: string): Promise<string> => {
   try {
@@ -49,15 +48,12 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
       .from('users')
       .insert([
         {
-          id: randomUUID(),
           email,
           full_name: person.full_name,
           church_id: churchId,
           role_id: roleId,
           people_id: personId,
           is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
         },
       ])
       .select()

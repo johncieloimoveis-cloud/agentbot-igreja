@@ -49,9 +49,9 @@ const createUserForLeader = async (
     }
 
     // 2. Buscar e deletar de auth.users (pai da FK)
-    const { data: existingAuth, error: listError } = await adminClient.auth.admin.listUsers();
-    if (!listError && existingAuth) {
-      const existingUser = existingAuth.users.find(u => u.email === email);
+    const { data, error: listError } = await adminClient.auth.admin.listUsers();
+    if (!listError && data?.users) {
+      const existingUser = data.users.find((u: any) => u.email === email);
       if (existingUser) {
         const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(
           existingUser.id

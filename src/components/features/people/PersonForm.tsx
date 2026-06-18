@@ -30,7 +30,6 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
   });
 
   // Watch para validação dinâmica
-  const ehLider = useWatch({ control, name: 'eh_lider' });
   const oficial = useWatch({ control, name: 'oficial' });
 
   // Type guards for error messages

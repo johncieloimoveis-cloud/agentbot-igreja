@@ -56,11 +56,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         const result = await createUserForLeader(leader.leader_id, leader.id, churchId);
         const hasError = result.error !== undefined && result.error !== null;
+        const errorMessage = hasError ? (result.error instanceof Error ? result.error.message : String(result.error)) : null;
         results.push({
           leader_id: leader.leader_id,
           success: !hasError,
-          message: result.message || (hasError ? 'Erro' : 'OK'),
-          error: hasError ? (result.error instanceof Error ? result.error.message : String(result.error)) : null
+          message: result.message || (hasError ? errorMessage : 'OK'),
+          error: errorMessage
         });
       } catch (err) {
         results.push({

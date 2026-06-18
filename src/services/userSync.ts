@@ -43,7 +43,10 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
         .update({ role_id: roleId })
         .eq('people_id', personId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Erro ao atualizar usuário:', updateError);
+        return { error: new Error(`Update failed: ${updateError.message}`), message: 'Erro ao atualizar' };
+      }
       return { data: existingUser, error: null, message: 'Usuário atualizado' };
     }
 

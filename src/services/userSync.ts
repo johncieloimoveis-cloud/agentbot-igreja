@@ -37,17 +37,16 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
       .single();
 
     if (existingUser) {
-      // Atualizar role do usuário existente usando o ID do usuário
-      const { error: updateError } = await supabase
+      // Deletar usuário existente e recriar com a role correta
+      const { error: deleteError } = await supabase
         .from('users')
-        .update({ role_id: roleId })
+        .delete()
         .eq('id', existingUser.id);
 
-      if (updateError) {
-        console.error('Erro ao atualizar usuário:', { userId: existingUser.id, error: updateError });
-        return { error: new Error(`Update failed: ${updateError.message}`), message: 'Erro ao atualizar' };
+      if (deleteError) {
+        console.error('Erro ao deletar usuário:', deleteError);
+        return { error: new Error(`Delete failed: ${deleteError.message}`), message: 'Erro ao deletar' };
       }
-      return { data: existingUser, error: null, message: 'Usuário atualizado' };
     }
 
     // Criar novo usuário

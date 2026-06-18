@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('groups')
       .select('leader_id, id, parent_group_id')
       .eq('church_id', churchId)
-      .not('leader_id', 'is', null);
+      .neq('leader_id', null);
 
     if (error) throw error;
 

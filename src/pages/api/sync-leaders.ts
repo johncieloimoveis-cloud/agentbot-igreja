@@ -14,9 +14,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('groups')
       .select('leader_id, id, parent_group_id')
       .eq('church_id', churchId)
-      .neq('leader_id', null);
+      .gt('leader_id', '');
 
-    if (error) throw error;
+    console.log('Leaders query:', { data: leaders, error });
+
+    if (error) {
+      console.error('Error:', error);
+      throw error;
+    }
 
     if (!leaders || leaders.length === 0) {
       return res.status(200).json({ message: 'Nenhum lider encontrado', results: [] });

@@ -318,7 +318,7 @@ export default function GroupDetail() {
                   <button
                     type="button"
                     onClick={() => setIsEditing(false)}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 dark:text-gray-300 font-semibold py-2 rounded-lg"
+                    className="flex-1 bg-gray-300 dark:bg-slate-600 hover:bg-gray-400 dark:hover:bg-slate-500 text-gray-900 dark:text-white font-semibold py-2 rounded-lg"
                   >
                     Cancelar
                   </button>

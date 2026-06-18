@@ -26,15 +26,28 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
       .eq('id', personId)
       .single();
     if (personError) throw personError;
+
+    const roleId = await determineUserRole(groupId);
+
+    // Verificar se usuário já existe
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
       .eq('people_id', personId)
       .single();
+
     if (existingUser) {
-      return { data: existingUser, message: 'Usuário já existe' };
+      // Atualizar role do usuário existente
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ role_id: roleId })
+        .eq('people_id', personId);
+
+      if (updateError) throw updateError;
+      return { data: existingUser, message: 'Usuário atualizado' };
     }
-    const roleId = await determineUserRole(groupId);
+
+    // Criar novo usuário
     const email = person.email || `usuario.${personId.substring(0, 8)}@sheepcare.local`;
     const { data: newUser, error: createError } = await supabase
       .from('users')

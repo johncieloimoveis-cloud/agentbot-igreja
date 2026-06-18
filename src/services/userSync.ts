@@ -37,14 +37,14 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
       .single();
 
     if (existingUser) {
-      // Atualizar role do usuário existente
+      // Atualizar role do usuário existente usando o ID do usuário
       const { error: updateError } = await supabase
         .from('users')
         .update({ role_id: roleId })
-        .eq('people_id', personId);
+        .eq('id', existingUser.id);
 
       if (updateError) {
-        console.error('Erro ao atualizar usuário:', updateError);
+        console.error('Erro ao atualizar usuário:', { userId: existingUser.id, error: updateError });
         return { error: new Error(`Update failed: ${updateError.message}`), message: 'Erro ao atualizar' };
       }
       return { data: existingUser, error: null, message: 'Usuário atualizado' };

@@ -55,11 +55,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     for (const leader of uniqueLeaders) {
       try {
         const result = await createUserForLeader(leader.leader_id, leader.id, churchId);
+        const hasError = result.error !== undefined && result.error !== null;
         results.push({
           leader_id: leader.leader_id,
-          success: !result.error,
-          message: result.message || 'OK',
-          error: result.error ? result.error.message : null
+          success: !hasError,
+          message: result.message || (hasError ? 'Erro' : 'OK'),
+          error: hasError ? (result.error instanceof Error ? result.error.message : String(result.error)) : null
         });
       } catch (err) {
         results.push({

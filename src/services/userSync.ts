@@ -1,4 +1,13 @@
 import { supabase } from './supabase';
+import { createClient } from '@supabase/supabase-js';
+
+const getAdminClient = () => {
+  return createClient(
+    'https://hdfywkehiqxqjnructyy.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZnl3a2VoaXF4cWpucnVjdHl5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDQwNDI4NSwiZXhwIjoyMDk1OTgwMjg1fQ.o9JjD6j416BHhpebmNzMqPq4aHnCL0j_6z65K_egKsg'
+  );
+};
+
 export const determineUserRole = async (groupId: string): Promise<string> => {
   try {
     const { data: group, error } = await supabase
@@ -38,7 +47,8 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
 
     if (existingUser) {
       // Deletar usuário existente e recriar com a role correta
-      const { error: deleteError } = await supabase
+      const adminClient = getAdminClient();
+      const { error: deleteError } = await adminClient
         .from('users')
         .delete()
         .eq('id', existingUser.id);
@@ -50,8 +60,9 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
     }
 
     // Criar novo usuário
+    const adminClient = getAdminClient();
     const email = person.email || `usuario.${personId.substring(0, 8)}@sheepcare.local`;
-    const { data: newUser, error: createError } = await supabase
+    const { data: newUser, error: createError } = await adminClient
       .from('users')
       .insert([
         {

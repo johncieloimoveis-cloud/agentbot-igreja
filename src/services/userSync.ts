@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { v4 as uuidv4 } from 'uuid';
 
 export const determineUserRole = async (groupId: string): Promise<string> => {
   try {
@@ -48,6 +49,7 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
       .from('users')
       .insert([
         {
+          id: uuidv4(),
           email,
           full_name: person.full_name,
           church_id: churchId,

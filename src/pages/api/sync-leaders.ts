@@ -21,7 +21,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('groups')
       .select('*');
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
 
     // DEBUG
     const debug = {

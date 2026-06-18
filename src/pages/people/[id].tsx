@@ -16,8 +16,6 @@ interface Person {
   address?: string;
   city?: string;
   notes?: string;
-  membresia?: boolean;
-  eh_lider?: boolean;
   oficial?: string;
 }
 
@@ -71,7 +69,6 @@ export default function PersonDetail() {
         address: data.address || undefined,
         city: data.city || undefined,
         notes: data.notes || undefined,
-        eh_lider: data.eh_lider || false,
         oficial: data.oficial || 'NÃO',
       };
 

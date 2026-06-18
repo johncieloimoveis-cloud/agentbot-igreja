@@ -10,7 +10,6 @@ interface Person {
   full_name: string;
   phone?: string;
   status: string;
-  eh_lider?: boolean;
   oficial?: string;
 }
 
@@ -163,7 +162,6 @@ export default function PeopleList() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Nome</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Telefone</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Status</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Líder</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Posição Oficial</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-950 dark:text-white">Ações</th>
                 </tr>
@@ -177,9 +175,6 @@ export default function PeopleList() {
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(person.status)}`}>
                         {getStatusLabel(person.status)}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                      {person.eh_lider ? '👤 Sim' : '-'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                       {person.oficial && person.oficial !== 'NÃO' ? person.oficial : '-'}

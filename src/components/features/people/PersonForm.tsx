@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 const personSchema = z.object({
   full_name: z.string().min(3, 'Nome obrigatório'),
   status: z.string().min(1, 'Status obrigatório'),
-  eh_lider: z.boolean().optional(),
   oficial: z.string().optional(),
   phone: z.any().optional(),
   whatsapp: z.any().optional(),
@@ -119,34 +118,6 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
       {/* Classificações */}
       <div className="border-t border-gray-200 dark:border-slate-700 pt-6">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Classificações</h3>
-
-        {/* Líder */}
-        <div className="mb-4">
-          <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg border-2 border-gray-200 dark:border-slate-600 cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
-            <div className="relative w-6 h-6">
-              <input
-                {...register('eh_lider')}
-                type="checkbox"
-                className="w-6 h-6 cursor-pointer appearance-none rounded border-2 border-gray-400 dark:border-gray-500 bg-white dark:bg-slate-600 checked:bg-blue-600 dark:checked:bg-blue-600 checked:border-blue-600 dark:checked:border-blue-600"
-              />
-              <svg
-                className="absolute top-0.5 left-0.5 w-5 h-5 text-white pointer-events-none hidden"
-                style={{display: 'none'}}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">
-              É líder de grupo
-            </span>
-          </label>
-        </div>
 
         {/* Oficial */}
         <div>

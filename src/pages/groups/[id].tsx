@@ -486,32 +486,4 @@ export default function GroupDetail() {
 
             {members.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400">Nenhum membro neste grupo</p>
-            ) : (
-              <div className="space-y-2">
-                {members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="bg-gray-50 dark:bg-slate-700 p-4 rounded-lg flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-700 dark:bg-slate-800 transition"
-                  >
-                    <div>
-                      <h3 className="font-bold">{member.person.full_name}</h3>
-                      {member.person.phone && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{member.person.phone}</p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleRemoveMember(member.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded"
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
+            ) : (

@@ -115,8 +115,4 @@ export const isArcanjo = async (userId: string) => {
 };
 
 // Verificar se usuário é Querubim
-export const isQuerubim = async (userId: string) => {
-  const { data, error } = await getUserRole(userId);
-  if (error) return false;
-  return data === 'Querubim' || data === 'Arcanjo';
-};
+export const 

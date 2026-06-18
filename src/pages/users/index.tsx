@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getUsers, deleteUser, isArcanjo } from '@/services/users';
-import { Plus, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, Edit } from 'lucide-react';
 
 interface User {
   id: string;
@@ -148,23 +148,14 @@ export default function UsersManagement() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => router.push(`/users/${u.id}`)}
+                          className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
+                          title="Editar usuário"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
                         {u.roles?.name !== 'Arcanjo' && (
                           <button
                             onClick={() => handleDelete(u.id, u.roles?.name || '')}
-                            className="text-red-600 hover:text-red-700 font-medium transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                            className="text-red-600 hover:text-red-700 

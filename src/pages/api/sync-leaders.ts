@@ -53,34 +53,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const results: any[] = [];
 
     for (const leader of uniqueLeaders) {
-      try {
-        const result = await createUserForLeader(leader.leader_id, leader.id, churchId);
-        results.push({
-          leader_id: leader.leader_id,
-          success: !result.error,
-          message: result.message || 'OK',
-          error: result.error ? result.error.message : null
-        });
-      } catch (err) {
-        results.push({
-          leader_id: leader.leader_id,
-          success: false,
-          error: err instanceof Error ? err.message : 'Erro'
-        });
-      }
-    }
-
-    const created = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
-
-    res.status(200).json({ 
-      message: 'Sincronizacao concluida',
-      created,
-      failed,
-      total: uniqueLeaders.length,
-      results
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao sincronizar' });
-  }
-}

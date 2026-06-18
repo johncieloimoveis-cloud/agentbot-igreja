@@ -84,8 +84,14 @@ export default function UsersManagement() {
   };
 
   const getRoleName = (user: User) => {
-    if (user.roles?.name) return user.roles.name;
-    if (Array.isArray(user.roles) && user.roles[0]?.name) return user.roles[0].name;
+    // Se roles é um objeto com name
+    if (user.roles && typeof user.roles === 'object' && 'name' in user.roles && !Array.isArray(user.roles)) {
+      return user.roles.name;
+    }
+    // Se roles é um array
+    if (Array.isArray(user.roles) && user.roles.length > 0 && user.roles[0]?.name) {
+      return user.roles[0].name;
+    }
     return 'N/A';
   };
 

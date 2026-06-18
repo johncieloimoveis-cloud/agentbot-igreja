@@ -7,13 +7,15 @@ export const determineUserRole = async (groupId: string): Promise<string> => {
       .eq('id', groupId)
       .single();
     if (error) throw error;
+    // Querubim: líder de grupo raiz (sem parent_group_id)
     if (!group?.parent_group_id) {
-      return 'a6a04902-be4c-4e07-afcc-531ea893772e';
+      return '2a79ee87-5cf5-4e4d-91fa-8ca1e074d6cd'; // Querubim
     }
-    return '2a79ee87-5cf5-4e4d-91fa-8ca1e074d6cd';
+    // Serafim: líder de subgrupo (com parent_group_id)
+    return '3b80ff98-6dg6-5f5e-a2gb-9db185e7f8de'; // Serafim
   } catch (err) {
     console.error('Erro ao determinar role:', err);
-    return '2a79ee87-5cf5-4e4d-91fa-8ca1e074d6cd';
+    return '3b80ff98-6dg6-5f5e-a2gb-9db185e7f8de'; // Padrão para Serafim
   }
 };
 export const createUserForLeader = async (personId: string, groupId: string, churchId: string) => {

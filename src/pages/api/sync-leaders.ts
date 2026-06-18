@@ -10,18 +10,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
 
-    const { data: leaders, error } = await supabase
+    const { data: allGroups, error } = await supabase
       .from('groups')
       .select('leader_id, id, parent_group_id')
-      .eq('church_id', churchId)
-      .gt('leader_id', '');
+      .eq('church_id', churchId);
 
-    console.log('Leaders query:', { data: leaders, error });
+    if (error) throw error;
 
-    if (error) {
-      console.error('Error:', error);
-      throw error;
-    }
+    // Filtrar apenas grupos com líder
+    const leaders = allGroups?.filter(g => g.leader_id) || [];
 
     if (!leaders || leaders.length === 0) {
       return res.status(200).json({ message: 'Nenhum lider encontrado', results: [] });

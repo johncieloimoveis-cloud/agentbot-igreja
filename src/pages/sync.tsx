@@ -9,7 +9,7 @@ export default function SyncPage() {
     setError('');
     setResult(null);
     try {
-      const response = await fetch('/api/sync-leaders', {
+      const response = await fetch('/api/users/sync-leaders', {
         method: 'POST',
       });
       const data = await response.json();

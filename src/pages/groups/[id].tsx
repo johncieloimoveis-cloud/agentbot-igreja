@@ -51,6 +51,7 @@ export default function GroupDetail() {
     meeting_time: '',
     meeting_address: '',
     parent_group_id: '',
+    leader_id: '',
   });
 
   useEffect(() => {
@@ -74,6 +75,7 @@ export default function GroupDetail() {
         meeting_time: groupData?.meeting_time || '',
         meeting_address: groupData?.meeting_address || '',
         parent_group_id: groupData?.parent_group_id || '',
+        leader_id: groupData?.leader_id || '',
       });
 
       // Carregar todos os grupos (para dropdown de grupo pai)
@@ -129,6 +131,7 @@ export default function GroupDetail() {
         meeting_time: formData.meeting_time || null,
         meeting_address: formData.meeting_address || null,
         parent_group_id: formData.parent_group_id ? formData.parent_group_id : null,
+        leader_id: formData.leader_id ? formData.leader_id : null,
       };
       console.log('Atualizando grupo com dados:', dataToSubmit);
       const { error: err } = await updateGroup(id as string, dataToSubmit);
@@ -256,6 +259,24 @@ export default function GroupDetail() {
                     {allGroups.map((g) => (
                       <option key={g.id} value={g.id}>
                         {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Líder do Grupo
+                  </label>
+                  <select
+                    value={formData.leader_id}
+                    onChange={(e) => setFormData({ ...formData, leader_id: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Selecione um líder</option>
+                    {members.map((m) => (
+                      <option key={m.person.id} value={m.person.id}>
+                        {m.person.full_name}
                       </option>
                     ))}
                   </select>

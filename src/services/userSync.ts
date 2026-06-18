@@ -44,7 +44,7 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
         .eq('people_id', personId);
 
       if (updateError) throw updateError;
-      return { data: existingUser, message: 'Usuário atualizado' };
+      return { data: existingUser, error: null, message: 'Usuário atualizado' };
     }
 
     // Criar novo usuário
@@ -64,7 +64,7 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
       .select()
       .single();
     if (createError) throw createError;
-    return { data: newUser, message: 'Usuário criado com sucesso' };
+    return { data: newUser, error: null, message: 'Usuário criado com sucesso' };
   } catch (err) {
     console.error('Erro ao criar usuário:', err);
     return { error: err };

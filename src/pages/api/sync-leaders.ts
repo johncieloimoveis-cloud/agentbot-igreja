@@ -12,9 +12,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { data: allGroups, error } = await supabase
       .from('groups')
-      .select('leader_id, id, parent_group_id, church_id');
+      .select('*');
 
     if (error) throw error;
+
+    // DEBUG
+    const debug = {
+      totalGroups: allGroups?.length || 0,
+      churchId,
+      sample: allGroups?.[0],
+      withLeader: allGroups?.filter(g => g.leader_id)?.length || 0
+    };
 
     // Filtrar: apenas church correto E com líder
     const leaders = (allGroups || []).filter(g =>
@@ -22,7 +30,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     if (!leaders || leaders.length === 0) {
-      return res.status(200).json({ message: 'Nenhum lider encontrado', results: [] });
+      return res.status(200).json({
+        message: 'Nenhum lider encontrado',
+        results: [],
+        debug
+      });
     }
 
     const uniqueLeaders = Array.from(new Map(leaders.map(l => [l.leader_id, l])).values());

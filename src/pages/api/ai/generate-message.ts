@@ -1,10 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const PROMPTS: Record<string, (ctx: any) => string> = {
   checkin: (ctx) =>
     `Você é um assistente pastoral que ajuda líderes de igreja a se comunicar com cuidado e afeto com os membros do grupo.
@@ -46,6 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!promptFn) {
     return res.status(400).json({ error: 'Tipo de mensagem inválido' });
   }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'OPENAI_API_KEY não configurada no servidor' });
+  }
+
+  const openai = new OpenAI({ apiKey });
 
   try {
     const prompt = promptFn({ name: personName, weeksAbsent, taskTitle });

@@ -79,6 +79,18 @@ export const getRecentVisitors = async (churchId: string, days: number = 30) => 
   if (error) return { error };
   return { data: data || [] };
 };
+// Pessoas ausentes (status = absent)
+export const getAbsentPeople = async (churchId: string, limit: number = 10) => {
+  const { data, error } = await supabase
+    .from('people')
+    .select('id, full_name, phone, whatsapp')
+    .eq('church_id', churchId)
+    .eq('status', 'absent')
+    .limit(limit);
+  if (error) return { error };
+  return { data: data || [] };
+};
+
 // Frequência média
 export const getAverageAttendance = async (churchId: string) => {
   const { data, error } = await supabase

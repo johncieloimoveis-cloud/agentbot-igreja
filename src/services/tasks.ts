@@ -13,7 +13,7 @@ export const getTasks = async (churchId: string, status?: string) => {
 export const getTask = async (taskId: string) => {
   return supabase
     .from('tasks')
-    .select('*, person:people(id, full_name)')
+    .select('*, person:people(id, full_name, phone, whatsapp)')
     .eq('id', taskId)
     .single();
 };

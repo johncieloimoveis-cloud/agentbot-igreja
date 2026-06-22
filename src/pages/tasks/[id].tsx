@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getTask, updateTask, deleteTask } from '@/services/tasks';
 import { getPeople } from '@/services/people';
-import { AlertCircle, Edit2, Trash2, X } from 'lucide-react';
+import { AlertCircle, Edit2, Trash2, X, Sparkles, MessageCircle } from 'lucide-react';
 export default function TaskDetail() {
   const router = useRouter();
   const { user } = useAuth();
@@ -14,6 +14,9 @@ export default function TaskDetail() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [people, setPeople] = useState<any[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiMessage, setAiMessage] = useState('');
+  const [aiSent, setAiSent] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -101,6 +104,38 @@ export default function TaskDetail() {
       setError('Erro ao deletar tarefa');
     }
   };
+  const handleGenerateTaskMessage = async () => {
+    if (!task?.person) return;
+    setAiLoading(true);
+    setAiMessage('');
+    setAiSent(false);
+    try {
+      const res = await fetch('/api/ai/generate-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageType: 'tarefa',
+          personName: task.person.full_name.split(' ')[0],
+          taskTitle: task.title,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const phone = (task.person.whatsapp || task.person.phone || '').replace(/\D/g, '');
+      const encoded = encodeURIComponent(data.message);
+      if (phone) {
+        window.open(`https://wa.me/55${phone}?text=${encoded}`, '_blank');
+      } else {
+        setAiMessage(data.message);
+      }
+      setAiSent(true);
+    } catch (err) {
+      console.error('Erro IA:', err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const getPriorityColor = (priority: string) => {
     const colors: { [key: string]: string } = {
       high: 'bg-red-100 text-red-800',
@@ -273,9 +308,34 @@ export default function TaskDetail() {
           </div>
           <div className="space-y-4">
             {task?.person && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Relacionado a</p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">{task.person.full_name}</p>
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Relacionado a</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-slate-100">{task.person.full_name}</p>
+                </div>
+                <button
+                  onClick={handleGenerateTaskMessage}
+                  disabled={aiLoading}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    aiSent
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white'
+                  }`}
+                >
+                  {aiLoading ? (
+                    <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Gerando...</>
+                  ) : aiSent ? (
+                    <><MessageCircle className="w-4 h-4" />Enviado</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4" />Mensagem IA</>
+                  )}
+                </button>
+              </div>
+            )}
+            {aiMessage && (
+              <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+                <p className="text-xs text-violet-600 dark:text-violet-400 font-medium mb-2">Mensagem gerada (copie e envie manualmente):</p>
+                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{aiMessage}</p>
               </div>
             )}
             <div className="grid grid-cols-3 gap-4">

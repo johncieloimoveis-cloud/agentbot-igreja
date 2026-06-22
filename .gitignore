@@ -42,3 +42,8 @@ Thumbs.db
 
 # Dist
 dist/
+"chaves.txt" 
+"HISTORICO_COMPLETO_SHEEPCARE.txt" 
+"SHEEPCARE_RESUMO_COMPLETO.md" 
+"*.txt" 
+"tsconfig.tsbuildinfo" 

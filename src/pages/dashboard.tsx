@@ -10,7 +10,14 @@ import {
   getAverageAttendance,
   getAbsentPeople,
 } from '@/services/dashboard';
-import { LogOut, Users, Users2, UserCheck, Calendar, TrendingUp, Cake, Heart, Sparkles, MessageCircle } from 'lucide-react';
+import { LogOut, Users, Users2, UserCheck, Calendar, TrendingUp, Cake, Heart, Sparkles, MessageCircle, X } from 'lucide-react';
+
+interface AiCard {
+  personId: string;
+  loading: boolean;
+  message: string;
+  error: string;
+}
 
 export default function Dashboard() {
   const router = useRouter();
@@ -34,8 +41,8 @@ export default function Dashboard() {
     absentPeople: [],
   });
 
-  // IA state: { [personId]: 'loading' | 'done' | undefined }
-  const [aiState, setAiState] = useState<Record<string, 'loading' | 'done'>>({});
+  // aiCards: mapa personId → estado do card
+  const [aiCards, setAiCards] = useState<Record<string, AiCard>>({});
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
@@ -75,11 +82,11 @@ export default function Dashboard() {
     }
   };
 
-  const handleGenerateAndSend = async (
-    person: any,
-    messageType: 'aniversario' | 'resgate'
-  ) => {
-    setAiState((prev) => ({ ...prev, [person.id]: 'loading' }));
+  const handleGenerate = async (person: any, messageType: 'aniversario' | 'resgate') => {
+    setAiCards((prev) => ({
+      ...prev,
+      [person.id]: { personId: person.id, loading: true, message: '', error: '' },
+    }));
     try {
       const res = await fetch('/api/ai/generate-message', {
         method: 'POST',
@@ -90,32 +97,35 @@ export default function Dashboard() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      const phone = (person.whatsapp || person.phone || '').replace(/\D/g, '');
-      const encoded = encodeURIComponent(data.message);
-      if (phone) {
-        window.open(`https://wa.me/55${phone}?text=${encoded}`, '_blank');
-      } else {
-        window.open(`https://wa.me/?text=${encoded}`, '_blank');
-      }
-      setAiState((prev) => ({ ...prev, [person.id]: 'done' }));
-    } catch (err) {
-      console.error('Erro IA:', err);
-      setAiState((prev) => {
-        const next = { ...prev };
-        delete next[person.id];
-        return next;
-      });
+      if (!res.ok) throw new Error(data.error || 'Erro ao gerar');
+      setAiCards((prev) => ({
+        ...prev,
+        [person.id]: { personId: person.id, loading: false, message: data.message, error: '' },
+      }));
+    } catch (err: any) {
+      setAiCards((prev) => ({
+        ...prev,
+        [person.id]: { personId: person.id, loading: false, message: '', error: err.message || 'Erro' },
+      }));
     }
   };
 
+  const dismissCard = (personId: string) => {
+    setAiCards((prev) => {
+      const next = { ...prev };
+      delete next[personId];
+      return next;
+    });
+  };
+
+  const buildWhatsAppUrl = (person: any, message: string) => {
+    const phone = (person.whatsapp || person.phone || '').replace(/\D/g, '');
+    const encoded = encodeURIComponent(message);
+    return phone ? `https://wa.me/55${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+  };
+
   const handleLogout = async () => {
-    try {
-      await logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-    }
+    try { await logout(); router.push('/login'); } catch (e) { console.error(e); }
   };
 
   if (loading) {
@@ -143,47 +153,68 @@ export default function Dashboard() {
     </div>
   );
 
-  const AiPersonCard = ({ person, messageType, color }: { person: any; messageType: 'aniversario' | 'resgate'; color: string }) => {
-    const state = aiState[person.id];
+  const renderAiPersonRow = (person: any, messageType: 'aniversario' | 'resgate', bgColor: string) => {
+    const card = aiCards[person.id];
     return (
-      <div className={`flex justify-between items-center p-3 ${color} rounded`}>
-        <div>
-          <p className="font-medium text-gray-900 dark:text-white text-sm">{person.full_name}</p>
-          {person.phone && <p className="text-xs text-gray-500 dark:text-gray-400">{person.phone}</p>}
-        </div>
-        <button
-          onClick={() => handleGenerateAndSend(person, messageType)}
-          disabled={state === 'loading'}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-            state === 'done'
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white'
-          }`}
-        >
-          {state === 'loading' ? (
-            <>
-              <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              Gerando...
-            </>
-          ) : state === 'done' ? (
-            <>
-              <MessageCircle className="w-3 h-3" />
-              Enviado
-            </>
-          ) : (
-            <>
+      <div key={person.id} className={`rounded-lg overflow-hidden border border-transparent ${card?.message ? 'border-violet-200 dark:border-violet-800' : ''}`}>
+        <div className={`flex justify-between items-center p-3 ${bgColor}`}>
+          <div>
+            <p className="font-medium text-gray-900 dark:text-white text-sm">{person.full_name}</p>
+            {person.phone && <p className="text-xs text-gray-500 dark:text-gray-400">{person.phone}</p>}
+          </div>
+          {!card ? (
+            <button
+              onClick={() => handleGenerate(person, messageType)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white transition-colors"
+            >
               <Sparkles className="w-3 h-3" />
               Mensagem IA
-            </>
-          )}
-        </button>
+            </button>
+          ) : card.loading ? (
+            <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400">
+              <div className="w-3 h-3 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
+              Gerando...
+            </div>
+          ) : card.error ? (
+            <span className="text-xs text-red-500">{card.error}</span>
+          ) : null}
+        </div>
+
+        {card?.message && (
+          <div className="bg-violet-50 dark:bg-violet-900/20 p-3 border-t border-violet-100 dark:border-violet-800">
+            <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-3">{card.message}</p>
+            <div className="flex gap-2">
+              <a
+                href={buildWhatsAppUrl(person, card.message)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors"
+              >
+                <MessageCircle className="w-3 h-3" />
+                Abrir WhatsApp
+              </a>
+              <button
+                onClick={() => handleGenerate(person, messageType)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-xs font-semibold rounded-lg transition-colors"
+              >
+                <Sparkles className="w-3 h-3" />
+                Regerar
+              </button>
+              <button
+                onClick={() => dismissCard(person.id)}
+                className="ml-auto p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
-      {/* Header */}
       <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -203,7 +234,6 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-950 dark:text-white mb-2">Dashboard 📊</h2>
@@ -217,7 +247,6 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            {/* Estatísticas Principais */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <StatCard icon={Users} label="Total de Pessoas" value={stats.people.total} color="border-blue-500" />
               <StatCard icon={UserCheck} label="Membros Ativos" value={stats.people.active_member} color="border-green-500" />
@@ -237,12 +266,8 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="w-5 h-5 text-violet-500" />
                   <h3 className="text-xl font-bold text-gray-950 dark:text-white">Ações Pastorais com IA</h3>
-                  <span className="text-xs bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full font-medium">
-                    Clique para gerar e abrir WhatsApp
-                  </span>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Aniversariantes */}
                   {stats.birthdays.length > 0 && (
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-t-4 border-red-400">
                       <div className="flex items-center gap-2 mb-4">
@@ -251,14 +276,12 @@ export default function Dashboard() {
                         <span className="ml-auto text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full">{stats.birthdays.length}</span>
                       </div>
                       <div className="space-y-2">
-                        {stats.birthdays.map((person: any) => (
-                          <AiPersonCard key={person.id} person={person} messageType="aniversario" color="bg-red-50 dark:bg-red-900/10" />
-                        ))}
+                        {stats.birthdays.map((person: any) =>
+                          renderAiPersonRow(person, 'aniversario', 'bg-red-50 dark:bg-red-900/10')
+                        )}
                       </div>
                     </div>
                   )}
-
-                  {/* Ausentes */}
                   {stats.absentPeople.length > 0 && (
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-t-4 border-amber-400">
                       <div className="flex items-center gap-2 mb-4">
@@ -267,9 +290,9 @@ export default function Dashboard() {
                         <span className="ml-auto text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">{stats.absentPeople.length}</span>
                       </div>
                       <div className="space-y-2">
-                        {stats.absentPeople.map((person: any) => (
-                          <AiPersonCard key={person.id} person={person} messageType="resgate" color="bg-amber-50 dark:bg-amber-900/10" />
-                        ))}
+                        {stats.absentPeople.map((person: any) =>
+                          renderAiPersonRow(person, 'resgate', 'bg-amber-50 dark:bg-amber-900/10')
+                        )}
                       </div>
                     </div>
                   )}
@@ -279,7 +302,6 @@ export default function Dashboard() {
 
             {/* Informações Adicionais */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Aniversariantes (lista simples quando sem IA panel) */}
               {stats.birthdays.length === 0 && (
                 <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                   <div className="flex items-center gap-2 mb-4">
@@ -289,8 +311,6 @@ export default function Dashboard() {
                   <p className="text-gray-500 dark:text-gray-400 text-center py-8 text-sm">Nenhum aniversariante</p>
                 </div>
               )}
-
-              {/* Visitantes Recentes */}
               <div className={`bg-white dark:bg-slate-800 rounded-lg shadow p-6 ${stats.birthdays.length === 0 ? '' : 'lg:col-span-2'}`}>
                 <div className="flex items-center gap-2 mb-4">
                   <Users className="w-6 h-6 text-blue-500" />
@@ -303,22 +323,17 @@ export default function Dashboard() {
                     {stats.recentVisitors.slice(0, 5).map((visitor: any) => (
                       <div key={visitor.id} className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded">
                         <p className="font-medium text-gray-950 dark:text-white text-sm">{visitor.full_name}</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                          {new Date(visitor.created_at).toLocaleDateString('pt-BR')}
-                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{new Date(visitor.created_at).toLocaleDateString('pt-BR')}</p>
                       </div>
                     ))}
                     {stats.recentVisitors.length > 5 && (
-                      <p className="text-xs text-gray-600 dark:text-gray-400 text-center mt-2">
-                        +{stats.recentVisitors.length - 5} outros
-                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 text-center mt-2">+{stats.recentVisitors.length - 5} outros</p>
                     )}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Resumo */}
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
               <h3 className="text-lg font-bold text-gray-950 dark:text-white mb-6">Resumo da Igreja</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

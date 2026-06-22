@@ -3,12 +3,26 @@ import { createClient } from '@supabase/supabase-js';
 
 const getAdminClient = () => {
   return createClient(
-    'https://hdfywkehiqxqjnructyy.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZnl3a2VoaXF4cWpucnVjdHl5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDQwNDI4NSwiZXhwIjoyMDk1OTgwMjg1fQ.o9JjD6j416BHhpebmNzMqPq4aHnCL0j_6z65K_egKsg'
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
   );
 };
 
-export const determineUserRole = async (groupId: string): Promise<string> => {
+const getRoleIdByName = async (name: string): Promise<string | null> => {
+  const { data, error } = await supabase
+    .from('roles')
+    .select('id')
+    .eq('name', name)
+    .single();
+  if (error) {
+    console.error(`Erro ao buscar role "${name}":`, error);
+    return null;
+  }
+  return data?.id ?? null;
+};
+
+export const determineUserRole = async (groupId: string): Promise<string | null> => {
   try {
     const { data: group, error } = await supabase
       .from('groups')
@@ -16,17 +30,17 @@ export const determineUserRole = async (groupId: string): Promise<string> => {
       .eq('id', groupId)
       .single();
     if (error) throw error;
-    // Querubim: líder de grupo raiz (sem parent_group_id)
+
     if (!group?.parent_group_id) {
-      return '2a79ee87-5cf5-4e4d-91fa-8ca1e074d6cd'; // Querubim
+      return await getRoleIdByName('Querubim');
     }
-    // Serafim: líder de subgrupo (com parent_group_id)
-    return '3b80ff98-6dg6-5f5e-a2gb-9db185e7f8de'; // Serafim
+    return await getRoleIdByName('Serafim');
   } catch (err) {
     console.error('Erro ao determinar role:', err);
-    return '3b80ff98-6dg6-5f5e-a2gb-9db185e7f8de'; // Padrão para Serafim
+    return await getRoleIdByName('Serafim');
   }
 };
+
 export const createUserForLeader = async (personId: string, groupId: string, churchId: string) => {
   try {
     const { data: person, error: personError } = await supabase
@@ -37,8 +51,8 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
     if (personError) throw personError;
 
     const roleId = await determineUserRole(groupId);
+    if (!roleId) throw new Error('Role nao encontrada no banco de dados');
 
-    // Verificar se usuário já existe
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
@@ -46,7 +60,6 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
       .single();
 
     if (existingUser) {
-      // Deletar usuário existente e recriar com a role correta
       const adminClient = getAdminClient();
       const { error: deleteError } = await adminClient
         .from('users')
@@ -54,35 +67,33 @@ export const createUserForLeader = async (personId: string, groupId: string, chu
         .eq('id', existingUser.id);
 
       if (deleteError) {
-        console.error('Erro ao deletar usuário:', deleteError);
+        console.error('Erro ao deletar usuario:', deleteError);
         return { error: new Error(`Delete failed: ${deleteError.message}`), message: 'Erro ao deletar' };
       }
     }
 
-    // Criar novo usuário
     const adminClient = getAdminClient();
     const email = person.email || `usuario.${personId.substring(0, 8)}@sheepcare.local`;
     const { data: newUser, error: createError } = await adminClient
       .from('users')
-      .insert([
-        {
-          email,
-          full_name: person.full_name,
-          church_id: churchId,
-          role_id: roleId,
-          people_id: personId,
-          is_active: true,
-        },
-      ])
+      .insert([{
+        email,
+        full_name: person.full_name,
+        church_id: churchId,
+        role_id: roleId,
+        people_id: personId,
+        is_active: true,
+      }])
       .select()
       .single();
     if (createError) throw createError;
-    return { data: newUser, error: null, message: 'Usuário criado com sucesso' };
+    return { data: newUser, error: null, message: 'Usuario criado com sucesso' };
   } catch (err) {
-    console.error('Erro ao criar usuário:', err);
+    console.error('Erro ao criar usuario:', err);
     return { error: err };
   }
 };
+
 export const deleteUserForLeader = async (personId: string) => {
   try {
     const { error } = await supabase
@@ -92,10 +103,11 @@ export const deleteUserForLeader = async (personId: string) => {
     if (error) throw error;
     return { data: { success: true } };
   } catch (err) {
-    console.error('Erro ao deletar usuário:', err);
+    console.error('Erro ao deletar usuario:', err);
     return { error: err };
   }
 };
+
 export const syncUserWithLeaderStatus = async (
   personId: string,
   isLeader: boolean,

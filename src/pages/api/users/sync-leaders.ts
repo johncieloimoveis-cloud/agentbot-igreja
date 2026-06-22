@@ -7,7 +7,20 @@ const adminClient = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-const determineUserRole = async (groupId: string): Promise<string> => {
+const getRoleIdByName = async (name: string): Promise<string | null> => {
+  const { data, error } = await adminClient
+    .from('roles')
+    .select('id')
+    .eq('name', name)
+    .single();
+  if (error) {
+    console.error(`Erro ao buscar role "${name}":`, error);
+    return null;
+  }
+  return data?.id ?? null;
+};
+
+const determineUserRole = async (groupId: string): Promise<string | null> => {
   const { data: group } = await adminClient
     .from('groups')
     .select('parent_group_id')
@@ -15,9 +28,9 @@ const determineUserRole = async (groupId: string): Promise<string> => {
     .single();
 
   if (!group?.parent_group_id) {
-    return '2a79ee87-5cf5-4e4d-91fa-8ca1e074d6cd'; // Querubim
+    return await getRoleIdByName('Querubim');
   }
-  return '3b80ff98-6dg6-5f5e-a2gb-9db185e7f8de'; // Serafim
+  return await getRoleIdByName('Serafim');
 };
 
 const createUserForLeader = async (
@@ -35,6 +48,7 @@ const createUserForLeader = async (
     if (!person) throw new Error('Person not found');
 
     const roleId = await determineUserRole(groupId);
+    if (!roleId) throw new Error('Role nao encontrada no banco de dados');
     const email = person.email || `usuario.${personId.substring(0, 8)}@sheepcare.local`;
 
     // 1. Deletar de public.users primeiro (filho da FK)
@@ -45,17 +59,14 @@ const createUserForLeader = async (
 
     if (deletePublicError) {
       console.error('Erro ao deletar public.users:', deletePublicError);
-      // Continua mesmo se falhar (pode não existir)
     }
 
     // 2. Buscar e deletar de auth.users (pai da FK)
-    const { data, error: listError } = await adminClient.auth.admin.listUsers();
-    if (!listError && data?.users) {
-      const existingUser = data.users.find((u: any) => u.email === email);
+    const { data: listData, error: listError } = await adminClient.auth.admin.listUsers();
+    if (!listError && listData?.users) {
+      const existingUser = listData.users.find((u: any) => u.email === email);
       if (existingUser) {
-        const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(
-          existingUser.id
-        );
+        const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(existingUser.id);
         if (deleteAuthError) {
           console.error('Erro ao deletar auth.users:', deleteAuthError);
         }
@@ -63,12 +74,11 @@ const createUserForLeader = async (
     }
 
     // 3. Recriar em auth.users
-    const { data: authData, error: createAuthError } =
-      await adminClient.auth.admin.createUser({
-        email,
-        password: Math.random().toString(36).slice(-12), // temp password
-        email_confirm: true,
-      });
+    const { data: authData, error: createAuthError } = await adminClient.auth.admin.createUser({
+      email,
+      password: Math.random().toString(36).slice(-12),
+      email_confirm: true,
+    });
 
     if (createAuthError) throw createAuthError;
     if (!authData.user) throw new Error('Failed to create auth user');
@@ -76,24 +86,22 @@ const createUserForLeader = async (
     // 4. Recriar em public.users
     const { error: createPublicError } = await adminClient
       .from('users')
-      .insert([
-        {
-          id: authData.user.id,
-          email,
-          full_name: person.full_name,
-          church_id: churchId,
-          role_id: roleId,
-          people_id: personId,
-          is_active: true,
-        },
-      ]);
+      .insert([{
+        id: authData.user.id,
+        email,
+        full_name: person.full_name,
+        church_id: churchId,
+        role_id: roleId,
+        people_id: personId,
+        is_active: true,
+      }]);
 
     if (createPublicError) throw createPublicError;
 
-    return { data: { id: authData.user.id }, error: null, message: 'Usuário criado/atualizado' };
+    return { data: { id: authData.user.id }, error: null, message: 'Usuario criado/atualizado' };
   } catch (err) {
     console.error('Erro em createUserForLeader:', err);
-    return { error: err, message: 'Erro ao processar usuário' };
+    return { error: err, message: 'Erro ao processar usuario' };
   }
 };
 
@@ -114,8 +122,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ message: 'Nenhum grupo encontrado', results: [] });
     }
 
-    const leaders = allGroups.filter(g => g.leader_id);
-    const uniqueLeaders = Array.from(new Map(leaders.map(l => [l.leader_id, l])).values());
+    const leaders = allGroups.filter((g: any) => g.leader_id);
+    const uniqueLeaders = Array.from(
+      new Map(leaders.map((l: any) => [l.leader_id, l])).values()
+    ) as any[];
     const results: any[] = [];
 
     for (const leader of uniqueLeaders) {
@@ -125,7 +135,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           leader_id: leader.leader_id,
           success: !result.error,
           message: result.message,
-          error: result.error ? (result.error instanceof Error ? result.error.message : String(result.error)) : null,
+          error: result.error
+            ? result.error instanceof Error
+              ? result.error.message
+              : String(result.error)
+            : null,
         });
       } catch (err) {
         results.push({
@@ -136,10 +150,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    const created = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
+    const created = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Sincronizacao concluida',
       created,
       failed,
@@ -147,7 +161,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       results,
     });
   } catch (error) {
-    console.error('Erro na sincronização:', error);
-    res.status(500).json({ error: 'Erro ao sincronizar' });
+    console.error('Erro na sincronizacao:', error);
+    return res.status(500).json({ error: 'Erro ao sincronizar' });
   }
 }

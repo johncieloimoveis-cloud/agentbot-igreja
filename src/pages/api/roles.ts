@@ -13,12 +13,12 @@ const DEFAULT_ROLES = [
     description: 'Admin com poder total'
   },
   {
-    id: '3b80ff98-6dg6-5f5e-a2gb-9db185e7f8de',
+    id: '3b80ff98-6d06-5f5e-a20b-9db185e7f8de',
     name: 'Serafim',
     description: 'Líder de grupo'
   },
   {
-    id: '4c91g0a9-7eh7-6g6f-b3hc-aec296f8g9ef',
+    id: '4c910a09-7e07-6f6f-b3bc-aec296f809ef',
     name: 'Anjinho',
     description: 'Membro comum'
   }

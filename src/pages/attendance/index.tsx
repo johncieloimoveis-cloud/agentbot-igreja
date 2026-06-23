@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getAttendanceEvents } from '@/services/attendance';
-import { Plus, Calendar, Sparkles, MessageCircle, AlertTriangle, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Plus, Calendar, Sparkles, MessageCircle, AlertTriangle, ChevronDown, ChevronUp, X, Copy, Check } from 'lucide-react';
 
 interface AttendanceEvent {
   id: string;
@@ -33,6 +33,13 @@ export default function AttendanceList() {
   // aiMessages: personId → mensagem gerada
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({});
   const [aiMessages, setAiMessages] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState<Record<string, boolean>>({});
+
+  const handleCopy = (id: string, msg: string) => {
+    navigator.clipboard.writeText(msg);
+    setCopied((p) => ({ ...p, [id]: true }));
+    setTimeout(() => setCopied((p) => ({ ...p, [id]: false })), 2000);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -214,8 +221,15 @@ export default function AttendanceList() {
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors"
                           >
                             <MessageCircle className="w-3 h-3" />
-                            Abrir WhatsApp
+                            WhatsApp
                           </a>
+                          <button
+                            onClick={() => handleCopy(person.id, aiMessages[person.id])}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg transition-colors"
+                          >
+                            {copied[person.id] ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+                            {copied[person.id] ? 'Copiado!' : 'Copiar'}
+                          </button>
                           <button
                             onClick={() => handleGenerateMessage(person)}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-xs font-semibold rounded-lg transition-colors"

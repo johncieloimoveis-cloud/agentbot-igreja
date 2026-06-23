@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
 import { getPerson, updatePerson, deletePerson } from '@/services/people';
-import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Send } from 'lucide-react';
+import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Send, Copy, Check } from 'lucide-react';
 
 interface Person {
   id: string;
@@ -45,6 +45,13 @@ export default function PersonDetail() {
   const [aiError, setAiError] = useState('');
   const [weeksAbsent, setWeeksAbsent] = useState('');
   const [taskTitle, setTaskTitle] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (msg: string) => {
+    navigator.clipboard.writeText(msg);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -315,13 +322,22 @@ export default function PersonDetail() {
                       rows={5}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-500"
                     />
-                    <button
-                      onClick={handleSendWhatsApp}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      Enviar via WhatsApp
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleCopy(aiMessage)}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg transition-colors"
+                      >
+                        {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                        {copied ? 'Copiado!' : 'Copiar'}
+                      </button>
+                      <button
+                        onClick={handleSendWhatsApp}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        WhatsApp
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

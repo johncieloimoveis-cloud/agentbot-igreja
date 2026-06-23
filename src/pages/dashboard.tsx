@@ -10,7 +10,7 @@ import {
   getAverageAttendance,
   getAbsentPeople,
 } from '@/services/dashboard';
-import { LogOut, Users, Users2, UserCheck, Calendar, TrendingUp, Cake, Heart, Sparkles, MessageCircle, X } from 'lucide-react';
+import { LogOut, Users, Users2, UserCheck, Calendar, TrendingUp, Cake, Heart, Sparkles, MessageCircle, X, Copy, Check } from 'lucide-react';
 
 interface AiCard {
   personId: string;
@@ -43,6 +43,13 @@ export default function Dashboard() {
 
   // aiCards: mapa personId → estado do card
   const [aiCards, setAiCards] = useState<Record<string, AiCard>>({});
+  const [copied, setCopied] = useState<Record<string, boolean>>({});
+
+  const handleCopy = (personId: string, message: string) => {
+    navigator.clipboard.writeText(message);
+    setCopied((prev) => ({ ...prev, [personId]: true }));
+    setTimeout(() => setCopied((prev) => ({ ...prev, [personId]: false })), 2000);
+  };
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
@@ -191,8 +198,15 @@ export default function Dashboard() {
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors"
               >
                 <MessageCircle className="w-3 h-3" />
-                Abrir WhatsApp
+                WhatsApp
               </a>
+              <button
+                onClick={() => handleCopy(person.id, card.message)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg transition-colors"
+              >
+                {copied[person.id] ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+                {copied[person.id] ? 'Copiado!' : 'Copiar'}
+              </button>
               <button
                 onClick={() => handleGenerate(person, messageType)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-xs font-semibold rounded-lg transition-colors"

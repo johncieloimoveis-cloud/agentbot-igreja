@@ -3,15 +3,20 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getGroupMembers, removeGroupMember, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups } from '@/services/groups';
 import { getPeople } from '@/services/people';
-import { TrashIcon, Plus, Edit2, X, Search } from 'lucide-react';
+import { TrashIcon, Plus, Edit2, X, Search, Sparkles, MessageCircle, Copy, Check, Cake, Users, UserCheck, UserMinus } from 'lucide-react';
+
+interface Person {
+  id: string;
+  full_name: string;
+  phone?: string;
+  whatsapp?: string;
+  status?: string;
+  date_of_birth?: string;
+}
 
 interface Member {
   id: string;
-  person: {
-    id: string;
-    full_name: string;
-    phone?: string;
-  };
+  person: Person;
 }
 
 interface Group {
@@ -42,7 +47,6 @@ export default function GroupDetail() {
   const [addingMember, setAddingMember] = useState(false);
 
   const [allGroups, setAllGroups] = useState<any[]>([]);
-  const [loadingGroups, setLoadingGroups] = useState(false);
   const [parentGroup, setParentGroup] = useState<any>(null);
 
   const [formData, setFormData] = useState({
@@ -54,6 +58,11 @@ export default function GroupDetail() {
     leader_id: '',
   });
 
+  // IA state
+  const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({});
+  const [aiMessages, setAiMessages] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     if (!id) return;
     loadGroupData();
@@ -63,8 +72,6 @@ export default function GroupDetail() {
     setLoading(true);
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-
-      // Carregar dados do grupo
       const { data: groupData, error: groupError } = await getGroup(id as string);
       if (groupError) throw groupError;
 
@@ -78,20 +85,14 @@ export default function GroupDetail() {
         leader_id: groupData?.leader_id || '',
       });
 
-      // Carregar todos os grupos (para dropdown de grupo pai)
-      const { data: groupsData, error: groupsError } = await getGroups(churchId);
-      if (groupsError) throw groupsError;
-      // Filtrar para não mostrar o grupo atual
-      const filteredGroups = (groupsData || []).filter((g: any) => g.id !== id);
-      setAllGroups(filteredGroups);
+      const { data: groupsData } = await getGroups(churchId);
+      setAllGroups((groupsData || []).filter((g: any) => g.id !== id));
 
-      // Carregar grupo pai se existir
       if (groupData?.parent_group_id) {
         const { data: parentGroupData } = await getGroup(groupData.parent_group_id);
         setParentGroup(parentGroupData);
       }
 
-      // Carregar membros
       const { data: membersData, error: membersError } = await getGroupMembers(id as string);
       if (membersError) throw membersError;
       setMembers(membersData || []);
@@ -103,61 +104,92 @@ export default function GroupDetail() {
     }
   };
 
+  // --- IA ---
+  const handleGenerate = async (person: Person, messageType: 'aniversario' | 'resgate' | 'checkin') => {
+    setAiLoading((p) => ({ ...p, [person.id]: true }));
+    setAiMessages((p) => { const n = { ...p }; delete n[person.id]; return n; });
+    try {
+      const res = await fetch('/api/ai/generate-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageType, personName: person.full_name.split(' ')[0] }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setAiMessages((p) => ({ ...p, [person.id]: data.message }));
+    } catch (err) {
+      console.error('Erro IA:', err);
+    } finally {
+      setAiLoading((p) => ({ ...p, [person.id]: false }));
+    }
+  };
+
+  const handleCopy = (personId: string, msg: string) => {
+    navigator.clipboard.writeText(msg);
+    setCopied((p) => ({ ...p, [personId]: true }));
+    setTimeout(() => setCopied((p) => ({ ...p, [personId]: false })), 2000);
+  };
+
+  const buildWhatsAppUrl = (person: Person, message: string) => {
+    const phone = (person.whatsapp || person.phone || '').replace(/\D/g, '');
+    const encoded = encodeURIComponent(message);
+    return phone ? `https://wa.me/55${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+  };
+
+  // --- Stats calculadas ---
+  const getUpcomingBirthdays = () => {
+    const today = new Date();
+    const future = new Date(); future.setDate(future.getDate() + 7);
+    return members.filter((m) => {
+      if (!m.person.date_of_birth) return false;
+      const [, month, day] = m.person.date_of_birth.split('T')[0].split('-').map(Number);
+      const bday = new Date(today.getFullYear(), month - 1, day);
+      const todayN = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const futureN = new Date(future.getFullYear(), future.getMonth(), future.getDate());
+      if (bday < todayN) bday.setFullYear(bday.getFullYear() + 1);
+      return bday >= todayN && bday <= futureN;
+    }).map((m) => m.person);
+  };
+
+  const absentMembers = members.filter((m) => m.person.status === 'absent').map((m) => m.person);
+  const activeMembers = members.filter((m) => m.person.status === 'active_member').length;
+  const birthdayMembers = getUpcomingBirthdays();
+
+  // --- Handlers existentes ---
   const handleRemoveMember = async (memberId: string) => {
     if (!confirm('Remover membro do grupo?')) return;
-    try {
-      await removeGroupMember(memberId);
-      loadGroupData();
-    } catch (error) {
-      console.error('Erro:', error);
-      setError('Erro ao remover membro');
-    }
+    try { await removeGroupMember(memberId); loadGroupData(); }
+    catch (error) { console.error('Erro:', error); setError('Erro ao remover membro'); }
   };
 
   const handleUpdateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (!formData.name.trim()) {
-      setError('Nome do grupo é obrigatório');
-      return;
-    }
-
+    if (!formData.name.trim()) { setError('Nome do grupo e obrigatorio'); return; }
     setSaving(true);
     try {
-      const dataToSubmit = {
+      const { error: err } = await updateGroup(id as string, {
         name: formData.name,
         meeting_day: formData.meeting_day || null,
         meeting_time: formData.meeting_time || null,
         meeting_address: formData.meeting_address || null,
-        parent_group_id: formData.parent_group_id ? formData.parent_group_id : null,
-        leader_id: formData.leader_id ? formData.leader_id : null,
-      };
-      console.log('Atualizando grupo com dados:', dataToSubmit);
-      const { error: err } = await updateGroup(id as string, dataToSubmit);
+        parent_group_id: formData.parent_group_id || null,
+        leader_id: formData.leader_id || null,
+      });
       if (err) throw err;
-
       setIsEditing(false);
       loadGroupData();
-    } catch (error) {
-      console.error('Erro completo:', error);
-      setError('Erro ao atualizar grupo');
-    } finally {
-      setSaving(false);
-    }
+    } catch (error) { console.error('Erro:', error); setError('Erro ao atualizar grupo'); }
+    finally { setSaving(false); }
   };
 
   const handleDeleteGroup = async () => {
-    if (!confirm('Tem certeza que deseja deletar este grupo? Esta ação não pode ser desfeita.')) return;
-
+    if (!confirm('Tem certeza que deseja deletar este grupo?')) return;
     try {
       const { error: err } = await deleteGroup(id as string);
       if (err) throw err;
       router.push('/groups');
-    } catch (error) {
-      console.error('Erro:', error);
-      setError('Erro ao deletar grupo');
-    }
+    } catch (error) { console.error('Erro:', error); setError('Erro ao deletar grupo'); }
   };
 
   const loadAvailablePeople = async () => {
@@ -166,20 +198,10 @@ export default function GroupDetail() {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
       const { data, error } = await getPeople(churchId, undefined, searchPeople || undefined);
       if (error) throw error;
-
-      // Filtrar pessoas que já são membros
       const memberPersonIds = members.map((m) => m.person.id);
-      const filteredPeople = (data || []).filter(
-        (person: any) => !memberPersonIds.includes(person.id)
-      );
-
-      setAvailablePeople(filteredPeople);
-    } catch (error) {
-      console.error('Erro:', error);
-      setError('Erro ao carregar pessoas');
-    } finally {
-      setLoadingPeople(false);
-    }
+      setAvailablePeople((data || []).filter((p: any) => !memberPersonIds.includes(p.id)));
+    } catch (error) { console.error('Erro:', error); setError('Erro ao carregar pessoas'); }
+    finally { setLoadingPeople(false); }
   };
 
   const handleAddMember = async (personId: string) => {
@@ -187,41 +209,84 @@ export default function GroupDetail() {
     try {
       const { error: err } = await addGroupMember(id as string, personId);
       if (err) throw err;
-
-      setSearchPeople('');
-      setShowAddForm(false);
-      loadGroupData();
-    } catch (error) {
-      console.error('Erro:', error);
-      setError('Erro ao adicionar membro');
-    } finally {
-      setAddingMember(false);
-    }
+      setSearchPeople(''); setShowAddForm(false); loadGroupData();
+    } catch (error) { console.error('Erro:', error); setError('Erro ao adicionar membro'); }
+    finally { setAddingMember(false); }
   };
 
-  const handleOpenAddForm = () => {
-    setShowAddForm(true);
-    loadAvailablePeople();
-  };
+  const handleOpenAddForm = () => { setShowAddForm(true); loadAvailablePeople(); };
+
+  // Render IA row
+  const renderAiRow = (person: Person, messageType: 'aniversario' | 'resgate' | 'checkin', bg: string) => (
+    <div key={person.id} className={`rounded-lg overflow-hidden ${aiMessages[person.id] ? 'border border-violet-200 dark:border-violet-800' : ''}`}>
+      <div className={`flex justify-between items-center p-3 ${bg}`}>
+        <div>
+          <p className="font-medium text-gray-900 dark:text-white text-sm">{person.full_name}</p>
+          {person.phone && <p className="text-xs text-gray-500 dark:text-gray-400">{person.phone}</p>}
+        </div>
+        {!aiMessages[person.id] ? (
+          <button
+            onClick={() => handleGenerate(person, messageType)}
+            disabled={aiLoading[person.id]}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            {aiLoading[person.id]
+              ? <><div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />Gerando...</>
+              : <><Sparkles className="w-3 h-3" />Mensagem IA</>}
+          </button>
+        ) : null}
+      </div>
+      {aiMessages[person.id] && (
+        <div className="bg-violet-50 dark:bg-violet-900/20 p-3 border-t border-violet-100 dark:border-violet-800">
+          <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-3">{aiMessages[person.id]}</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleCopy(person.id, aiMessages[person.id])}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg transition-colors"
+            >
+              {copied[person.id] ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+              {copied[person.id] ? 'Copiado!' : 'Copiar'}
+            </button>
+            <a
+              href={buildWhatsAppUrl(person, aiMessages[person.id])}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors"
+            >
+              <MessageCircle className="w-3 h-3" />
+              WhatsApp
+            </a>
+            <button
+              onClick={() => handleGenerate(person, messageType)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-semibold rounded-lg"
+            >
+              <Sparkles className="w-3 h-3" />
+              Regerar
+            </button>
+            <button
+              onClick={() => setAiMessages((p) => { const n = { ...p }; delete n[person.id]; return n; })}
+              className="ml-auto p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   if (!user) return null;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      {/* Botão Voltar */}
-      <button
-        onClick={() => router.back()}
-        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6"
-      >
-        ← Voltar
+      <button onClick={() => router.back()} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-slate-100 mb-6">
+        Voltar
       </button>
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-6 flex justify-between items-center">
           <p className="text-red-700">{error}</p>
-          <button onClick={() => setError('')}>
-            <X className="w-5 h-5 text-red-600" />
-          </button>
+          <button onClick={() => setError('')}><X className="w-5 h-5 text-red-600" /></button>
         </div>
       )}
 
@@ -229,118 +294,63 @@ export default function GroupDetail() {
         <p className="text-gray-500 dark:text-gray-400">Carregando...</p>
       ) : (
         <>
-          {/* Seção de Detalhes/Edição */}
+          {/* Info / Edição */}
           {isEditing ? (
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-950 dark:text-white mb-4">Editar Grupo</h2>
               <form onSubmit={handleUpdateGroup} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Nome do Grupo *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nome do Grupo *</label>
+                  <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Grupo Pai (Opcional)
-                  </label>
-                  <select
-                    value={formData.parent_group_id}
-                    onChange={(e) => setFormData({ ...formData, parent_group_id: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Grupo Pai</label>
+                  <select value={formData.parent_group_id} onChange={(e) => setFormData({ ...formData, parent_group_id: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                     <option value="">Nenhum (grupo raiz)</option>
-                    {allGroups.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
+                    {allGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Líder do Grupo
-                  </label>
-                  <select
-                    value={formData.leader_id}
-                    onChange={(e) => setFormData({ ...formData, leader_id: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="">Selecione um líder</option>
-                    {members.map((m) => (
-                      <option key={m.person.id} value={m.person.id}>
-                        {m.person.full_name}
-                      </option>
-                    ))}
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lider do Grupo</label>
+                  <select value={formData.leader_id} onChange={(e) => setFormData({ ...formData, leader_id: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Selecione um lider</option>
+                    {members.map((m) => <option key={m.person.id} value={m.person.id}>{m.person.full_name}</option>)}
                   </select>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Dia da Reunião
-                    </label>
-                    <select
-                      value={formData.meeting_day}
-                      onChange={(e) => setFormData({ ...formData, meeting_day: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    >
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dia da Reuniao</label>
+                    <select value={formData.meeting_day} onChange={(e) => setFormData({ ...formData, meeting_day: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                       <option value="">Selecione</option>
                       <option value="segunda">Segunda</option>
-                      <option value="terca">Terça</option>
+                      <option value="terca">Terca</option>
                       <option value="quarta">Quarta</option>
                       <option value="quinta">Quinta</option>
                       <option value="sexta">Sexta</option>
-                      <option value="sabado">Sábado</option>
+                      <option value="sabado">Sabado</option>
                       <option value="domingo">Domingo</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Horário
-                    </label>
-                    <input
-                      type="time"
-                      value={formData.meeting_time}
-                      onChange={(e) => setFormData({ ...formData, meeting_time: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Horario</label>
+                    <input type="time" value={formData.meeting_time} onChange={(e) => setFormData({ ...formData, meeting_time: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Endereço
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.meeting_address}
-                    onChange={(e) => setFormData({ ...formData, meeting_address: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Endereco</label>
+                  <input type="text" value={formData.meeting_address} onChange={(e) => setFormData({ ...formData, meeting_address: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
-
                 <div className="flex gap-3 pt-4">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg"
-                  >
-                    {saving ? 'Salvando...' : 'Salvar Alterações'}
+                  <button type="submit" disabled={saving} className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg">
+                    {saving ? 'Salvando...' : 'Salvar Alteracoes'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="flex-1 bg-gray-300 dark:bg-slate-600 hover:bg-gray-400 dark:hover:bg-slate-500 text-gray-900 dark:text-white font-semibold py-2 rounded-lg"
-                  >
+                  <button type="button" onClick={() => setIsEditing(false)} className="flex-1 bg-gray-300 dark:bg-slate-600 hover:bg-gray-400 text-gray-900 dark:text-white font-semibold py-2 rounded-lg">
                     Cancelar
                   </button>
                 </div>
@@ -351,50 +361,94 @@ export default function GroupDetail() {
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-gray-950 dark:text-white">{group?.name}</h1>
-                  {parentGroup && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      👥 Subgrupo de: <span className="font-semibold">{parentGroup.name}</span>
-                    </p>
-                  )}
-                  {group?.meeting_day && (
-                    <p className="text-gray-600 dark:text-gray-400 mt-2">
-                      {group.meeting_day} às {group.meeting_time || 'Horário não definido'}
-                    </p>
-                  )}
-                  {group?.meeting_address && (
-                    <p className="text-gray-600 dark:text-gray-400">📍 {group.meeting_address}</p>
-                  )}
+                  {parentGroup && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Subgrupo de: <span className="font-semibold">{parentGroup.name}</span></p>}
+                  {group?.meeting_day && <p className="text-gray-600 dark:text-gray-400 mt-2">{group.meeting_day} as {group.meeting_time || 'Horario nao definido'}</p>}
+                  {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400">Endereco: {group.meeting_address}</p>}
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
-                  >
-                    <Edit2 className="w-5 h-5" />
-                    Editar
+                  <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
+                    <Edit2 className="w-5 h-5" />Editar
                   </button>
-                  <button
-                    onClick={handleDeleteGroup}
-                    className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                    Deletar
+                  <button onClick={handleDeleteGroup} className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                    <TrashIcon className="w-5 h-5" />Deletar
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Seção de Membros */}
+          {/* Visao Geral do Grupo */}
+          {members.length > 0 && (
+            <div className="mb-6 space-y-4">
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 border-l-4 border-blue-500 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Total</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{members.length}</p>
+                  </div>
+                  <Users className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                </div>
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 border-l-4 border-green-500 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Membros Ativos</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{activeMembers}</p>
+                  </div>
+                  <UserCheck className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                </div>
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 border-l-4 border-amber-500 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Afastados</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{absentMembers.length}</p>
+                  </div>
+                  <UserMinus className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                </div>
+              </div>
+
+              {/* Acoes Pastorais com IA */}
+              {(birthdayMembers.length > 0 || absentMembers.length > 0) && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-violet-500" />
+                    <h3 className="font-bold text-gray-900 dark:text-white">Acoes Pastorais com IA</h3>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {birthdayMembers.length > 0 && (
+                      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 border-t-4 border-red-400">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Cake className="w-4 h-4 text-red-500" />
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Aniversariantes (7 dias)</h4>
+                          <span className="ml-auto text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full">{birthdayMembers.length}</span>
+                        </div>
+                        <div className="space-y-2">
+                          {birthdayMembers.map((p) => renderAiRow(p, 'aniversario', 'bg-red-50 dark:bg-red-900/10'))}
+                        </div>
+                      </div>
+                    )}
+                    {absentMembers.length > 0 && (
+                      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 border-t-4 border-amber-400">
+                        <div className="flex items-center gap-2 mb-3">
+                          <UserMinus className="w-4 h-4 text-amber-500" />
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Afastados no grupo</h4>
+                          <span className="ml-auto text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">{absentMembers.length}</span>
+                        </div>
+                        <div className="space-y-2">
+                          {absentMembers.map((p) => renderAiRow(p, 'resgate', 'bg-amber-50 dark:bg-amber-900/10'))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Membros */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-950 dark:text-white">Membros ({members.length})</h2>
-              <button
-                onClick={handleOpenAddForm}
-                className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
-              >
-                <Plus className="w-5 h-5" />
-                Adicionar Membro
+              <button onClick={handleOpenAddForm} className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
+                <Plus className="w-5 h-5" />Adicionar Membro
               </button>
             </div>
 
@@ -402,19 +456,12 @@ export default function GroupDetail() {
               <div className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-lg p-6 mb-6 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Adicionar Membro</h3>
-                  <button
-                    onClick={() => setShowAddForm(false)}
-                    className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300"
-                  >
+                  <button onClick={() => setShowAddForm(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-
-                {/* Busca de Pessoas */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Buscar Pessoa
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Buscar Pessoa</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                     <input
@@ -423,17 +470,13 @@ export default function GroupDetail() {
                       value={searchPeople}
                       onChange={(e) => {
                         setSearchPeople(e.target.value);
-                        // Fazer busca automática
                         if (e.target.value.length > 0) {
                           setLoadingPeople(true);
                           setTimeout(() => {
                             const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
                             getPeople(churchId, undefined, e.target.value).then(({ data }) => {
-                              const memberPersonIds = members.map((m) => m.person.id);
-                              const filteredPeople = (data || []).filter(
-                                (person: any) => !memberPersonIds.includes(person.id)
-                              );
-                              setAvailablePeople(filteredPeople);
+                              const ids = members.map((m) => m.person.id);
+                              setAvailablePeople((data || []).filter((p: any) => !ids.includes(p.id)));
                               setLoadingPeople(false);
                             });
                           }, 300);
@@ -441,40 +484,26 @@ export default function GroupDetail() {
                           loadAvailablePeople();
                         }
                       }}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400"
                     />
                   </div>
                 </div>
-
-                {/* Lista de Pessoas Disponíveis */}
                 {loadingPeople ? (
-                  <div className="text-center py-4">
-                    <p className="text-gray-500 dark:text-gray-400">Buscando pessoas...</p>
-                  </div>
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-4">Buscando...</p>
                 ) : availablePeople.length === 0 ? (
-                  <div className="text-center py-4">
-                    <p className="text-gray-500 dark:text-gray-400">
-                      {searchPeople ? 'Nenhuma pessoa encontrada' : 'Nenhuma pessoa disponível'}
-                    </p>
-                  </div>
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                    {searchPeople ? 'Nenhuma pessoa encontrada' : 'Nenhuma pessoa disponivel'}
+                  </p>
                 ) : (
                   <div className="max-h-64 overflow-y-auto space-y-2">
                     {availablePeople.map((person: any) => (
-                      <div
-                        key={person.id}
-                        className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 dark:bg-slate-800 transition"
-                      >
+                      <div key={person.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-600 transition">
                         <div>
                           <p className="font-medium text-gray-900 dark:text-slate-100">{person.full_name}</p>
-                          {person.phone && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{person.phone}</p>
-                          )}
+                          {person.phone && <p className="text-sm text-gray-600 dark:text-gray-400">{person.phone}</p>}
                         </div>
-                        <button
-                          onClick={() => handleAddMember(person.id)}
-                          disabled={addingMember}
-                          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white px-3 py-1 rounded text-sm font-medium"
-                        >
+                        <button onClick={() => handleAddMember(person.id)} disabled={addingMember}
+                          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white px-3 py-1 rounded text-sm font-medium">
                           {addingMember ? 'Adicionando...' : 'Adicionar'}
                         </button>
                       </div>
@@ -489,20 +518,12 @@ export default function GroupDetail() {
             ) : (
               <div className="space-y-2">
                 {members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="bg-gray-50 dark:bg-slate-700 p-4 rounded-lg flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-700 dark:bg-slate-800 transition"
-                  >
+                  <div key={member.id} className="bg-gray-50 dark:bg-slate-700 p-4 rounded-lg flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-600 transition">
                     <div>
-                      <h3 className="font-bold">{member.person.full_name}</h3>
-                      {member.person.phone && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{member.person.phone}</p>
-                      )}
+                      <h3 className="font-bold text-gray-900 dark:text-slate-100">{member.person.full_name}</h3>
+                      {member.person.phone && <p className="text-sm text-gray-600 dark:text-gray-400">{member.person.phone}</p>}
                     </div>
-                    <button
-                      onClick={() => handleRemoveMember(member.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded"
-                    >
+                    <button onClick={() => handleRemoveMember(member.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded">
                       <TrashIcon className="w-5 h-5" />
                     </button>
                   </div>

@@ -21,7 +21,7 @@ export const createGroup = async (churchId: string, data: any) => {
 export const getGroupMembers = async (groupId: string) => {
   return supabase
     .from('group_members')
-    .select('*, person:people(id, full_name, phone, whatsapp)')
+    .select('*, person:people(id, full_name, phone, whatsapp, status, date_of_birth)')
     .eq('group_id', groupId)
     .order('created_at');
 };

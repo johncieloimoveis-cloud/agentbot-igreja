@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
-import { getGroupMembers, removeGroupMember, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups } from '@/services/groups';
+import { getGroupMembers, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups } from '@/services/groups';
 import { getPeople } from '@/services/people';
 import { TrashIcon, Plus, Edit2, X, Search, Sparkles, MessageCircle, Copy, Check, Cake, Users, UserCheck, UserMinus } from 'lucide-react';
 
@@ -158,8 +158,16 @@ export default function GroupDetail() {
   // --- Handlers existentes ---
   const handleRemoveMember = async (memberId: string) => {
     if (!confirm('Remover membro do grupo?')) return;
-    try { await removeGroupMember(memberId); loadGroupData(); }
-    catch (error) { console.error('Erro:', error); setError('Erro ao remover membro'); }
+    try {
+      const res = await fetch('/api/groups/remove-member', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ membershipId: memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      loadGroupData();
+    } catch (error) { console.error('Erro:', error); setError('Erro ao remover membro'); }
   };
 
   const handleUpdateGroup = async (e: React.FormEvent) => {

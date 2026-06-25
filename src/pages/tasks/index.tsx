@@ -47,10 +47,17 @@ export default function TasksList() {
   const handleDeleteTask = async (taskId: string) => {
     if (!confirm('Deletar esta tarefa?')) return;
     try {
-      await deleteTask(taskId);
+      const res = await fetch('/api/tasks/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
       loadTasks();
     } catch (error) {
-      console.error('Erro:', error);
+      console.error('Erro ao deletar tarefa:', error);
+      alert('Erro ao deletar tarefa');
     }
   };
   const getPriorityColor = (priority: string) => {

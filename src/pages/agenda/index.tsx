@@ -3,12 +3,13 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import {
   getRecurringEvents, generateMonthInstances, generateInstances, getRecurrenceLabel,
-  RecurringEvent, EventInstance
+  groupToRecurringEvent, RecurringEvent, EventInstance
 } from '@/services/agenda';
 import { createAttendanceEvent, getAttendanceEvents } from '@/services/attendance';
+import { getGroups } from '@/services/groups';
 import {
   Plus, ChevronLeft, ChevronRight, Calendar, List,
-  Clock, MapPin, Users, User, Repeat, Check
+  Clock, MapPin, Users, User, Repeat, Check, Building2
 } from 'lucide-react';
 
 const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
@@ -25,7 +26,7 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   culto: 'Culto',
-  gceu: 'GCEU',
+  gceu: 'GCEU / Grupo',
   missoes: 'Missões',
   evangelismo: 'Evangelismo',
   estudo_biblico: 'Estudo Bíblico',
@@ -47,29 +48,39 @@ export default function AgendaPage() {
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [events, setEvents] = useState<RecurringEvent[]>([]);
+
+  const [manualEvents, setManualEvents] = useState<RecurringEvent[]>([]);
+  const [groupEvents, setGroupEvents] = useState<RecurringEvent[]>([]);
+  const [allEvents, setAllEvents] = useState<RecurringEvent[]>([]);
   const [instances, setInstances] = useState<EventInstance[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [attendanceEvents, setAttendanceEvents] = useState<any[]>([]);
   const [creatingAttendance, setCreatingAttendance] = useState<string | null>(null);
-  const [created, setCreated] = useState<Record<string, string>>({}); // instanceKey → attendanceEventId
 
-  useEffect(() => { if (user) loadEvents(); }, [user]);
+  useEffect(() => { if (user) loadAll(); }, [user]);
+
   useEffect(() => {
-    setInstances(generateMonthInstances(events, currentYear, currentMonth));
+    const merged = [...manualEvents, ...groupEvents];
+    setAllEvents(merged);
+    setInstances(generateMonthInstances(merged, currentYear, currentMonth));
     setSelectedDay(null);
-  }, [events, currentYear, currentMonth]);
+  }, [manualEvents, groupEvents, currentYear, currentMonth]);
 
-  useEffect(() => {
-    loadAttendanceEvents();
-  }, [currentYear, currentMonth]);
+  useEffect(() => { loadAttendanceEvents(); }, [currentYear, currentMonth]);
 
-  const loadEvents = async () => {
+  const loadAll = async () => {
     setLoading(true);
     try {
-      const { data } = await getRecurringEvents(CHURCH_ID);
-      setEvents(data || []);
+      const [{ data: evData }, { data: grpData }] = await Promise.all([
+        getRecurringEvents(CHURCH_ID),
+        getGroups(CHURCH_ID),
+      ]);
+      setManualEvents(evData || []);
+      // Grupos com meeting_day definido → gerar eventos automáticos
+      const withDay = (grpData || []).filter((g: any) => g.meeting_day);
+      setGroupEvents(withDay.map(groupToRecurringEvent));
     } finally { setLoading(false); }
   };
 
@@ -130,7 +141,7 @@ export default function AgendaPage() {
   const listStart = new Date(today); listStart.setHours(0,0,0,0);
   const listEnd = new Date(listStart); listEnd.setDate(listEnd.getDate() + 27);
   const listInstances: EventInstance[] = [];
-  for (const ev of events) {
+  for (const ev of allEvents) {
     const dates = generateInstances(ev, listStart, listEnd);
     for (const date of dates) listInstances.push({ date, recurring_event: ev });
   }
@@ -152,9 +163,65 @@ export default function AgendaPage() {
 
   if (!user) return null;
 
+  // Card de detalhe de instância
+  const renderInstanceCard = (inst: EventInstance, idx: number) => {
+    const ae = findAttendanceEvent(inst);
+    const key = instanceKey(inst);
+    const fromGroup = inst.recurring_event._from_group;
+    return (
+      <div key={idx} className="border border-gray-100 dark:border-slate-700 rounded-lg p-3">
+        <div className="flex items-start gap-2 mb-2">
+          <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${EVENT_TYPE_COLORS[inst.recurring_event.event_type] || 'bg-gray-500'}`} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-gray-900 dark:text-white text-sm">{inst.recurring_event.title}</p>
+              {fromGroup && (
+                <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded-full font-medium">grupo</span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{EVENT_TYPE_LABELS[inst.recurring_event.event_type] || inst.recurring_event.event_type}</p>
+          </div>
+        </div>
+        {inst.recurring_event.start_time && (
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <Clock className="w-3 h-3" />
+            {inst.recurring_event.start_time.slice(0,5)}
+            {inst.recurring_event.end_time && ` – ${inst.recurring_event.end_time.slice(0,5)}`}
+          </div>
+        )}
+        {inst.recurring_event.location && (
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <MapPin className="w-3 h-3" />{inst.recurring_event.location}
+          </div>
+        )}
+        {inst.recurring_event.leader && (
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <User className="w-3 h-3" />{inst.recurring_event.leader.full_name}
+          </div>
+        )}
+        {inst.recurring_event.group && (
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <Users className="w-3 h-3" />{inst.recurring_event.group.name}
+          </div>
+        )}
+        <button
+          onClick={() => handleOpenAttendance(inst)}
+          disabled={creatingAttendance === key}
+          className={`w-full text-xs font-semibold py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors
+            ${ae ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200' : 'bg-primary-600 hover:bg-primary-700 text-white'}`}
+        >
+          {creatingAttendance === key ? (
+            <><div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />Abrindo...</>
+          ) : ae ? (
+            <><Check className="w-3 h-3" />Ver Frequência</>
+          ) : 'Registrar Frequência'}
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-950 dark:text-white">Agenda</h1>
         <button
@@ -167,31 +234,26 @@ export default function AgendaPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-lg mb-6 w-fit">
-        <button
-          onClick={() => setView('calendar')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${view === 'calendar' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-        >
-          <Calendar className="w-4 h-4" />Calendário
-        </button>
-        <button
-          onClick={() => setView('list')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${view === 'list' ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-        >
-          <List className="w-4 h-4" />Lista
-        </button>
+        {(['calendar','list'] as const).map(v => (
+          <button key={v} onClick={() => setView(v)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors
+              ${view === v ? 'bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+          >
+            {v === 'calendar' ? <><Calendar className="w-4 h-4" />Calendário</> : <><List className="w-4 h-4" />Lista</>}
+          </button>
+        ))}
       </div>
 
       {loading ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 mx-auto mb-3" />
-          Carregando...
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 mx-auto mb-3" />Carregando...
         </div>
-      ) : events.length === 0 ? (
+      ) : allEvents.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-xl shadow">
           <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">Nenhum evento cadastrado</p>
-          <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">Crie o primeiro evento recorrente da sua igreja</p>
-          <button onClick={() => router.push('/agenda/new')} className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium">
+          <p className="text-gray-400 dark:text-gray-500 text-sm mb-1">Crie um evento recorrente ou configure o dia de reunião de um grupo.</p>
+          <button onClick={() => router.push('/agenda/new')} className="mt-4 bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium">
             Criar Evento
           </button>
         </div>
@@ -199,56 +261,45 @@ export default function AgendaPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendário */}
           <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl shadow p-6">
-            {/* Nav mês */}
             <div className="flex items-center justify-between mb-6">
               <button onClick={prevMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg">
                 <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {MONTH_NAMES[currentMonth]} {currentYear}
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{MONTH_NAMES[currentMonth]} {currentYear}</h2>
               <button onClick={nextMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg">
                 <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
             </div>
 
-            {/* Grid dias da semana */}
             <div className="grid grid-cols-7 mb-2">
               {DAY_NAMES_SHORT.map(d => (
                 <div key={d} className="text-center text-xs font-semibold text-gray-400 dark:text-gray-500 py-2">{d}</div>
               ))}
             </div>
 
-            {/* Grid dias */}
             <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} />)}
+              {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`e-${i}`} />)}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const dayInsts = instancesByDay[day] || [];
                 const isSelected = selectedDay === day;
-                const todayClass = isToday(day);
+                const todayMark = isToday(day);
                 return (
-                  <button
-                    key={day}
-                    onClick={() => setSelectedDay(isSelected ? null : day)}
+                  <button key={day} onClick={() => setSelectedDay(isSelected ? null : day)}
                     className={`relative min-h-[60px] p-1 rounded-lg border transition-all text-left
                       ${isSelected ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-transparent hover:border-gray-200 dark:hover:border-slate-600'}
-                      ${todayClass ? 'ring-2 ring-primary-500' : ''}
-                    `}
+                      ${todayMark ? 'ring-2 ring-primary-500' : ''}`}
                   >
                     <span className={`text-sm font-semibold block mb-1 w-6 h-6 flex items-center justify-center rounded-full
-                      ${todayClass ? 'bg-primary-600 text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                      {day}
-                    </span>
+                      ${todayMark ? 'bg-primary-600 text-white' : 'text-gray-700 dark:text-gray-300'}`}>{day}</span>
                     <div className="space-y-0.5">
                       {dayInsts.slice(0,3).map((inst, idx) => (
-                        <div key={idx} className={`text-[10px] text-white px-1 rounded truncate ${EVENT_TYPE_COLORS[inst.recurring_event.event_type] || 'bg-gray-500'}`}>
+                        <div key={idx} className={`text-[10px] text-white px-1 rounded truncate flex items-center gap-0.5 ${EVENT_TYPE_COLORS[inst.recurring_event.event_type] || 'bg-gray-500'}`}>
+                          {inst.recurring_event._from_group && <span className="opacity-80">👥</span>}
                           {inst.recurring_event.title}
                         </div>
                       ))}
-                      {dayInsts.length > 3 && (
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">+{dayInsts.length - 3}</div>
-                      )}
+                      {dayInsts.length > 3 && <div className="text-[10px] text-gray-500 dark:text-gray-400">+{dayInsts.length - 3}</div>}
                     </div>
                   </button>
                 );
@@ -256,74 +307,17 @@ export default function AgendaPage() {
             </div>
           </div>
 
-          {/* Painel lateral — eventos do dia / legenda */}
+          {/* Painel lateral */}
           <div className="space-y-4">
             {selectedDay && selectedInstances.length > 0 ? (
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-5">
-                <h3 className="font-bold text-gray-900 dark:text-white mb-4">
-                  {selectedDay} de {MONTH_NAMES[currentMonth]}
-                </h3>
-                <div className="space-y-3">
-                  {selectedInstances.map((inst, idx) => {
-                    const ae = findAttendanceEvent(inst);
-                    const key = instanceKey(inst);
-                    return (
-                      <div key={idx} className="border border-gray-100 dark:border-slate-700 rounded-lg p-3">
-                        <div className="flex items-start gap-2 mb-2">
-                          <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${EVENT_TYPE_COLORS[inst.recurring_event.event_type] || 'bg-gray-500'}`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 dark:text-white text-sm">{inst.recurring_event.title}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{EVENT_TYPE_LABELS[inst.recurring_event.event_type] || inst.recurring_event.event_type}</p>
-                          </div>
-                        </div>
-                        {inst.recurring_event.start_time && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            <Clock className="w-3 h-3" />
-                            {inst.recurring_event.start_time.slice(0,5)}
-                            {inst.recurring_event.end_time && ` – ${inst.recurring_event.end_time.slice(0,5)}`}
-                          </div>
-                        )}
-                        {inst.recurring_event.location && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            <MapPin className="w-3 h-3" />
-                            {inst.recurring_event.location}
-                          </div>
-                        )}
-                        {inst.recurring_event.leader && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            <User className="w-3 h-3" />
-                            {inst.recurring_event.leader.full_name}
-                          </div>
-                        )}
-                        {inst.recurring_event.group && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
-                            <Users className="w-3 h-3" />
-                            {inst.recurring_event.group.name}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleOpenAttendance(inst)}
-                          disabled={creatingAttendance === key}
-                          className={`w-full text-xs font-semibold py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-colors
-                            ${ae ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200' : 'bg-primary-600 hover:bg-primary-700 text-white'}`}
-                        >
-                          {creatingAttendance === key ? (
-                            <><div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />Abrindo...</>
-                          ) : ae ? (
-                            <><Check className="w-3 h-3" />Ver Frequência</>
-                          ) : (
-                            'Registrar Frequência'
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-4">{selectedDay} de {MONTH_NAMES[currentMonth]}</h3>
+                <div className="space-y-3">{selectedInstances.map(renderInstanceCard)}</div>
               </div>
             ) : (
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-5">
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Clique em um dia para ver os eventos</p>
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-3 text-sm">Tipos de evento</h3>
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-3 text-sm">Legenda</h3>
                 <div className="space-y-2">
                   {Object.entries(EVENT_TYPE_LABELS).map(([key, label]) => (
                     <div key={key} className="flex items-center gap-2">
@@ -331,36 +325,62 @@ export default function AgendaPage() {
                       <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
                     </div>
                   ))}
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-slate-700">
+                    <span className="text-xs">👥</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Reunião de grupo automática</span>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Eventos recorrentes cadastrados */}
+            {/* Eventos cadastrados */}
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm">Eventos cadastrados</h3>
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm">Eventos recorrentes</h3>
                 <Repeat className="w-4 h-4 text-gray-400" />
               </div>
-              <div className="space-y-2">
-                {events.map(ev => (
-                  <div
-                    key={ev.id}
-                    onClick={() => router.push(`/agenda/${ev.id}`)}
-                    className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer"
-                  >
-                    <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${EVENT_TYPE_COLORS[ev.event_type] || 'bg-gray-500'}`} />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{ev.title}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{getRecurrenceLabel(ev)}</p>
+              {manualEvents.length === 0 ? (
+                <p className="text-xs text-gray-400 dark:text-gray-500">Nenhum evento criado manualmente</p>
+              ) : (
+                <div className="space-y-2">
+                  {manualEvents.map(ev => (
+                    <div key={ev.id} onClick={() => router.push(`/agenda/${ev.id}`)}
+                      className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer">
+                      <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${EVENT_TYPE_COLORS[ev.event_type] || 'bg-gray-500'}`} />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{ev.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{getRecurrenceLabel(ev)}</p>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              )}
+              {/* Grupos automáticos */}
+              {groupEvents.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 mt-4 mb-2 pt-3 border-t border-gray-100 dark:border-slate-700">
+                    <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Grupos</span>
                   </div>
-                ))}
-              </div>
+                  <div className="space-y-2">
+                    {groupEvents.map(ev => (
+                      <div key={ev.id} onClick={() => router.push(`/groups/${ev.group_id}`)}
+                        className="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer">
+                        <div className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 bg-green-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{ev.title}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{getRecurrenceLabel(ev)}{ev.start_time ? ` · ${ev.start_time.slice(0,5)}` : ''}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       ) : (
-        /* VIEW LISTA */
+        /* LISTA */
         <div className="space-y-6">
           {weekGroups.filter(Boolean).map((group, gi) => (
             <div key={gi}>
@@ -371,18 +391,20 @@ export default function AgendaPage() {
                   const key = instanceKey(inst);
                   return (
                     <div key={idx} className="bg-white dark:bg-slate-800 rounded-xl shadow p-4 flex items-center gap-4">
-                      {/* Data */}
                       <div className="flex-shrink-0 text-center w-14">
                         <p className="text-xs text-gray-500 dark:text-gray-400">{DAY_NAMES_SHORT[inst.date.getDay()]}</p>
                         <p className="text-2xl font-bold text-gray-900 dark:text-white leading-none">{inst.date.getDate()}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{MONTH_NAMES[inst.date.getMonth()].slice(0,3)}</p>
                       </div>
-                      {/* Cor */}
                       <div className={`w-1 self-stretch rounded-full ${EVENT_TYPE_COLORS[inst.recurring_event.event_type] || 'bg-gray-400'}`} />
-                      {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-white">{inst.recurring_event.title}</p>
-                        <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900 dark:text-white">{inst.recurring_event.title}</p>
+                          {inst.recurring_event._from_group && (
+                            <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded-full">grupo</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                           {inst.recurring_event.start_time && (
                             <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                               <Clock className="w-3 h-3" />{inst.recurring_event.start_time.slice(0,5)}
@@ -393,14 +415,8 @@ export default function AgendaPage() {
                               <MapPin className="w-3 h-3" />{inst.recurring_event.location}
                             </span>
                           )}
-                          {inst.recurring_event.leader && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                              <User className="w-3 h-3" />{inst.recurring_event.leader.full_name}
-                            </span>
-                          )}
                         </div>
                       </div>
-                      {/* Botão frequência */}
                       <button
                         onClick={() => handleOpenAttendance(inst)}
                         disabled={creatingAttendance === key}

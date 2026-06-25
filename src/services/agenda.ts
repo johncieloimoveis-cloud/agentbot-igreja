@@ -17,8 +17,10 @@ export interface RecurringEvent {
   location?: string;
   group_id?: string;
   leader_id?: string;
+  people_ids?: string[];
   notes?: string;
   is_active: boolean;
+  _from_group?: boolean;      // true = gerado automaticamente do grupo
   // joins
   group?: { id: string; name: string };
   leader?: { id: string; full_name: string };
@@ -72,6 +74,29 @@ export const deleteRecurringEvent = async (id: string) => {
     .update({ is_active: false })
     .eq('id', id);
 };
+
+// ---------- Grupos → RecurringEvent ----------
+
+const GROUP_DAY_MAP: Record<string, number> = {
+  domingo: 0, segunda: 1, terca: 2, quarta: 3,
+  quinta: 4, sexta: 5, sabado: 6,
+};
+
+export const groupToRecurringEvent = (group: any): RecurringEvent => ({
+  id: `group_${group.id}`,
+  church_id: group.church_id || '',
+  title: group.name,
+  event_type: 'gceu',
+  recurrence: 'weekly',
+  day_of_week: GROUP_DAY_MAP[group.meeting_day] ?? 0,
+  start_time: group.meeting_time || undefined,
+  end_time: undefined,
+  location: group.meeting_address || undefined,
+  group_id: group.id,
+  group: { id: group.id, name: group.name },
+  is_active: true,
+  _from_group: true,
+});
 
 // ---------- Geração de instâncias ----------
 

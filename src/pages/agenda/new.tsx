@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createRecurringEvent, Recurrence } from '@/services/agenda';
 import { getGroups } from '@/services/groups';
 import { getPeople } from '@/services/people';
+import { Users, User, Check, Search } from 'lucide-react';
 
 const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
 
@@ -39,28 +40,46 @@ export default function NewAgendaEvent() {
     start_time: '',
     end_time: '',
     location: '',
-    group_id: '',
-    leader_id: '',
     notes: '',
   });
+
+  // Associação: grupo OU pessoas
+  const [associationType, setAssociationType] = useState<'group' | 'people'>('group');
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [selectedPeopleIds, setSelectedPeopleIds] = useState<string[]>([]);
+  const [peopleSearch, setPeopleSearch] = useState('');
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [groups, setGroups] = useState<any[]>([]);
-  const [people, setPeople] = useState<any[]>([]);
+  const [allPeople, setAllPeople] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
     getGroups(CHURCH_ID).then(({ data }) => setGroups(data || []));
-    getPeople(CHURCH_ID).then(({ data }) => setPeople(data || []));
+    getPeople(CHURCH_ID).then(({ data }) => setAllPeople(data || []));
   }, [user]);
 
   const set = (field: string, value: any) => setForm(f => ({ ...f, [field]: value }));
+
+  const filteredPeople = allPeople.filter(p =>
+    p.full_name.toLowerCase().includes(peopleSearch.toLowerCase())
+  );
+
+  const togglePerson = (id: string) => {
+    setSelectedPeopleIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!form.title.trim()) { setError('Título é obrigatório'); return; }
     if (form.recurrence === 'once' && !form.event_date) { setError('Informe a data do evento'); return; }
+    if (associationType === 'people' && selectedPeopleIds.length === 0) {
+      setError('Selecione ao menos uma pessoa'); return;
+    }
 
     setSaving(true);
     try {
@@ -71,10 +90,11 @@ export default function NewAgendaEvent() {
         start_time: form.start_time || null,
         end_time: form.end_time || null,
         location: form.location || null,
-        group_id: form.group_id || null,
-        leader_id: form.leader_id || null,
         notes: form.notes || null,
+        group_id: associationType === 'group' ? (selectedGroupId || null) : null,
+        people_ids: associationType === 'people' ? selectedPeopleIds : [],
       };
+
       if (form.recurrence === 'weekly') {
         payload.day_of_week = form.day_of_week;
       } else if (form.recurrence === 'monthly_weekday') {
@@ -106,7 +126,7 @@ export default function NewAgendaEvent() {
       <h1 className="text-3xl font-bold text-gray-950 dark:text-white mb-6">Novo Evento</h1>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-6 text-red-700">{error}</div>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-6 text-red-700 text-sm">{error}</div>
       )}
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-xl shadow p-6 space-y-5">
@@ -132,7 +152,7 @@ export default function NewAgendaEvent() {
             className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="culto">⛪ Culto</option>
-            <option value="gceu">👥 GCEU</option>
+            <option value="gceu">👥 GCEU / Grupo</option>
             <option value="missoes">🌍 Missões</option>
             <option value="evangelismo">📢 Evangelismo</option>
             <option value="estudo_biblico">📖 Estudo Bíblico</option>
@@ -143,30 +163,28 @@ export default function NewAgendaEvent() {
 
         {/* Recorrência */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recorrência *</label>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recorrência *</label>
+          <div className="grid grid-cols-2 gap-2">
             {[
-              { value: 'weekly', label: '📅 Semanal' },
-              { value: 'monthly_weekday', label: '📆 Mensal (dia da semana)' },
-              { value: 'monthly_date', label: '🗓 Mensal (data fixa)' },
-              { value: 'once', label: '📌 Eventual' },
+              { value: 'weekly', label: '📅 Semanal', desc: 'Ex: toda terça' },
+              { value: 'monthly_weekday', label: '📆 Mensal (dia)', desc: 'Ex: 1º domingo' },
+              { value: 'monthly_date', label: '🗓 Mensal (data)', desc: 'Ex: todo dia 15' },
+              { value: 'once', label: '📌 Eventual', desc: 'Uma data específica' },
             ].map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => set('recurrence', opt.value)}
-                className={`px-3 py-2 rounded-lg border text-sm font-medium text-center transition-colors
+              <button key={opt.value} type="button" onClick={() => set('recurrence', opt.value)}
+                className={`px-3 py-2.5 rounded-lg border text-left transition-colors
                   ${form.recurrence === opt.value
                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                     : 'border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:border-gray-400'}`}
               >
-                {opt.label}
+                <div className="text-sm font-medium">{opt.label}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{opt.desc}</div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Campos condicionais de recorrência */}
+        {/* Campos condicionais */}
         {form.recurrence === 'weekly' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dia da semana</label>
@@ -180,7 +198,7 @@ export default function NewAgendaEvent() {
         {form.recurrence === 'monthly_weekday' && (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Semana do mês</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Semana</label>
               <select value={form.week_of_month} onChange={e => set('week_of_month', Number(e.target.value))}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                 {WEEK_OPTIONS.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
@@ -193,8 +211,8 @@ export default function NewAgendaEvent() {
                 {DAY_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
               </select>
             </div>
-            <p className="col-span-2 text-xs text-gray-500 dark:text-gray-400">
-              Ex: "{WEEK_OPTIONS[form.week_of_month-1]?.label} {DAY_OPTIONS[form.day_of_week]?.label} de cada mês"
+            <p className="col-span-2 text-xs text-gray-500 dark:text-gray-400 -mt-2">
+              → {WEEK_OPTIONS[form.week_of_month - 1]?.label} {DAY_OPTIONS[form.day_of_week]?.label} de cada mês
             </p>
           </div>
         )}
@@ -239,24 +257,80 @@ export default function NewAgendaEvent() {
             className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
         </div>
 
-        {/* Grupo */}
+        {/* Associação: Grupo OU Pessoas */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grupo responsável</label>
-          <select value={form.group_id} onChange={e => set('group_id', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-            <option value="">Nenhum</option>
-            {groups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
-        </div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Participantes</label>
+          <div className="flex gap-2 mb-3">
+            <button type="button" onClick={() => setAssociationType('group')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-medium transition-colors
+                ${associationType === 'group'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                  : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-400 hover:border-gray-400'}`}
+            >
+              <Users className="w-4 h-4" />Grupo
+            </button>
+            <button type="button" onClick={() => setAssociationType('people')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-medium transition-colors
+                ${associationType === 'people'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                  : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-400 hover:border-gray-400'}`}
+            >
+              <User className="w-4 h-4" />Pessoas específicas
+            </button>
+          </div>
 
-        {/* Líder */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Líder / Responsável</label>
-          <select value={form.leader_id} onChange={e => set('leader_id', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-            <option value="">Nenhum</option>
-            {people.map((p: any) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
-          </select>
+          {associationType === 'group' ? (
+            <select value={selectedGroupId} onChange={e => setSelectedGroupId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <option value="">Nenhum (evento geral)</option>
+              {groups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+          ) : (
+            <div className="border border-gray-200 dark:border-slate-600 rounded-lg overflow-hidden">
+              {/* Busca */}
+              <div className="relative border-b border-gray-200 dark:border-slate-600">
+                <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar pessoa..."
+                  value={peopleSearch}
+                  onChange={e => setPeopleSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:outline-none"
+                />
+              </div>
+              {/* Lista */}
+              <div className="max-h-48 overflow-y-auto">
+                {filteredPeople.length === 0 ? (
+                  <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-4">Nenhuma pessoa encontrada</p>
+                ) : filteredPeople.map((p: any) => {
+                  const selected = selectedPeopleIds.includes(p.id);
+                  return (
+                    <button key={p.id} type="button" onClick={() => togglePerson(p.id)}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors text-sm
+                        ${selected ? 'bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                    >
+                      <span className={selected ? 'text-primary-700 dark:text-primary-300 font-medium' : 'text-gray-800 dark:text-gray-200'}>
+                        {p.full_name}
+                      </span>
+                      {selected && <Check className="w-4 h-4 text-primary-600 dark:text-primary-400 flex-shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Contador */}
+              {selectedPeopleIds.length > 0 && (
+                <div className="px-4 py-2 bg-primary-50 dark:bg-primary-900/20 border-t border-gray-200 dark:border-slate-600">
+                  <span className="text-xs text-primary-700 dark:text-primary-300 font-medium">
+                    {selectedPeopleIds.length} pessoa{selectedPeopleIds.length > 1 ? 's' : ''} selecionada{selectedPeopleIds.length > 1 ? 's' : ''}
+                  </span>
+                  <button type="button" onClick={() => setSelectedPeopleIds([])}
+                    className="ml-3 text-xs text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400">
+                    Limpar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Observações */}

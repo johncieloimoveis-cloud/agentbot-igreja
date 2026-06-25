@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import {
   getRecurringEvents, generateMonthInstances, generateInstances, getRecurrenceLabel,
-  groupToRecurringEvent, RecurringEvent, EventInstance
+  groupToRecurringEvents, RecurringEvent, EventInstance
 } from '@/services/agenda';
 import { createAttendanceEvent, getAttendanceEvents } from '@/services/attendance';
 import { getGroups } from '@/services/groups';
@@ -78,9 +78,12 @@ export default function AgendaPage() {
         getGroups(CHURCH_ID),
       ]);
       setManualEvents(evData || []);
-      // Grupos com meeting_day definido → gerar eventos automáticos
-      const withDay = (grpData || []).filter((g: any) => g.meeting_day);
-      setGroupEvents(withDay.map(groupToRecurringEvent));
+      // Grupos → gerar eventos automáticos (via group_meetings ou meeting_day)
+      const eventsFromGroups: RecurringEvent[] = [];
+      for (const group of (grpData || [])) {
+        eventsFromGroups.push(...groupToRecurringEvents(group));
+      }
+      setGroupEvents(eventsFromGroups);
     } finally { setLoading(false); }
   };
 

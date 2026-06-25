@@ -82,6 +82,7 @@ const GROUP_DAY_MAP: Record<string, number> = {
   quinta: 4, sexta: 5, sabado: 6,
 };
 
+// Grupo com meeting_day direto no cadastro
 export const groupToRecurringEvent = (group: any): RecurringEvent => ({
   id: `group_${group.id}`,
   church_id: group.church_id || '',
@@ -97,6 +98,40 @@ export const groupToRecurringEvent = (group: any): RecurringEvent => ({
   is_active: true,
   _from_group: true,
 });
+
+// Entrada da tabela group_meetings (um grupo pode ter vários dias)
+export const groupMeetingToRecurringEvent = (group: any, meeting: any): RecurringEvent => ({
+  id: `gm_${meeting.id}`,
+  church_id: group.church_id || '',
+  title: group.name,
+  event_type: 'gceu',
+  recurrence: 'weekly',
+  day_of_week: GROUP_DAY_MAP[meeting.day_of_week] ?? 0,
+  start_time: meeting.time || undefined,
+  end_time: undefined,
+  location: meeting.location || group.meeting_address || undefined,
+  group_id: group.id,
+  group: { id: group.id, name: group.name },
+  is_active: true,
+  _from_group: true,
+});
+
+// Converte um grupo (com ou sem group_meetings) em lista de RecurringEvents
+export const groupToRecurringEvents = (group: any): RecurringEvent[] => {
+  const results: RecurringEvent[] = [];
+  // Prioriza group_meetings se existirem
+  if (group.meetings && group.meetings.length > 0) {
+    for (const meeting of group.meetings) {
+      if (meeting.day_of_week) {
+        results.push(groupMeetingToRecurringEvent(group, meeting));
+      }
+    }
+  } else if (group.meeting_day) {
+    // Fallback: campo direto no grupo
+    results.push(groupToRecurringEvent(group));
+  }
+  return results;
+};
 
 // ---------- Geração de instâncias ----------
 

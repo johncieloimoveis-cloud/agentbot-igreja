@@ -111,12 +111,12 @@ export default function AgendaPage() {
     setCreatingAttendance(key);
     try {
       const dateStr = inst.date.toISOString().slice(0,10);
-      const { data } = await createAttendanceEvent(CHURCH_ID, {
+      const { data, error } = await createAttendanceEvent(CHURCH_ID, {
+        name: inst.recurring_event.title,
         event_type: inst.recurring_event.event_type,
         event_date: dateStr,
-        title: inst.recurring_event.title,
-        location: inst.recurring_event.location || null,
       });
+      if (error) throw error;
       if (data?.id) router.push(`/attendance/${data.id}`);
     } finally { setCreatingAttendance(null); }
   };

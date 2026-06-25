@@ -107,8 +107,13 @@ export default function TaskDetail() {
   const handleDeleteTask = async () => {
     if (!confirm('Deletar esta tarefa?')) return;
     try {
-      const { error: err } = await deleteTask(id as string);
-      if (err) throw err;
+      const res = await fetch('/api/tasks/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
       router.push('/tasks');
     } catch (error) {
       console.error('Erro:', error);

@@ -10,6 +10,7 @@ interface Meeting {
   day_of_week: string;
   time: string;
   description: string;
+  event_type: string;
 }
 
 export default function NewGroup() {
@@ -26,6 +27,7 @@ export default function NewGroup() {
     day_of_week: '',
     time: '',
     description: '',
+    event_type: 'gceu',
   });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -61,7 +63,7 @@ export default function NewGroup() {
       return;
     }
     setMeetings([...meetings, { ...newMeeting, id: Date.now().toString() }]);
-    setNewMeeting({ day_of_week: '', time: '', description: '' });
+    setNewMeeting({ day_of_week: '', time: '', description: '', event_type: 'gceu' });
     setError('');
   };
 
@@ -111,6 +113,7 @@ export default function NewGroup() {
           day_of_week: meeting.day_of_week,
           time: meeting.time,
           description: meeting.description || null,
+          event_type: meeting.event_type || 'gceu',
         });
         if (meetingError) console.error('Erro ao adicionar reunião:', meetingError);
       }
@@ -259,16 +262,35 @@ export default function NewGroup() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Descrição (ex: Culto, Oração)
+                  Tipo de evento
                 </label>
-                <input
-                  type="text"
-                  value={newMeeting.description}
-                  onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })}
+                <select
+                  value={newMeeting.event_type}
+                  onChange={(e) => setNewMeeting({ ...newMeeting, event_type: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Culto, Oração, etc"
-                />
+                >
+                  <option value="culto">⛪ Culto</option>
+                  <option value="gceu">👥 GCEU / Grupo</option>
+                  <option value="missoes">🌍 Missões</option>
+                  <option value="evangelismo">📢 Evangelismo</option>
+                  <option value="estudo_biblico">📖 Estudo Bíblico</option>
+                  <option value="reuniao_ministerio">🙏 Reunião de Ministério</option>
+                  <option value="outro">📋 Outro</option>
+                </select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Descrição (opcional)
+              </label>
+              <input
+                type="text"
+                value={newMeeting.description}
+                onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Observação opcional"
+              />
             </div>
 
             <button

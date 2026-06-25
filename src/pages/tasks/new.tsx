@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createTask } from '@/services/tasks';
 import { getPeople } from '@/services/people';
 import { AlertCircle } from 'lucide-react';
+import { HelpTooltip } from '@/components/HelpTooltip';
 export default function NewTask() {
   const router = useRouter();
   const { user } = useAuth();
@@ -85,8 +86,9 @@ export default function NewTask() {
         <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
           {/* Título */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Título da Tarefa *
+              <HelpTooltip text="Descrição curta e clara da ação a ser feita. Ex: Ligar para João Silva, Visitar família Pereira." />
             </label>
             <input
               type="text"
@@ -98,8 +100,9 @@ export default function NewTask() {
           </div>
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Descrição
+              <HelpTooltip text="Contexto adicional sobre a tarefa. Ex: João está afastado há 3 semanas, última visita foi em março." />
             </label>
             <textarea
               value={formData.description}
@@ -111,8 +114,9 @@ export default function NewTask() {
           </div>
           {/* Pessoa */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Relacionado a Pessoa
+              <HelpTooltip text="Vincule a tarefa a um membro. O botão de Mensagem IA usará o nome e contexto desta pessoa para gerar a mensagem pastoral." />
             </label>
             <select
               value={formData.person_id}
@@ -130,8 +134,9 @@ export default function NewTask() {
           </div>
           {/* Prioridade */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Prioridade
+              <HelpTooltip text="Alta: urgente, fazer hoje. Média: importante, fazer esta semana. Baixa: quando possível." />
             </label>
             <select
               value={formData.priority}
@@ -145,8 +150,9 @@ export default function NewTask() {
           </div>
           {/* Data de Vencimento */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Data de Vencimento
+              <HelpTooltip text="Prazo para concluir a tarefa. Tarefas vencidas aparecem em destaque na lista." />
             </label>
             <input
               type="date"

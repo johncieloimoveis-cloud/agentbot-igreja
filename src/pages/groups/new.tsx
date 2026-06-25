@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createGroup, getGroups, addGroupMeeting } from '@/services/groups';
 import { getPeople } from '@/services/people';
 import { Trash2 } from 'lucide-react';
+import { HelpTooltip } from '@/components/HelpTooltip';
 
 interface Meeting {
   id?: string;
@@ -159,8 +160,9 @@ export default function NewGroup() {
 
       <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Nome do Grupo *
+            <HelpTooltip text="Nome do grupo como aparecerá no sistema. Ex: GCEU Zona Norte, Ministério de Louvor, IMW Ibaiti." />
           </label>
           <input
             type="text"
@@ -172,8 +174,9 @@ export default function NewGroup() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Líder do Grupo *
+            <HelpTooltip text="Pessoa responsável pelo grupo. Receberá notificações e aparecerá como referência nos relatórios." />
           </label>
           <select
             value={formData.leader_id}
@@ -191,8 +194,9 @@ export default function NewGroup() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Grupo Pai (Opcional)
+            <HelpTooltip text="Se este grupo pertence a outro maior. Ex: GCEU Zona Norte pode ser filho de IMW Ibaiti. Usado para organizar o organograma da igreja." />
           </label>
           <select
             value={formData.parent_group_id}
@@ -210,8 +214,9 @@ export default function NewGroup() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Endereço
+            <HelpTooltip text="Local onde o grupo se reúne habitualmente. Aparece no calendário ao clicar no evento." />
           </label>
           <input
             type="text"
@@ -224,12 +229,16 @@ export default function NewGroup() {
 
         {/* Reuniões */}
         <div className="border-t border-gray-200 dark:border-slate-700 pt-6">
-          <h3 className="text-lg font-semibold text-gray-950 dark:text-white mb-4">Dias de Reunião</h3>
+          <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-950 dark:text-white mb-4">
+            Dias de Reunião
+            <HelpTooltip text="Configure quantos dias de reunião o grupo tiver. Ex: um GCEU que se reúne toda terça às 20h, ou uma Igreja que tem culto domingo e quarta." />
+          </h3>
 
           <div className="space-y-3 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Dia da Semana *
+                <HelpTooltip text="Dia da semana em que este encontro acontece. O calendário usará este dado para gerar automaticamente as datas do mês." />
               </label>
               <select
                 value={newMeeting.day_of_week}
@@ -249,8 +258,9 @@ export default function NewGroup() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Horário *
+                  <HelpTooltip text="Hora de início do encontro. Aparece no calendário ao clicar no evento." />
                 </label>
                 <input
                   type="time"
@@ -261,8 +271,9 @@ export default function NewGroup() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Tipo de evento
+                  <HelpTooltip text="Define a cor deste encontro no calendário. Use Culto para cultos de adoração, GCEU para células, etc." />
                 </label>
                 <select
                   value={newMeeting.event_type}

@@ -5,6 +5,7 @@ import { createRecurringEvent, Recurrence } from '@/services/agenda';
 import { getGroups } from '@/services/groups';
 import { getPeople } from '@/services/people';
 import { Users, User, Check, Search } from 'lucide-react';
+import { HelpTooltip } from '@/components/HelpTooltip';
 
 const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
 
@@ -133,7 +134,10 @@ export default function NewAgendaEvent() {
 
         {/* Título */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título *</label>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Título *
+            <HelpTooltip text="Nome do evento como aparecerá no calendário. Ex: Culto de Domingo, GCEU Zona Sul, Reunião de Oração." />
+          </label>
           <input
             type="text"
             value={form.title}
@@ -145,7 +149,10 @@ export default function NewAgendaEvent() {
 
         {/* Tipo */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Tipo
+            <HelpTooltip text="Define a cor do evento no calendário e a categoria para relatórios de frequência." />
+          </label>
           <select
             value={form.event_type}
             onChange={e => set('event_type', e.target.value)}
@@ -163,7 +170,10 @@ export default function NewAgendaEvent() {
 
         {/* Recorrência */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Recorrência *</label>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Recorrência *
+            <HelpTooltip width="w-72" text="Semanal: repete todo semana no mesmo dia. Mensal (dia): ex. 1º domingo de cada mês. Mensal (data): ex. todo dia 15. Eventual: ocorre uma única vez numa data específica." />
+          </label>
           <div className="grid grid-cols-2 gap-2">
             {[
               { value: 'weekly', label: '📅 Semanal', desc: 'Ex: toda terça' },
@@ -251,7 +261,10 @@ export default function NewAgendaEvent() {
 
         {/* Local */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Local</label>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Local
+            <HelpTooltip text="Endereço ou nome do lugar onde o evento acontece. Aparece no detalhe do evento no calendário." />
+          </label>
           <input type="text" value={form.location} onChange={e => set('location', e.target.value)}
             placeholder="Ex: Templo principal, Casa do líder..."
             className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
@@ -259,7 +272,10 @@ export default function NewAgendaEvent() {
 
         {/* Associação: Grupo OU Pessoas */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Participantes</label>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Participantes
+            <HelpTooltip width="w-72" text="Grupo: associa o evento a um grupo inteiro (útil para cultos e GCEUs). Pessoas específicas: selecione indivíduos para eventos como visitas pastorais ou reuniões pequenas." />
+          </label>
           <div className="flex gap-2 mb-3">
             <button type="button" onClick={() => setAssociationType('group')}
               className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-sm font-medium transition-colors

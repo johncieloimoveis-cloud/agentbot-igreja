@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { createAttendanceEvent } from '@/services/attendance';
 import { AlertCircle } from 'lucide-react';
+import { HelpTooltip } from '@/components/HelpTooltip';
 export default function NewAttendanceEvent() {
   const router = useRouter();
   const { user } = useAuth();
@@ -85,8 +86,9 @@ export default function NewAttendanceEvent() {
         <form onSubmit={handleSubmit} className="space-y-6 bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
           {/* Nome do Evento */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Nome do Evento *
+              <HelpTooltip text="Nome descritivo para identificar este registro. Ex: Culto de Domingo 22/06, Estudo de João cap. 3." />
             </label>
             <input
               type="text"
@@ -98,8 +100,9 @@ export default function NewAttendanceEvent() {
           </div>
           {/* Tipo de Evento */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Tipo de Evento *
+              <HelpTooltip text="Categoria do evento. Usada para filtrar relatórios e comparar frequência entre cultos, GCEUs e outros encontros." />
             </label>
             <select
               value={formData.event_type}
@@ -116,8 +119,9 @@ export default function NewAttendanceEvent() {
           </div>
           {/* Data */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Data do Evento *
+              <HelpTooltip text="Data em que o evento ocorreu ou ocorrerá. Dica: eventos criados pela Agenda já preenchem a data automaticamente." />
             </label>
             <input
               type="date"
@@ -128,8 +132,9 @@ export default function NewAttendanceEvent() {
           </div>
           {/* Hora */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Horário
+              <HelpTooltip text="Horário de início do evento. Opcional, mas útil para diferenciar dois eventos no mesmo dia." />
             </label>
             <input
               type="time"

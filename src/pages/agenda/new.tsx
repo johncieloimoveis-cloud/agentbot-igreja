@@ -1,0 +1,282 @@
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useAuth } from '@/hooks/useAuth';
+import { createRecurringEvent, Recurrence } from '@/services/agenda';
+import { getGroups } from '@/services/groups';
+import { getPeople } from '@/services/people';
+
+const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+
+const DAY_OPTIONS = [
+  { value: 0, label: 'Domingo' },
+  { value: 1, label: 'Segunda-feira' },
+  { value: 2, label: 'Terça-feira' },
+  { value: 3, label: 'Quarta-feira' },
+  { value: 4, label: 'Quinta-feira' },
+  { value: 5, label: 'Sexta-feira' },
+  { value: 6, label: 'Sábado' },
+];
+
+const WEEK_OPTIONS = [
+  { value: 1, label: '1º' },
+  { value: 2, label: '2º' },
+  { value: 3, label: '3º' },
+  { value: 4, label: '4º' },
+];
+
+export default function NewAgendaEvent() {
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const [form, setForm] = useState({
+    title: '',
+    event_type: 'culto',
+    recurrence: 'weekly' as Recurrence,
+    day_of_week: 0,
+    week_of_month: 1,
+    day_of_month: 1,
+    event_date: '',
+    start_time: '',
+    end_time: '',
+    location: '',
+    group_id: '',
+    leader_id: '',
+    notes: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [groups, setGroups] = useState<any[]>([]);
+  const [people, setPeople] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    getGroups(CHURCH_ID).then(({ data }) => setGroups(data || []));
+    getPeople(CHURCH_ID).then(({ data }) => setPeople(data || []));
+  }, [user]);
+
+  const set = (field: string, value: any) => setForm(f => ({ ...f, [field]: value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!form.title.trim()) { setError('Título é obrigatório'); return; }
+    if (form.recurrence === 'once' && !form.event_date) { setError('Informe a data do evento'); return; }
+
+    setSaving(true);
+    try {
+      const payload: any = {
+        title: form.title,
+        event_type: form.event_type,
+        recurrence: form.recurrence,
+        start_time: form.start_time || null,
+        end_time: form.end_time || null,
+        location: form.location || null,
+        group_id: form.group_id || null,
+        leader_id: form.leader_id || null,
+        notes: form.notes || null,
+      };
+      if (form.recurrence === 'weekly') {
+        payload.day_of_week = form.day_of_week;
+      } else if (form.recurrence === 'monthly_weekday') {
+        payload.day_of_week = form.day_of_week;
+        payload.week_of_month = form.week_of_month;
+      } else if (form.recurrence === 'monthly_date') {
+        payload.day_of_month = form.day_of_month;
+      } else if (form.recurrence === 'once') {
+        payload.event_date = form.event_date;
+      }
+
+      const { error: err } = await createRecurringEvent(CHURCH_ID, payload);
+      if (err) throw err;
+      router.push('/agenda');
+    } catch (err: any) {
+      setError(err.message || 'Erro ao salvar evento');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="p-6 max-w-2xl mx-auto">
+      <button onClick={() => router.back()} className="text-gray-600 dark:text-gray-400 hover:text-gray-900 mb-6">
+        ← Voltar
+      </button>
+      <h1 className="text-3xl font-bold text-gray-950 dark:text-white mb-6">Novo Evento</h1>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-6 text-red-700">{error}</div>
+      )}
+
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-xl shadow p-6 space-y-5">
+
+        {/* Título */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título *</label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={e => set('title', e.target.value)}
+            placeholder="Ex: Culto de Domingo, GCEU Zona Sul..."
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
+
+        {/* Tipo */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+          <select
+            value={form.event_type}
+            onChange={e => set('event_type', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="culto">⛪ Culto</option>
+            <option value="gceu">👥 GCEU</option>
+            <option value="missoes">🌍 Missões</option>
+            <option value="evangelismo">📢 Evangelismo</option>
+            <option value="estudo_biblico">📖 Estudo Bíblico</option>
+            <option value="reuniao_ministerio">🙏 Reunião de Ministério</option>
+            <option value="outro">📋 Outro</option>
+          </select>
+        </div>
+
+        {/* Recorrência */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recorrência *</label>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { value: 'weekly', label: '📅 Semanal' },
+              { value: 'monthly_weekday', label: '📆 Mensal (dia da semana)' },
+              { value: 'monthly_date', label: '🗓 Mensal (data fixa)' },
+              { value: 'once', label: '📌 Eventual' },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => set('recurrence', opt.value)}
+                className={`px-3 py-2 rounded-lg border text-sm font-medium text-center transition-colors
+                  ${form.recurrence === opt.value
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:border-gray-400'}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Campos condicionais de recorrência */}
+        {form.recurrence === 'weekly' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dia da semana</label>
+            <select value={form.day_of_week} onChange={e => set('day_of_week', Number(e.target.value))}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+              {DAY_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+            </select>
+          </div>
+        )}
+
+        {form.recurrence === 'monthly_weekday' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Semana do mês</label>
+              <select value={form.week_of_month} onChange={e => set('week_of_month', Number(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                {WEEK_OPTIONS.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dia da semana</label>
+              <select value={form.day_of_week} onChange={e => set('day_of_week', Number(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                {DAY_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+              </select>
+            </div>
+            <p className="col-span-2 text-xs text-gray-500 dark:text-gray-400">
+              Ex: "{WEEK_OPTIONS[form.week_of_month-1]?.label} {DAY_OPTIONS[form.day_of_week]?.label} de cada mês"
+            </p>
+          </div>
+        )}
+
+        {form.recurrence === 'monthly_date' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dia do mês</label>
+            <select value={form.day_of_month} onChange={e => set('day_of_month', Number(e.target.value))}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+              {Array.from({ length: 28 }, (_, i) => i + 1).map(d => <option key={d} value={d}>Dia {d}</option>)}
+            </select>
+          </div>
+        )}
+
+        {form.recurrence === 'once' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data *</label>
+            <input type="date" value={form.event_date} onChange={e => set('event_date', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          </div>
+        )}
+
+        {/* Horário */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Início</label>
+            <input type="time" value={form.start_time} onChange={e => set('start_time', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Término</label>
+            <input type="time" value={form.end_time} onChange={e => set('end_time', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+          </div>
+        </div>
+
+        {/* Local */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Local</label>
+          <input type="text" value={form.location} onChange={e => set('location', e.target.value)}
+            placeholder="Ex: Templo principal, Casa do líder..."
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+        </div>
+
+        {/* Grupo */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grupo responsável</label>
+          <select value={form.group_id} onChange={e => set('group_id', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option value="">Nenhum</option>
+            {groups.map((g: any) => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
+        </div>
+
+        {/* Líder */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Líder / Responsável</label>
+          <select value={form.leader_id} onChange={e => set('leader_id', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option value="">Nenhum</option>
+            {people.map((p: any) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+          </select>
+        </div>
+
+        {/* Observações */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observações</label>
+          <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none" />
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <button type="submit" disabled={saving}
+            className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg">
+            {saving ? 'Salvando...' : 'Salvar Evento'}
+          </button>
+          <button type="button" onClick={() => router.back()}
+            className="flex-1 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-900 dark:text-white font-semibold py-2 rounded-lg">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

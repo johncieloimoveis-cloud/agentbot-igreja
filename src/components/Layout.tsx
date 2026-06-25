@@ -68,6 +68,16 @@ export function Layout({ children }: LayoutProps) {
       ],
     },
     {
+      id: 'agenda',
+      label: '🗓 Agenda',
+      icon: Calendar,
+      href: '/agenda',
+      submenu: [
+        { label: 'Calendário', href: '/agenda' },
+        { label: 'Novo Evento', href: '/agenda/new' },
+      ],
+    },
+    {
       id: 'attendance',
       label: '📅 Frequência',
       icon: Calendar,

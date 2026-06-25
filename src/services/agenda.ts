@@ -159,7 +159,10 @@ export const getRecurrenceLabel = (ev: RecurringEvent): string => {
 export const generateInstances = (event: RecurringEvent, start: Date, end: Date): Date[] => {
   const dates: Date[] = [];
   const cursor = new Date(start);
-  cursor.setHours(0, 0, 0, 0);
+  // Usa meio-dia (12h) para evitar problema de fuso horário:
+  // meia-noite local em UTC-3 → 21h UTC do dia anterior → toISOString() retorna dia errado.
+  // Meio-dia local em UTC-3 → 15h UTC → mesmo dia em qualquer fuso.
+  cursor.setHours(12, 0, 0, 0);
   const endDay = new Date(end);
   endDay.setHours(23, 59, 59, 999);
 

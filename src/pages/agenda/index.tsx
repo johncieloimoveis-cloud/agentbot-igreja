@@ -92,11 +92,20 @@ export default function AgendaPage() {
     setAttendanceEvents(data || []);
   };
 
+  // Formata data usando hora local para evitar deslocamento de UTC.
+  // toISOString() converte para UTC — em UTC-3, meia-noite local = 21h do dia anterior em UTC.
+  const toLocalDateStr = (d: Date) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const instanceKey = (inst: EventInstance) =>
-    `${inst.recurring_event.id}_${inst.date.toISOString().slice(0,10)}`;
+    `${inst.recurring_event.id}_${toLocalDateStr(inst.date)}`;
 
   const findAttendanceEvent = (inst: EventInstance) => {
-    const dateStr = inst.date.toISOString().slice(0,10);
+    const dateStr = toLocalDateStr(inst.date);
     return attendanceEvents.find(
       (ae) => ae.event_date?.slice(0,10) === dateStr &&
                ae.event_type === inst.recurring_event.event_type
@@ -110,7 +119,7 @@ export default function AgendaPage() {
     const key = instanceKey(inst);
     setCreatingAttendance(key);
     try {
-      const dateStr = inst.date.toISOString().slice(0,10);
+      const dateStr = toLocalDateStr(inst.date);
       const { data, error } = await createAttendanceEvent(CHURCH_ID, {
         name: inst.recurring_event.title,
         event_type: inst.recurring_event.event_type,

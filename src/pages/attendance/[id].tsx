@@ -118,13 +118,16 @@ export default function AttendanceDetail() {
     return labels[type] || type;
   };
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
+    // Normaliza a data para evitar deslocamento de fuso horário:
+    // '2026-06-23' ou '2026-06-23T00:00:00Z' viraria 22/06 às 21h em UTC-3.
+    // Truncamos para YYYY-MM-DD e reconstruímos como T12:00:00 (meio-dia local).
+    const datePart = dateString.slice(0, 10); // 'YYYY-MM-DD'
+    const d = new Date(`${datePart}T12:00:00`);
+    return d.toLocaleDateString('pt-BR', {
       weekday: 'long',
       day: '2-digit',
       month: 'long',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
   if (!user) return null;

@@ -124,6 +124,7 @@ export default function AgendaPage() {
         name: inst.recurring_event.title,
         event_type: inst.recurring_event.event_type,
         event_date: dateStr,
+        group_id: inst.recurring_event.group_id || null,
       });
       if (error) throw error;
       if (data?.id) router.push(`/attendance/${data.id}`);

@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const baseUsername = toUsername(personName);
-  const domain = 'sheepcare';
+  const domain = 'sheepcare.local';
   const defaultPassword = 'Ibaiti@2026';
 
   // Evitar duplicatas: tentar username, depois username2, username3...

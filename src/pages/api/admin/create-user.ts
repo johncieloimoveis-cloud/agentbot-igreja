@@ -27,10 +27,24 @@ function toUsername(fullName: string): string {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { personId, personName } = req.body;
+  const { personId, personName, oficialPosition } = req.body;
   if (!personId || !personName) {
     return res.status(400).json({ error: 'personId e personName são obrigatórios' });
   }
+
+  // Verificar se é líder de algum grupo ativo
+  const { data: ledGroups } = await supabaseAdmin
+    .from('groups')
+    .select('id')
+    .eq('leader_id', personId)
+    .eq('status', 'active')
+    .limit(1);
+
+  const isGroupLeader = (ledGroups?.length ?? 0) > 0;
+
+  // Posição oficial ou líder de grupo → Serafim; sem posição e sem grupo → Anjinho
+  const hasOfficialPosition = oficialPosition && oficialPosition !== 'NÃO' && oficialPosition !== 'NAO';
+  const targetRoleName = (hasOfficialPosition || isGroupLeader) ? 'Serafim' : 'Anjinho';
 
   // Verificar se já existe login para esta pessoa
   const { data: existingUser } = await supabaseAdmin
@@ -84,11 +98,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const authUserId = authData.user?.id;
   if (!authUserId) return res.status(500).json({ error: 'Usuário criado mas ID não retornado' });
 
-  // 2. Buscar role "Serafim"
+  // 2. Buscar role correto
   const { data: roleData } = await supabaseAdmin
     .from('roles')
     .select('id')
-    .eq('name', 'Serafim')
+    .eq('name', targetRoleName)
     .single();
 
   const roleId = roleData?.id ?? null;

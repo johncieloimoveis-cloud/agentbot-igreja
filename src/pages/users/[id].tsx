@@ -266,18 +266,24 @@ export default function EditUser() {
         </div>
 
         {/* Status */}
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            name="is_active"
-            id="is_active"
-            checked={formData.is_active}
-            onChange={handleChange}
-            className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-          />
-          <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Usuário Ativo
-          </label>
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Usuário Ativo</span>
+          <button
+            type="button"
+            onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+              formData.is_active ? 'bg-emerald-500' : 'bg-gray-400 dark:bg-slate-500'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${
+                formData.is_active ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+          <span className={`text-sm font-semibold ${formData.is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'}`}>
+            {formData.is_active ? 'Ativo' : 'Inativo'}
+          </span>
         </div>
 
         {/* Info */}

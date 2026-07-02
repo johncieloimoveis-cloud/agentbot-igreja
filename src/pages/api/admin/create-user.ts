@@ -9,13 +9,16 @@ const supabaseAdmin = createClient(
 
 const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
 
+/** Remove acentos, cedilha e caracteres especiais */
+function stripAccents(str: string): string {
+  return str.normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
 /** Normaliza nome para username: "João Silva Neto" → "joao.silva" */
 function toUsername(fullName: string): string {
-  const parts = fullName
+  const parts = stripAccents(fullName)
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')  // remove acentos
-    .replace(/[^a-z\s]/g, '')         // só letras e espaços
+    .replace(/[^a-z\s]/g, '')  // só letras e espaços
     .trim()
     .split(/\s+/)
     .filter(Boolean);
@@ -43,7 +46,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const isGroupLeader = (ledGroups?.length ?? 0) > 0;
 
   // Posição oficial ou líder de grupo → Serafim; sem posição e sem grupo → Anjinho
-  const hasOfficialPosition = oficialPosition && oficialPosition !== 'NÃO' && oficialPosition !== 'NAO';
+  const posNorm = stripAccents(oficialPosition || '').toLowerCase().trim();
+  const hasOfficialPosition = posNorm !== '' && posNorm !== 'nao';
   const targetRoleName = (hasOfficialPosition || isGroupLeader) ? 'Serafim' : 'Anjinho';
 
   // Verificar se já existe login para esta pessoa

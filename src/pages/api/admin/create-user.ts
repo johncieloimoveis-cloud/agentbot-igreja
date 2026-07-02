@@ -7,17 +7,18 @@ const supabaseAdmin = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
+const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+
 /** Normaliza nome para username: "João Silva Neto" → "joao.silva" */
 function toUsername(fullName: string): string {
   const parts = fullName
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')   // remove acentos
-    .replace(/[^a-z\s]/g, '')           // só letras e espaços
+    .replace(/[̀-ͯ]/g, '')  // remove acentos
+    .replace(/[^a-z\s]/g, '')         // só letras e espaços
     .trim()
     .split(/\s+/)
     .filter(Boolean);
-  // Usa primeiro + último nome (ou só o primeiro se nome único)
   const first = parts[0] || 'usuario';
   const last  = parts.length > 1 ? parts[parts.length - 1] : '';
   return last ? `${first}.${last}` : first;
@@ -35,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const domain = 'sheepcare.local';
   const defaultPassword = 'Ibaiti@2026';
 
-  // Evitar duplicatas: tentar username, depois username2, username3...
+  // Evitar duplicatas no Auth: tentar username, depois username2, username3...
   let username = baseUsername;
   let email = `${username}@${domain}`;
   let attempt = 1;
@@ -52,10 +53,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+  // 1. Criar usuário no Supabase Auth
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password: defaultPassword,
-    email_confirm: true,   // pula verificação por e-mail
+    email_confirm: true,
     user_metadata: {
       full_name: personName,
       person_id: personId,
@@ -63,13 +65,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
   });
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (authError) return res.status(500).json({ error: authError.message });
+
+  const authUserId = authData.user?.id;
+  if (!authUserId) return res.status(500).json({ error: 'Usuário criado mas ID não retornado' });
+
+  // 2. Buscar role "Serafim"
+  const { data: roleData } = await supabaseAdmin
+    .from('roles')
+    .select('id')
+    .eq('name', 'Serafim')
+    .single();
+
+  const roleId = roleData?.id ?? null;
+
+  // 3. Inserir na tabela users (mesmo id do Auth para getUserRole funcionar)
+  const { error: dbError } = await supabaseAdmin
+    .from('users')
+    .insert({
+      id: authUserId,
+      email,
+      full_name: personName,
+      church_id: CHURCH_ID,
+      role_id: roleId,
+      people_id: personId,
+      is_active: true,
+    });
+
+  if (dbError) {
+    // Rollback: deletar o Auth user criado
+    await supabaseAdmin.auth.admin.deleteUser(authUserId);
+    return res.status(500).json({ error: `Erro ao salvar usuário no banco: ${dbError.message}` });
+  }
 
   return res.status(200).json({
     success: true,
-    username,      // ex: "joao.silva"
-    email,         // ex: "joao.silva@sheepcare"
+    username,
+    email,
     password: defaultPassword,
-    userId: data.user?.id,
+    userId: authUserId,
   });
 }

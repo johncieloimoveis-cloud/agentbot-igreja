@@ -134,14 +134,19 @@ export default function EditUser() {
     setSuccess('');
 
     try {
-      const { error: err } = await updateUser(id, {
-        full_name: formData.full_name.trim(),
-        email: formData.email.trim(),
-        role_id: formData.role_id,
-        is_active: formData.is_active,
+      const res = await fetch('/api/admin/update-user', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: id,
+          full_name: formData.full_name.trim(),
+          email: formData.email.trim(),
+          role_id: formData.role_id,
+          is_active: formData.is_active,
+        }),
       });
-
-      if (err) throw err;
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
       setSuccess('Usuário atualizado com sucesso!');
       setTimeout(() => {
         router.push('/users');
@@ -224,7 +229,7 @@ export default function EditUser() {
             Email *
           </label>
           <input
-            type="email"
+            type="text"
             name="email"
             value={formData.email}
             onChange={handleChange}

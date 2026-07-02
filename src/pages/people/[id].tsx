@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
 import { getPerson, updatePerson, deletePerson } from '@/services/people';
-import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Send, Copy, Check } from 'lucide-react';
+import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Send, Copy, Check, KeyRound, UserPlus } from 'lucide-react';
 
 interface Person {
   id: string;
@@ -36,6 +36,41 @@ export default function PersonDetail() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Login state
+  const [creatingLogin, setCreatingLogin] = useState(false);
+  const [loginCredentials, setLoginCredentials] = useState<{ username: string; email: string; password: string } | null>(null);
+  const [loginError, setLoginError] = useState('');
+  const [copiedLogin, setCopiedLogin] = useState(false);
+
+  const handleCreateLogin = async () => {
+    if (!person) return;
+    setCreatingLogin(true);
+    setLoginError('');
+    setLoginCredentials(null);
+    try {
+      const res = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personId: person.id, personName: person.full_name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setLoginCredentials(data);
+    } catch (err: any) {
+      setLoginError(err.message || 'Erro ao criar login');
+    } finally {
+      setCreatingLogin(false);
+    }
+  };
+
+  const buildLoginWhatsApp = () => {
+    if (!loginCredentials || !person) return '';
+    const phone = (person.whatsapp || person.phone || '').replace(/\D/g, '');
+    const msg = `Olá ${person.full_name.split(' ')[0]}! Seu acesso ao sistema foi criado:\n\n🔑 Login: ${loginCredentials.email}\n🔒 Senha: ${loginCredentials.password}\n\nAcesse em: agentbot-igreja.vercel.app\n\nNo primeiro acesso você será solicitado a criar uma senha pessoal.`;
+    const encoded = encodeURIComponent(msg);
+    return phone ? `https://wa.me/55${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+  };
 
   // IA states
   const [showAiModal, setShowAiModal] = useState(false);
@@ -190,13 +225,23 @@ export default function PersonDetail() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">{person.full_name}</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">Editar informacoes da pessoa</p>
           </div>
-          <button
-            onClick={() => { setShowAiModal(true); setAiMessage(''); setAiError(''); }}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
-          >
-            <Sparkles className="w-4 h-4" />
-            Gerar Mensagem IA
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCreateLogin}
+              disabled={creatingLogin}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors shadow-sm"
+            >
+              <KeyRound className="w-4 h-4" />
+              {creatingLogin ? 'Criando...' : 'Criar Login'}
+            </button>
+            <button
+              onClick={() => { setShowAiModal(true); setAiMessage(''); setAiError(''); }}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
+            >
+              <Sparkles className="w-4 h-4" />
+              Gerar Mensagem IA
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -208,6 +253,62 @@ export default function PersonDetail() {
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-green-700">{success}</p>
+          </div>
+        )}
+
+        {/* Credenciais criadas */}
+        {loginError && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 dark:text-red-400 text-sm">{loginError}</p>
+          </div>
+        )}
+        {loginCredentials && (
+          <div className="mb-6 p-5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-300 dark:border-emerald-700 rounded-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-emerald-600" />
+                <span className="font-semibold text-emerald-800 dark:text-emerald-300">Login criado com sucesso!</span>
+              </div>
+              <button
+                onClick={() => setLoginCredentials(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-2 text-sm mb-4">
+              <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg px-3 py-2">
+                <span className="text-gray-500 dark:text-gray-400">Login:</span>
+                <span className="font-mono font-medium text-gray-900 dark:text-white">{loginCredentials.email}</span>
+              </div>
+              <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg px-3 py-2">
+                <span className="text-gray-500 dark:text-gray-400">Senha provisória:</span>
+                <span className="font-mono font-medium text-gray-900 dark:text-white">{loginCredentials.password}</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`Login: ${loginCredentials.email}\nSenha: ${loginCredentials.password}`);
+                  setCopiedLogin(true);
+                  setTimeout(() => setCopiedLogin(false), 2000);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg transition-colors text-sm"
+              >
+                {copiedLogin ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                {copiedLogin ? 'Copiado!' : 'Copiar'}
+              </button>
+              <a
+                href={buildLoginWhatsApp()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors text-sm"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Enviar WhatsApp
+              </a>
+            </div>
           </div>
         )}
 

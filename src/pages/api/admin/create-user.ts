@@ -32,6 +32,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'personId e personName são obrigatórios' });
   }
 
+  // Verificar se já existe login para esta pessoa
+  const { data: existingUser } = await supabaseAdmin
+    .from('users')
+    .select('id, email')
+    .eq('people_id', personId)
+    .maybeSingle();
+
+  if (existingUser) {
+    return res.status(409).json({
+      error: `Esta pessoa já possui login: ${existingUser.email}`,
+      email: existingUser.email,
+    });
+  }
+
   const baseUsername = toUsername(personName);
   const domain = 'sheepcare.local';
   const defaultPassword = 'Ibaiti@2026';

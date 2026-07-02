@@ -55,6 +55,11 @@ export default function PersonDetail() {
         body: JSON.stringify({ personId: person.id, personName: person.full_name }),
       });
       const data = await res.json();
+      if (res.status === 409) {
+        // Já tem login — mostrar email existente sem senha (não temos a senha)
+        setLoginCredentials({ username: '', email: data.email, password: '' });
+        return;
+      }
       if (!res.ok) throw new Error(data.error);
       setLoginCredentials(data);
     } catch (err: any) {

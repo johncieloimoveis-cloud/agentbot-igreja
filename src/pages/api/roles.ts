@@ -1,5 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/services/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Usa service role para ignorar RLS na tabela roles
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 const DEFAULT_ROLES = [
   {

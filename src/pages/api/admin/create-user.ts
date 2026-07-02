@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   while (true) {
     const { data: existing } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-    const taken = existing?.users?.some((u) => u.email === email);
+    const taken = (existing?.users as Array<{ email?: string | null }> ?? []).some((u) => u.email === email);
     if (!taken) break;
     attempt++;
     username = `${baseUsername}${attempt}`;

@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { empresa, mensagem, contato, status } = req.body;
+    const { empresa, mensagem, contato, status, destaque } = req.body;
     if (!empresa?.trim() || !mensagem?.trim()) {
       return res.status(400).json({ error: 'Empresa e mensagem são obrigatórios' });
     }
@@ -18,6 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       mensagem: mensagem.trim().slice(0, 120),
       contato: contato?.trim() || null,
       status: status || 'ativo',
+      destaque: destaque === true,
     });
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
@@ -33,13 +34,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'PATCH') {
-    const { id, status, empresa, mensagem, contato } = req.body;
+    const { id, status, empresa, mensagem, contato, destaque } = req.body;
     if (!id) return res.status(400).json({ error: 'id é obrigatório' });
     const update: any = {};
     if (status !== undefined) update.status = status;
     if (empresa !== undefined) update.empresa = empresa.trim();
     if (mensagem !== undefined) update.mensagem = mensagem.trim().slice(0, 120);
     if (contato !== undefined) update.contato = contato?.trim() || null;
+    if (destaque !== undefined) update.destaque = destaque;
     const { error } = await supabaseAdmin.from('anuncios').update(update).eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });

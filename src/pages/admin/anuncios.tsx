@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Trash2, Megaphone, Clock, PlusCircle, X, Save, Pencil } from 'lucide-react';
+import { CheckCircle, XCircle, Trash2, Megaphone, Clock, PlusCircle, X, Save, Pencil, Star } from 'lucide-react';
 
 interface Anuncio {
   id: string;
@@ -7,6 +7,7 @@ interface Anuncio {
   mensagem: string;
   contato: string | null;
   status: 'pendente' | 'ativo' | 'inativo';
+  destaque: boolean;
   created_at: string;
 }
 
@@ -85,6 +86,16 @@ export default function AdminAnuncios() {
       body: JSON.stringify({ id, status }),
     });
     setLista(prev => prev.map(a => a.id === id ? { ...a, status: status as any } : a));
+  };
+
+  const toggleDestaque = async (a: Anuncio) => {
+    const novoDestaque = !a.destaque;
+    await fetch('/api/admin/anuncios', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: a.id, destaque: novoDestaque }),
+    });
+    setLista(prev => prev.map(x => x.id === a.id ? { ...x, destaque: novoDestaque } : x));
   };
 
   const excluir = async (id: string) => {
@@ -248,6 +259,11 @@ export default function AdminAnuncios() {
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_LABEL[a.status].color}`}>
                         {STATUS_LABEL[a.status].label}
                       </span>
+                      {a.destaque && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-current" /> Destaque
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{a.mensagem}</p>
                     {a.contato && <p className="text-xs text-gray-400 mt-1">📞 {a.contato}</p>}
@@ -257,6 +273,17 @@ export default function AdminAnuncios() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => toggleDestaque(a)}
+                      title={a.destaque ? 'Remover destaque' : 'Marcar como destaque (banner)'}
+                      className={`p-2 rounded-lg transition-colors ${
+                        a.destaque
+                          ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                          : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      <Star className={`w-4 h-4 ${a.destaque ? 'fill-current' : ''}`} />
+                    </button>
                     <button onClick={() => abrirEdicao(a)} title="Editar"
                       className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
                       <Pencil className="w-4 h-4" />

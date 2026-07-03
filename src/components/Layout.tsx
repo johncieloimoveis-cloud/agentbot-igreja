@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { Mascote } from '@/components/Mascote';
 import { Ticker } from '@/components/Ticker';
+import { BannerAd } from '@/components/BannerAd';
 import {
   LogOut,
   Menu,
@@ -111,6 +112,7 @@ export function Layout({ children }: LayoutProps) {
       href: '/admin',
       submenu: [
         { label: 'Anúncios', href: '/admin/anuncios' },
+        { label: 'Planos', href: '/admin/planos' },
       ],
     },
   ];
@@ -230,6 +232,9 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
         </header>
+
+        {/* Banner de anúncio (apenas igrejas gratuitas) */}
+        <BannerAd />
 
         {/* Page Content */}
         <div className="p-6 pb-12">{children}</div>

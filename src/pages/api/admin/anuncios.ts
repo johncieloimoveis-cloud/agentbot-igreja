@@ -33,9 +33,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'PATCH') {
-    const { id, status } = req.body;
-    if (!id || !status) return res.status(400).json({ error: 'id e status são obrigatórios' });
-    const { error } = await supabaseAdmin.from('anuncios').update({ status }).eq('id', id);
+    const { id, status, empresa, mensagem, contato } = req.body;
+    if (!id) return res.status(400).json({ error: 'id é obrigatório' });
+    const update: any = {};
+    if (status !== undefined) update.status = status;
+    if (empresa !== undefined) update.empresa = empresa.trim();
+    if (mensagem !== undefined) update.mensagem = mensagem.trim().slice(0, 120);
+    if (contato !== undefined) update.contato = contato?.trim() || null;
+    const { error } = await supabaseAdmin.from('anuncios').update(update).eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true });
   }

@@ -52,7 +52,7 @@ export default function PersonDetail() {
       const res = await fetch('/api/admin/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ personId: person.id, personName: person.full_name }),
+        body: JSON.stringify({ personId: person.id, personName: person.full_name, oficialPosition: person.oficial }),
       });
       const data = await res.json();
       if (res.status === 409) {
@@ -133,7 +133,7 @@ export default function PersonDetail() {
       const { error: err } = await updatePerson(person.id, cleanData);
       if (err) throw err;
       setSuccess('Pessoa atualizada com sucesso!');
-      setTimeout(() => router.push('/people'), 1500);
+      setTimeout(() => router.back(), 1500);
     } catch (err) {
       console.error('Erro:', err);
       setError('Erro ao atualizar pessoa');

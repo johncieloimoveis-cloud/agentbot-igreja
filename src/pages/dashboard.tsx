@@ -10,7 +10,8 @@ import {
   getAverageAttendance,
   getAbsentPeople,
 } from '@/services/dashboard';
-import { LogOut, Users, Users2, UserCheck, Calendar, TrendingUp, Cake, Heart, Sparkles, MessageCircle, X, Copy, Check } from 'lucide-react';
+import { supabase } from '@/services/supabase';
+import { LogOut, Users, Users2, UserCheck, Calendar, TrendingUp, Cake, Heart, Sparkles, MessageCircle, X, Copy, Check, ClipboardCheck } from 'lucide-react';
 
 interface AiCard {
   personId: string;
@@ -39,6 +40,7 @@ export default function Dashboard() {
     recentVisitors: [],
     attendance: { total_events: 0, average: 0 },
     absentPeople: [],
+    cadastrosAtualizados: 0,
   });
 
   // aiCards: mapa personId → estado do card
@@ -63,7 +65,7 @@ export default function Dashboard() {
     setDashLoading(true);
     try {
       const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-      const [peopleRes, groupsRes, ministriesRes, birthdaysRes, visitorsRes, attendanceRes, absentRes] =
+      const [peopleRes, groupsRes, ministriesRes, birthdaysRes, visitorsRes, attendanceRes, absentRes, cadastrosRes] =
         await Promise.all([
           getPeopleStats(churchId),
           getGroupsStats(churchId),
@@ -72,6 +74,7 @@ export default function Dashboard() {
           getRecentVisitors(churchId, 30),
           getAverageAttendance(churchId),
           getAbsentPeople(churchId, 10),
+          supabase.from('people').select('*', { count: 'exact', head: true }).not('cadastro_atualizado_em', 'is', null),
         ]);
       setStats({
         people: peopleRes.data || stats.people,
@@ -81,6 +84,7 @@ export default function Dashboard() {
         recentVisitors: visitorsRes.data || [],
         attendance: attendanceRes.data || stats.attendance,
         absentPeople: absentRes.data || [],
+        cadastrosAtualizados: cadastrosRes.count || 0,
       });
     } catch (error) {
       console.error('Erro ao carregar dashboard:', error);
@@ -268,9 +272,15 @@ export default function Dashboard() {
               <StatCard icon={TrendingUp} label="Novos Convertidos" value={stats.people.new_convert} color="border-purple-500" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <StatCard icon={Calendar} label="Em Discipulado" value={stats.people.in_discipleship} color="border-indigo-500" />
               <StatCard icon={Heart} label="Grupos" value={stats.groups.total} color="border-pink-500" />
+              <StatCard
+                icon={ClipboardCheck}
+                label="Cadastros Atualizados"
+                value={`${stats.cadastrosAtualizados} / ${stats.people.total}`}
+                color="border-teal-500"
+              />
             </div>
 
             {/* Painel IA Pastoral */}

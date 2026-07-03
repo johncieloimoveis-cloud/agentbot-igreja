@@ -28,6 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     city: city?.trim() || null,
     phone: phone?.trim() || null,
     whatsapp: whatsapp?.trim() || null,
+    cadastro_atualizado_em: new Date().toISOString(),
   };
 
   if (req.method === 'PATCH') {

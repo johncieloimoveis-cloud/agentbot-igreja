@@ -297,7 +297,9 @@ export default function AttendanceList() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-2xl">{getEventTypeLabel(event.event_type).split(' ')[0]}</span>
-                    <h3 className="text-xl font-bold text-gray-950 dark:text-white">{getEventTypeLabel(event.event_type).slice(2)}</h3>
+                    <h3 className="text-xl font-bold text-gray-950 dark:text-white">
+                      {(event as any).name || getEventTypeLabel(event.event_type).slice(2)}
+                    </h3>
                   </div>
                   <div className="flex items-center gap-4 text-gray-600 dark:text-gray-400 mt-2">
                     <span className="flex items-center gap-1">

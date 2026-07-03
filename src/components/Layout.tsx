@@ -77,26 +77,9 @@ export function Layout({ children }: LayoutProps) {
         { label: 'Novo Evento', href: '/agenda/new' },
       ],
     },
-    {
-      id: 'attendance',
-      label: '📅 Frequência',
-      icon: Calendar,
-      href: '/attendance',
-      submenu: [
-        { label: 'Eventos', href: '/attendance' },
-        { label: 'Novo Evento', href: '/attendance/new' },
-      ],
-    },
-    {
-      id: 'tasks',
-      label: '✅ Tarefas',
-      icon: CheckSquare,
-      href: '/tasks',
-      submenu: [
-        { label: 'Minhas Tarefas', href: '/tasks' },
-        { label: 'Nova Tarefa', href: '/tasks/new' },
-      ],
-    },
+    // Frequência e Tarefas suspensas do menu — acesso via Agenda e Grupos
+    // { id: 'attendance', ... },
+    // { id: 'tasks', ... },
     {
       id: 'users',
       label: '👥 Usuários',

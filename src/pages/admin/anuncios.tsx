@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Trash2, Megaphone, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, Trash2, Megaphone, Clock, PlusCircle, X, Save } from 'lucide-react';
 
 interface Anuncio {
   id: string;
@@ -20,6 +20,10 @@ export default function AdminAnuncios() {
   const [lista, setLista] = useState<Anuncio[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<'todos' | 'pendente' | 'ativo' | 'inativo'>('todos');
+  const [criando, setCriando] = useState(false);
+  const [form, setForm] = useState({ empresa: '', mensagem: '', contato: '', status: 'ativo' });
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState('');
 
   const carregar = async () => {
     setLoading(true);
@@ -30,6 +34,23 @@ export default function AdminAnuncios() {
   };
 
   useEffect(() => { carregar(); }, []);
+
+  const salvar = async () => {
+    if (!form.empresa.trim() || !form.mensagem.trim()) { setErro('Empresa e mensagem são obrigatórios.'); return; }
+    setSalvando(true);
+    setErro('');
+    const res = await fetch('/api/admin/anuncios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    });
+    const data = await res.json();
+    if (!res.ok) { setErro(data.error || 'Erro ao salvar'); setSalvando(false); return; }
+    setForm({ empresa: '', mensagem: '', contato: '', status: 'ativo' });
+    setCriando(false);
+    carregar();
+    setSalvando(false);
+  };
 
   const atualizar = async (id: string, status: string) => {
     await fetch('/api/admin/anuncios', {
@@ -67,7 +88,59 @@ export default function AdminAnuncios() {
             )}
           </div>
         </div>
+        <button
+          onClick={() => { setCriando(true); setErro(''); }}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Novo Anúncio
+        </button>
       </div>
+
+      {/* Formulário inline */}
+      {criando && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-primary-200 dark:border-primary-700 p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900 dark:text-white">Novo Anúncio</h2>
+            <button onClick={() => setCriando(false)}><X className="w-4 h-4 text-gray-400" /></button>
+          </div>
+          {erro && <p className="text-red-500 text-sm">{erro}</p>}
+          <div className="grid grid-cols-1 gap-3">
+            <input
+              type="text" placeholder="Nome da empresa *"
+              value={form.empresa} onChange={e => setForm(p => ({ ...p, empresa: e.target.value }))}
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            <input
+              type="text" placeholder="Mensagem do anúncio *" maxLength={120}
+              value={form.mensagem} onChange={e => setForm(p => ({ ...p, mensagem: e.target.value }))}
+              className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+            <div className="flex gap-3">
+              <input
+                type="text" placeholder="Contato (opcional)"
+                value={form.contato} onChange={e => setForm(p => ({ ...p, contato: e.target.value }))}
+                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <select
+                value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
+                className="px-4 py-2.5 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="ativo">Ativo</option>
+                <option value="pendente">Pendente</option>
+                <option value="inativo">Inativo</option>
+              </select>
+            </div>
+          </div>
+          <button
+            onClick={salvar} disabled={salvando}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            <Save className="w-4 h-4" />
+            {salvando ? 'Salvando...' : 'Publicar Anúncio'}
+          </button>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="flex gap-2 flex-wrap">

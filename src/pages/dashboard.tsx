@@ -32,6 +32,7 @@ export default function Dashboard() {
     recentVisitors: any[];
     attendance: any;
     absentPeople: any[];
+    cadastrosAtualizados: number;
   }>({
     people: { total: 0, active_member: 0, visitor: 0, new_convert: 0, in_discipleship: 0, absent: 0, leader: 0 },
     groups: { total: 0 },

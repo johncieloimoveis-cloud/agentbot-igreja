@@ -1,0 +1,166 @@
+import { useState, useEffect } from 'react';
+import { CheckCircle, XCircle, Trash2, Megaphone, Clock } from 'lucide-react';
+
+interface Anuncio {
+  id: string;
+  empresa: string;
+  mensagem: string;
+  contato: string | null;
+  status: 'pendente' | 'ativo' | 'inativo';
+  created_at: string;
+}
+
+const STATUS_LABEL: Record<string, { label: string; color: string }> = {
+  pendente: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  ativo:    { label: 'Ativo',    color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  inativo:  { label: 'Inativo',  color: 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-400' },
+};
+
+export default function AdminAnuncios() {
+  const [lista, setLista] = useState<Anuncio[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filtro, setFiltro] = useState<'todos' | 'pendente' | 'ativo' | 'inativo'>('todos');
+
+  const carregar = async () => {
+    setLoading(true);
+    const res = await fetch('/api/admin/anuncios');
+    const data = await res.json();
+    setLista(Array.isArray(data) ? data : []);
+    setLoading(false);
+  };
+
+  useEffect(() => { carregar(); }, []);
+
+  const atualizar = async (id: string, status: string) => {
+    await fetch('/api/admin/anuncios', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    });
+    setLista(prev => prev.map(a => a.id === id ? { ...a, status: status as any } : a));
+  };
+
+  const excluir = async (id: string) => {
+    if (!confirm('Excluir este anúncio?')) return;
+    await fetch('/api/admin/anuncios', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    setLista(prev => prev.filter(a => a.id !== id));
+  };
+
+  const filtrados = filtro === 'todos' ? lista : lista.filter(a => a.status === filtro);
+  const pendentes = lista.filter(a => a.status === 'pendente').length;
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Megaphone className="w-7 h-7 text-primary-500" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Anúncios</h1>
+            {pendentes > 0 && (
+              <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                {pendentes} aguardando aprovação
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="flex gap-2 flex-wrap">
+        {(['todos', 'pendente', 'ativo', 'inativo'] as const).map(f => (
+          <button
+            key={f}
+            onClick={() => setFiltro(f)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors capitalize ${
+              filtro === f
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'
+            }`}
+          >
+            {f === 'todos' ? 'Todos' : STATUS_LABEL[f].label}
+            {f !== 'todos' && (
+              <span className="ml-1.5 opacity-70">({lista.filter(a => a.status === f).length})</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Lista */}
+      {loading ? (
+        <div className="text-center text-gray-400 py-12">Carregando...</div>
+      ) : filtrados.length === 0 ? (
+        <div className="text-center text-gray-400 dark:text-gray-500 py-16">
+          <Megaphone className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p>Nenhum anúncio encontrado.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtrados.map(a => (
+            <div key={a.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="font-semibold text-gray-900 dark:text-white">🏪 {a.empresa}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_LABEL[a.status].color}`}>
+                      {STATUS_LABEL[a.status].label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{a.mensagem}</p>
+                  {a.contato && (
+                    <p className="text-xs text-gray-400 mt-1">📞 {a.contato}</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {new Date(a.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+
+                {/* Ações */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {a.status === 'pendente' && (
+                    <button
+                      onClick={() => atualizar(a.id, 'ativo')}
+                      title="Aprovar"
+                      className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                    </button>
+                  )}
+                  {a.status === 'ativo' && (
+                    <button
+                      onClick={() => atualizar(a.id, 'inativo')}
+                      title="Desativar"
+                      className="p-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
+                    >
+                      <XCircle className="w-5 h-5" />
+                    </button>
+                  )}
+                  {a.status === 'inativo' && (
+                    <button
+                      onClick={() => atualizar(a.id, 'ativo')}
+                      title="Reativar"
+                      className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => excluir(a.id)}
+                    title="Excluir"
+                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

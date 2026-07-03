@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { Mascote } from '@/components/Mascote';
+import { Ticker } from '@/components/Ticker';
 import {
   LogOut,
   Menu,
@@ -101,6 +102,15 @@ export function Layout({ children }: LayoutProps) {
       href: '/users',
       submenu: [
         { label: 'Gestão de Usuários', href: '/users' },
+      ],
+    },
+    {
+      id: 'admin',
+      label: '⚙️ Admin',
+      icon: Users,
+      href: '/admin',
+      submenu: [
+        { label: 'Anúncios', href: '/admin/anuncios' },
       ],
     },
   ];
@@ -226,6 +236,7 @@ export function Layout({ children }: LayoutProps) {
       </main>
 
       <Mascote />
+      <Ticker />
     </div>
   );
 }

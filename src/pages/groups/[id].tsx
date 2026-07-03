@@ -744,8 +744,8 @@ export default function GroupDetail() {
               <div className="space-y-2">
                 {members.map((member) => (
                   <div key={member.id} className="bg-gray-50 dark:bg-slate-700 p-4 rounded-lg flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-600 transition">
-                    <div>
-                      <h3 className="font-bold text-gray-900 dark:text-slate-100">{member.person.full_name}</h3>
+                    <div className="cursor-pointer flex-1" onClick={() => router.push(`/people/${member.person.id}`)}>
+                      <h3 className="font-bold text-gray-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{member.person.full_name}</h3>
                       {member.person.phone && <p className="text-sm text-gray-600 dark:text-gray-400">{member.person.phone}</p>}
                     </div>
                     <button onClick={() => handleRemoveMember(member.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
+import { Mascote } from '@/components/Mascote';
 import {
   LogOut,
   Menu,
@@ -210,6 +211,8 @@ export function Layout({ children }: LayoutProps) {
         {/* Page Content */}
         <div className="p-6">{children}</div>
       </main>
+
+      <Mascote />
     </div>
   );
 }

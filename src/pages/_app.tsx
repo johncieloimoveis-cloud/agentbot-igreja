@@ -7,9 +7,9 @@ import { supabase } from '@/services/supabase';
 import '@/styles/globals.css';
 
 // Páginas que não usam Layout
-const NO_LAYOUT = ['/login', '/change-password'];
+const NO_LAYOUT = ['/login', '/change-password', '/cadastro'];
 // Páginas que não precisam de autenticação
-const PUBLIC_PAGES = ['/login', '/change-password'];
+const PUBLIC_PAGES = ['/login', '/change-password', '/cadastro'];
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();

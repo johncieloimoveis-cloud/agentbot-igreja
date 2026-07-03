@@ -12,6 +12,7 @@ import {
   Calendar,
   CheckSquare,
   ChevronDown,
+  BookOpen,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -81,6 +82,18 @@ export function Layout({ children }: LayoutProps) {
     // Frequência e Tarefas suspensas do menu — acesso via Agenda e Grupos
     // { id: 'attendance', ... },
     // { id: 'tasks', ... },
+    {
+      id: 'estudo',
+      label: '📖 Estudo',
+      icon: BookOpen,
+      href: '/estudo',
+      submenu: [
+        { label: 'Bíblia', href: '/estudo/biblia' },
+        { label: 'Plano de Leitura', href: '/estudo/plano-leitura' },
+        { label: 'Anotações', href: '/estudo/anotacoes' },
+        { label: 'Devocionais', href: '/estudo/devocionais' },
+      ],
+    },
     {
       id: 'users',
       label: '👥 Usuários',

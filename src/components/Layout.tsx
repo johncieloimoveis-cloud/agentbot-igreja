@@ -232,7 +232,7 @@ export function Layout({ children }: LayoutProps) {
         </header>
 
         {/* Page Content */}
-        <div className="p-6">{children}</div>
+        <div className="p-6 pb-12">{children}</div>
       </main>
 
       <Mascote />

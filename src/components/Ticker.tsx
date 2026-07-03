@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/services/supabase';
 
 interface Anuncio {
@@ -27,7 +27,7 @@ export function Ticker() {
 
   return (
     <div
-      className="h-8 bg-slate-950 border-t border-slate-700 flex items-center overflow-hidden select-none flex-shrink-0"
+      className="fixed bottom-0 left-0 right-0 h-8 bg-slate-950 border-t border-slate-700 flex items-center overflow-hidden select-none z-40"
       onMouseEnter={() => setPausado(true)}
       onMouseLeave={() => setPausado(false)}
     >

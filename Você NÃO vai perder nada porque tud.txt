@@ -1,0 +1,65 @@
+Você NÃO vai perder nada porque tudo está no Git. Aqui está o plano:
+
+Clica em "Chat" (no topo do Cowork, onde está agora "Cowork")
+Abre uma nova conversa
+No dropdown "Haiku 4.5" (canto inferior direito), seleciona Claude Sonnet 4.6
+Cola este resumo:
+
+Problema: Sincronização de usuários em Next.js/Supabase não funciona.
+
+Contexto: 
+- App: https://agentbot-igreja.vercel.app
+- Git: https://github.com/johncieloimoveis-cloud/agentbot-igreja
+- Endpoint: POST /api/users/sync-leaders
+
+Erro: Ao sincronizar líderes de grupos, o delete na tabela `public.users` falha 
+mesmo com service role key.
+
+Sonnet diagnosticou:
+1. FK Constraint: `public.users.id` → `auth.users.id` com RESTRICT
+2. Service Role Key estava em código client-side
+3. Função rodava no browser em vez de API Route
+
+Solução criada:
+- Novo endpoint `/api/users/sync-leaders.ts` (server-side)
+- Usa `adminClient.auth.admin.deleteUser()` para `auth.users`
+- Deleta `public.users` depois
+- Recria ambas na ordem correta
+
+Status: Build passou, deploy forçado. Preciso testar em `/sync` e resolver 
+por que ainda retorna HTML em vez de JSON.
+
+Ajude a diagnosticar por que a API retorna HTML mesmo com endpoint correto.
+
+Cola o código ou o link do erro que está vendo
+Sonnet vai ter muito mais poder para resolver isso!
+
+O trabalho todo fica salvo no Git. Pronto? 🚀
+
+
+
+
+
+Sem problema — vou te ajudar a encontrar e trocar. Acesse o Cowork e rode isso no terminal do projeto:1. Encontre onde o modelo está definido:
+bashgrep -r "haiku" . --include="*.ts" --include="*.tsx" --include="*.js" --include="*.env*" -l
+Esse comando lista todos os arquivos que contêm "haiku". Depois:
+bashgrep -r "haiku" . --include="*.ts" --include="*.tsx" --include="*.js" --include="*.env*" -n
+Isso mostra a linha exata em cada arquivo.
+
+2. Substitua pelo Sonnet:
+Dependendo do que encontrar:
+Se estiver hardcoded no código:
+bash# Substitui todas as ocorrências de uma vez
+find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" \) \
+  -exec sed -i 's/claude-haiku-4-5-20251001/claude-sonnet-4-6/g' {} +
+Se estiver no .env ou .env.local:
+
+Abra o arquivo e troque:
+MODEL=claude-haiku-4-5-20251001
+# por:
+MODEL=claude-sonnet-4-6
+
+3. Confirme a troca:
+bashgrep -r "haiku\|sonnet" . --include="*.ts" --include="*.tsx" --include="*.js" --include="*.env*" -n
+
+Me manda o output do primeiro grep que te digo exatamente onde está e qual linha trocar.

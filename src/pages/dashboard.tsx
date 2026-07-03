@@ -268,10 +268,9 @@ export default function Dashboard() {
               <StatCard icon={TrendingUp} label="Novos Convertidos" value={stats.people.new_convert} color="border-purple-500" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <StatCard icon={Calendar} label="Em Discipulado" value={stats.people.in_discipleship} color="border-indigo-500" />
               <StatCard icon={Heart} label="Grupos" value={stats.groups.total} color="border-pink-500" />
-              <StatCard icon={Users} label="Ministérios" value={stats.ministries.total} color="border-orange-500" />
             </div>
 
             {/* Painel IA Pastoral */}

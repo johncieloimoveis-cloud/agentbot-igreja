@@ -68,7 +68,7 @@ export function withAuth(
     req: NextApiRequest,
     res: NextApiResponse,
     user: AuthUser
-  ) => Promise<void>
+  ) => Promise<unknown>
 ) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
     const user = await getAuthUser(req);

@@ -113,6 +113,7 @@ export function Layout({ children }: LayoutProps) {
       submenu: [
         { label: 'Anúncios', href: '/admin/anuncios' },
         { label: 'Planos', href: '/admin/planos' },
+        { label: 'Cadastros', href: '/admin/cadastros' },
       ],
     },
   ];

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ClipboardCheck, Clock, UserCheck, UserX, Phone, Mail, RefreshCw, Copy } from 'lucide-react';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Pessoa {
   id: string;
@@ -20,7 +21,7 @@ export default function AdminCadastros() {
 
   const carregar = async (a: Aba) => {
     setLoading(true);
-    const res = await fetch(`/api/admin/cadastros?aba=${a}`);
+    const res = await fetchWithAuth(`/api/admin/cadastros?aba=${a}`);
     const data = await res.json();
     setLista(Array.isArray(data) ? data : []);
     setLoading(false);

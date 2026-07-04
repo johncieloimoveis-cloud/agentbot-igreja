@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Building2, Crown, Gift, RefreshCw } from 'lucide-react';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Igreja {
   id: string;
@@ -14,7 +15,7 @@ export default function AdminPlanos() {
 
   const carregar = async () => {
     setLoading(true);
-    const res = await fetch('/api/admin/igrejas');
+    const res = await fetchWithAuth('/api/admin/igrejas');
     const data = await res.json();
     setIgrejas(Array.isArray(data) ? data : []);
     setLoading(false);
@@ -25,9 +26,8 @@ export default function AdminPlanos() {
   const alternarPlano = async (igreja: Igreja) => {
     const novoPlano = igreja.plano === 'gratuito' ? 'pagante' : 'gratuito';
     setAtualizando(igreja.id);
-    const res = await fetch('/api/admin/igrejas', {
+    const res = await fetchWithAuth('/api/admin/igrejas', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: igreja.id, plano: novoPlano }),
     });
     if (res.ok) {

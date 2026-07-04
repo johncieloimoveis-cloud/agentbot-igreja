@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, Trash2, Megaphone, Clock, PlusCircle, X, Save, Pencil, Star } from 'lucide-react';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Anuncio {
   id: string;
@@ -32,7 +33,7 @@ export default function AdminAnuncios() {
 
   const carregar = async () => {
     setLoading(true);
-    const res = await fetch('/api/admin/anuncios');
+    const res = await fetchWithAuth('/api/admin/anuncios');
     const data = await res.json();
     setLista(Array.isArray(data) ? data : []);
     setLoading(false);
@@ -44,9 +45,9 @@ export default function AdminAnuncios() {
     if (!form.empresa.trim() || !form.mensagem.trim()) { setErro('Empresa e mensagem são obrigatórios.'); return; }
     setSalvando(true);
     setErro('');
-    const res = await fetch('/api/admin/anuncios', {
+    const res = await fetchWithAuth('/api/admin/anuncios', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+
       body: JSON.stringify(form),
     });
     const data = await res.json();
@@ -67,9 +68,9 @@ export default function AdminAnuncios() {
     if (!editForm.empresa.trim() || !editForm.mensagem.trim()) { setErroEdit('Empresa e mensagem são obrigatórios.'); return; }
     setSalvandoEdit(true);
     setErroEdit('');
-    const res = await fetch('/api/admin/anuncios', {
+    const res = await fetchWithAuth('/api/admin/anuncios', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+
       body: JSON.stringify({ id: editandoId, ...editForm }),
     });
     const data = await res.json();
@@ -82,7 +83,7 @@ export default function AdminAnuncios() {
   const atualizar = async (id: string, status: string) => {
     await fetch('/api/admin/anuncios', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+
       body: JSON.stringify({ id, status }),
     });
     setLista(prev => prev.map(a => a.id === id ? { ...a, status: status as any } : a));
@@ -92,7 +93,7 @@ export default function AdminAnuncios() {
     const novoDestaque = !a.destaque;
     await fetch('/api/admin/anuncios', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+
       body: JSON.stringify({ id: a.id, destaque: novoDestaque }),
     });
     setLista(prev => prev.map(x => x.id === a.id ? { ...x, destaque: novoDestaque } : x));
@@ -102,7 +103,7 @@ export default function AdminAnuncios() {
     if (!confirm('Excluir este anúncio?')) return;
     await fetch('/api/admin/anuncios', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+
       body: JSON.stringify({ id }),
     });
     setLista(prev => prev.filter(a => a.id !== id));

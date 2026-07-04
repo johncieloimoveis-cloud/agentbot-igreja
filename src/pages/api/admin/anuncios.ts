@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 );
 
 export default withAuth(
-  ['admin'],
+  ['Arcanjo'],
   async (req: NextApiRequest, res: NextApiResponse, _user: AuthUser) => {
     if (req.method === 'POST') {
       const { empresa, mensagem, contato, status, destaque } = req.body;

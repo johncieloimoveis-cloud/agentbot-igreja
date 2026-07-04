@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(
 const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
 
 export default withAuth(
-  ['admin', 'secretary'],
+  ['Arcanjo', 'Querubim'],
   async (req: NextApiRequest, res: NextApiResponse, _user: AuthUser) => {
     if (req.method !== 'GET') return res.status(405).end();
 

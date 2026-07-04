@@ -20,43 +20,50 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-const ALL_ROLES: UserRole[] = [
-  'admin',
-  'pastor',
-  'secretary',
-  'group_leader',
-  'ministry_leader',
-];
+const ALL_ROLES: UserRole[] = ['Arcanjo', 'Querubim', 'Serafim', 'Anjinho'];
+const GESTAO: UserRole[] = ['Arcanjo', 'Querubim'];
+const LIDERANCA: UserRole[] = ['Arcanjo', 'Querubim', 'Serafim'];
 
-// Mapa de rotas para roles permitidos
+// Rotas e roles mínimos para acesso
 const ROUTE_ROLES: Record<string, UserRole[]> = {
-  '/dashboard': ALL_ROLES,
-  '/organogram': ALL_ROLES,
-  '/people': ['admin', 'pastor', 'secretary'],
-  '/people/new': ['admin', 'pastor', 'secretary'],
-  '/groups': ['admin', 'pastor', 'secretary', 'group_leader'],
-  '/groups/new': ['admin', 'pastor', 'secretary'],
-  '/agenda': ['admin', 'pastor', 'secretary'],
-  '/agenda/new': ['admin', 'pastor', 'secretary'],
-  '/estudo': ALL_ROLES,
-  '/estudo/biblia': ALL_ROLES,
+  '/dashboard':            ALL_ROLES,
+  '/organogram':           ALL_ROLES,
+  '/people':               LIDERANCA,
+  '/people/new':           GESTAO,
+  '/groups':               ALL_ROLES,
+  '/groups/new':           GESTAO,
+  '/agenda':               LIDERANCA,
+  '/agenda/new':           LIDERANCA,
+  '/estudo':               ALL_ROLES,
+  '/estudo/biblia':        ALL_ROLES,
   '/estudo/plano-leitura': ALL_ROLES,
-  '/estudo/anotacoes': ALL_ROLES,
-  '/estudo/devocionais': ALL_ROLES,
-  '/users': ['admin'],
-  '/admin/anuncios': ['admin'],
-  '/admin/planos': ['admin'],
-  '/admin/cadastros': ['admin', 'secretary'],
+  '/estudo/anotacoes':     ALL_ROLES,
+  '/estudo/devocionais':   ALL_ROLES,
+  '/users':                GESTAO,
+  '/admin/anuncios':       ['Arcanjo'],
+  '/admin/planos':         ['Arcanjo'],
+  '/admin/cadastros':      GESTAO,
 };
 
 function getAllowedRoles(pathname: string): UserRole[] {
-  // Correspondência exata
   if (ROUTE_ROLES[pathname]) return ROUTE_ROLES[pathname];
-  // Correspondência por prefixo (ex: /people/[id])
   const prefix = Object.keys(ROUTE_ROLES)
     .filter((k) => pathname.startsWith(k + '/'))
     .sort((a, b) => b.length - a.length)[0];
-  return prefix ? ROUTE_ROLES[prefix] : ['admin'];
+  return prefix ? ROUTE_ROLES[prefix] : ['Arcanjo'];
+}
+
+const ROLE_BADGE: Record<UserRole, string> = {
+  Arcanjo:  '👑 Arcanjo',
+  Querubim: '✨ Querubim',
+  Serafim:  '⭐ Serafim',
+  Anjinho:  '😇 Anjinho',
+};
+
+interface SubItem {
+  label: string;
+  href: string;
+  allowedRoles: UserRole[];
 }
 
 interface MenuItem {
@@ -65,7 +72,7 @@ interface MenuItem {
   icon: React.ElementType;
   href: string;
   allowedRoles: UserRole[];
-  submenu: { label: string; href: string; allowedRoles: UserRole[] }[];
+  submenu: SubItem[];
 }
 
 export function Layout({ children }: LayoutProps) {
@@ -74,7 +81,7 @@ export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
-  // Guarda de rota: redireciona se role não tem acesso
+  // Guarda de rota: redireciona se o role não tem acesso
   useEffect(() => {
     if (!role) return;
     const allowed = getAllowedRoles(router.pathname);
@@ -114,18 +121,10 @@ export function Layout({ children }: LayoutProps) {
       label: '👤 Pessoas',
       icon: Users,
       href: '/people',
-      allowedRoles: ['admin', 'pastor', 'secretary'],
+      allowedRoles: LIDERANCA,
       submenu: [
-        {
-          label: 'Todas as Pessoas',
-          href: '/people',
-          allowedRoles: ['admin', 'pastor', 'secretary'],
-        },
-        {
-          label: 'Nova Pessoa',
-          href: '/people/new',
-          allowedRoles: ['admin', 'pastor', 'secretary'],
-        },
+        { label: 'Todas as Pessoas', href: '/people',     allowedRoles: LIDERANCA },
+        { label: 'Nova Pessoa',       href: '/people/new', allowedRoles: GESTAO },
       ],
     },
     {
@@ -133,18 +132,10 @@ export function Layout({ children }: LayoutProps) {
       label: '👫 Grupos',
       icon: Users2,
       href: '/groups',
-      allowedRoles: ['admin', 'pastor', 'secretary', 'group_leader'],
+      allowedRoles: ALL_ROLES,
       submenu: [
-        {
-          label: 'Todos os Grupos',
-          href: '/groups',
-          allowedRoles: ['admin', 'pastor', 'secretary', 'group_leader'],
-        },
-        {
-          label: 'Novo Grupo',
-          href: '/groups/new',
-          allowedRoles: ['admin', 'pastor', 'secretary'],
-        },
+        { label: 'Todos os Grupos', href: '/groups',     allowedRoles: ALL_ROLES },
+        { label: 'Novo Grupo',       href: '/groups/new', allowedRoles: GESTAO },
       ],
     },
     {
@@ -152,18 +143,10 @@ export function Layout({ children }: LayoutProps) {
       label: '🗓 Agenda',
       icon: Calendar,
       href: '/agenda',
-      allowedRoles: ['admin', 'pastor', 'secretary'],
+      allowedRoles: LIDERANCA,
       submenu: [
-        {
-          label: 'Calendário',
-          href: '/agenda',
-          allowedRoles: ['admin', 'pastor', 'secretary'],
-        },
-        {
-          label: 'Novo Evento',
-          href: '/agenda/new',
-          allowedRoles: ['admin', 'pastor', 'secretary'],
-        },
+        { label: 'Calendário',  href: '/agenda',     allowedRoles: LIDERANCA },
+        { label: 'Novo Evento', href: '/agenda/new', allowedRoles: LIDERANCA },
       ],
     },
     {
@@ -173,22 +156,10 @@ export function Layout({ children }: LayoutProps) {
       href: '/estudo',
       allowedRoles: ALL_ROLES,
       submenu: [
-        { label: 'Bíblia', href: '/estudo/biblia', allowedRoles: ALL_ROLES },
-        {
-          label: 'Plano de Leitura',
-          href: '/estudo/plano-leitura',
-          allowedRoles: ALL_ROLES,
-        },
-        {
-          label: 'Anotações',
-          href: '/estudo/anotacoes',
-          allowedRoles: ALL_ROLES,
-        },
-        {
-          label: 'Devocionais',
-          href: '/estudo/devocionais',
-          allowedRoles: ALL_ROLES,
-        },
+        { label: 'Bíblia',           href: '/estudo/biblia',        allowedRoles: ALL_ROLES },
+        { label: 'Plano de Leitura', href: '/estudo/plano-leitura', allowedRoles: ALL_ROLES },
+        { label: 'Anotações',        href: '/estudo/anotacoes',     allowedRoles: ALL_ROLES },
+        { label: 'Devocionais',      href: '/estudo/devocionais',   allowedRoles: ALL_ROLES },
       ],
     },
     {
@@ -196,13 +167,9 @@ export function Layout({ children }: LayoutProps) {
       label: '👥 Usuários',
       icon: Users,
       href: '/users',
-      allowedRoles: ['admin'],
+      allowedRoles: GESTAO,
       submenu: [
-        {
-          label: 'Gestão de Usuários',
-          href: '/users',
-          allowedRoles: ['admin'],
-        },
+        { label: 'Gestão de Usuários', href: '/users', allowedRoles: GESTAO },
       ],
     },
     {
@@ -210,23 +177,11 @@ export function Layout({ children }: LayoutProps) {
       label: '⚙️ Admin',
       icon: Users,
       href: '/admin',
-      allowedRoles: ['admin', 'secretary'],
+      allowedRoles: GESTAO,
       submenu: [
-        {
-          label: 'Anúncios',
-          href: '/admin/anuncios',
-          allowedRoles: ['admin'],
-        },
-        {
-          label: 'Planos',
-          href: '/admin/planos',
-          allowedRoles: ['admin'],
-        },
-        {
-          label: 'Cadastros',
-          href: '/admin/cadastros',
-          allowedRoles: ['admin', 'secretary'],
-        },
+        { label: 'Anúncios', href: '/admin/anuncios', allowedRoles: ['Arcanjo'] },
+        { label: 'Planos',   href: '/admin/planos',   allowedRoles: ['Arcanjo'] },
+        { label: 'Cadastros',href: '/admin/cadastros',allowedRoles: GESTAO },
       ],
     },
   ];
@@ -234,7 +189,6 @@ export function Layout({ children }: LayoutProps) {
   const isActive = (href: string) =>
     router.pathname === href || router.pathname.startsWith(href + '/');
 
-  // Filtra itens de menu pelo role do usuário
   const visibleMenuItems = menuItems.filter(
     (item) => !role || item.allowedRoles.includes(role)
   );
@@ -266,36 +220,27 @@ export function Layout({ children }: LayoutProps) {
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="text-gray-600 dark:text-gray-400 hover:text-gray-950 dark:text-white dark:hover:text-gray-200 p-1"
             >
-              {sidebarOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Role badge */}
+        {/* Badge do role */}
         {sidebarOpen && role && (
           <div className="px-4 py-2 border-b border-gray-100 dark:border-slate-700">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-500">
-              {role === 'admin' && '🔑 Administrador'}
-              {role === 'pastor' && '✝️ Pastor'}
-              {role === 'secretary' && '📋 Secretário(a)'}
-              {role === 'group_leader' && '👥 Líder de Grupo'}
-              {role === 'ministry_leader' && '🎵 Líder de Ministério'}
+              {ROLE_BADGE[role]}
             </span>
           </div>
         )}
 
-        {/* Menu Items */}
+        {/* Itens de menu */}
         <nav className="p-4 space-y-2">
           {visibleMenuItems.map((item) => {
             const Icon = item.icon;
             const isMenuActive = isActive(item.href);
             const isExpanded = expandedMenu === item.id;
 
-            // Filtra subitens pelo role
             const visibleSubmenu = item.submenu.filter(
               (sub) => !role || sub.allowedRoles.includes(role)
             );
@@ -323,21 +268,13 @@ export function Layout({ children }: LayoutProps) {
                   {sidebarOpen && visibleSubmenu.length > 0 && (
                     <svg
                       className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   )}
                 </button>
 
-                {/* Submenu */}
                 {sidebarOpen && visibleSubmenu.length > 0 && isExpanded && (
                   <div className="ml-4 mt-2 space-y-1 border-l-2 border-gray-200 dark:border-slate-700 pl-4">
                     {visibleSubmenu.map((subitem) => (
@@ -359,7 +296,6 @@ export function Layout({ children }: LayoutProps) {
             );
           })}
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
             className="w-full mt-4 flex items-center gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors font-medium"
@@ -370,14 +306,12 @@ export function Layout({ children }: LayoutProps) {
         </nav>
       </aside>
 
-      {/* Main Content */}
+      {/* Conteúdo principal */}
       <main className="flex-1 overflow-auto">
-        {/* Header */}
         <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm sticky top-0 z-10">
           <div className="flex items-center justify-between px-6 py-4">
             <h2 className="text-2xl font-bold text-gray-950 dark:text-white">
-              {visibleMenuItems.find((item) => isActive(item.href))?.label ||
-                'SheepCare'}
+              {visibleMenuItems.find((item) => isActive(item.href))?.label || 'SheepCare'}
             </h2>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">{user?.email}</span>
@@ -392,10 +326,8 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </header>
 
-        {/* Banner de anúncio (apenas igrejas gratuitas) */}
         <BannerAd />
 
-        {/* Page Content */}
         <div className="p-6 pb-12">{children}</div>
       </main>
 

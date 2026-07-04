@@ -2,12 +2,7 @@ import React, { createContext, useEffect, useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { User } from '@supabase/supabase-js';
 
-export type UserRole =
-  | 'admin'
-  | 'pastor'
-  | 'secretary'
-  | 'group_leader'
-  | 'ministry_leader';
+export type UserRole = 'Arcanjo' | 'Querubim' | 'Serafim' | 'Anjinho';
 
 export interface AuthContextType {
   user: User | null;

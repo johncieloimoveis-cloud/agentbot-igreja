@@ -1,12 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-export type UserRole =
-  | 'admin'
-  | 'pastor'
-  | 'secretary'
-  | 'group_leader'
-  | 'ministry_leader';
+export type UserRole = 'Arcanjo' | 'Querubim' | 'Serafim' | 'Anjinho';
 
 export interface AuthUser {
   id: string;

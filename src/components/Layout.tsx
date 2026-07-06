@@ -94,6 +94,7 @@ export function Layout({ children }: LayoutProps) {
 
   const handleLogout = async () => {
     try {
+      sessionStorage.removeItem('sheepcare_banner_dismissed');
       await logout();
       router.push('/login');
     } catch (error) {

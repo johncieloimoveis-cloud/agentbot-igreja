@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { withAuth, AuthUser } from '@/lib/withAuth';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +28,9 @@ function toUsername(fullName: string): string {
   return last ? `${first}.${last}` : first;
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default withAuth(
+  ['Arcanjo', 'Querubim'],
+  async (req: NextApiRequest, res: NextApiResponse, _user: AuthUser) => {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { personId, personName, oficialPosition } = req.body;
@@ -64,24 +67,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  const baseUsername = toUsername(personName);
-  const domain = 'sheepcare.local';
   const defaultPassword = 'Ibaiti@2026';
+  const { data: existing } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+  const takenEmails = new Set(
+    (existing?.users as Array<{ email?: string | null }> ?? []).map((u) => u.email?.toLowerCase())
+  );
 
-  // Evitar duplicatas no Auth: tentar username, depois username2, username3...
-  let username = baseUsername;
-  let email = `${username}@${domain}`;
-  let attempt = 1;
+  // Buscar email real da pessoa no cadastro
+  const { data: personData } = await supabaseAdmin
+    .from('people')
+    .select('email')
+    .eq('id', personId)
+    .maybeSingle();
 
-  while (true) {
-    const { data: existing } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-    const taken = (existing?.users as Array<{ email?: string | null }> ?? []).some((u) => u.email === email);
-    if (!taken) break;
-    attempt++;
-    username = `${baseUsername}${attempt}`;
+  const realEmail = personData?.email?.trim().toLowerCase();
+
+  let email: string;
+  let username: string;
+
+  if (realEmail && !takenEmails.has(realEmail)) {
+    // Usar o email real cadastrado
+    email = realEmail;
+    username = realEmail.split('@')[0];
+  } else {
+    // Fallback: gerar email @sheepcare.local
+    const baseUsername = toUsername(personName);
+    const domain = 'sheepcare.local';
+    username = baseUsername;
     email = `${username}@${domain}`;
-    if (attempt > 10) {
-      return res.status(409).json({ error: 'Não foi possível gerar um username único para este nome.' });
+    let attempt = 1;
+    while (takenEmails.has(email)) {
+      attempt++;
+      username = `${baseUsername}${attempt}`;
+      email = `${username}@${domain}`;
+      if (attempt > 10) {
+        return res.status(409).json({ error: 'Não foi possível gerar um username único para este nome.' });
+      }
     }
   }
 
@@ -137,4 +158,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     password: defaultPassword,
     userId: authUserId,
   });
-}
+});

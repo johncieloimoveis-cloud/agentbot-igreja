@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
 import { getPerson, updatePerson, deletePerson } from '@/services/people';
 import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Send, Copy, Check, KeyRound, UserPlus } from 'lucide-react';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Person {
   id: string;
@@ -49,9 +50,8 @@ export default function PersonDetail() {
     setLoginError('');
     setLoginCredentials(null);
     try {
-      const res = await fetch('/api/admin/create-user', {
+      const res = await fetchWithAuth('/api/admin/create-user', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ personId: person.id, personName: person.full_name, oficialPosition: person.oficial }),
       });
       const data = await res.json();

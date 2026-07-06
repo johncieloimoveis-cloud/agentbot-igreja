@@ -81,32 +81,35 @@ export default function AdminAnuncios() {
   };
 
   const atualizar = async (id: string, status: string) => {
-    await fetch('/api/admin/anuncios', {
+    const res = await fetchWithAuth('/api/admin/anuncios', {
       method: 'PATCH',
-
       body: JSON.stringify({ id, status }),
     });
-    setLista(prev => prev.map(a => a.id === id ? { ...a, status: status as any } : a));
+    if (res.ok) {
+      setLista(prev => prev.map(a => a.id === id ? { ...a, status: status as any } : a));
+    }
   };
 
   const toggleDestaque = async (a: Anuncio) => {
     const novoDestaque = !a.destaque;
-    await fetch('/api/admin/anuncios', {
+    const res = await fetchWithAuth('/api/admin/anuncios', {
       method: 'PATCH',
-
       body: JSON.stringify({ id: a.id, destaque: novoDestaque }),
     });
-    setLista(prev => prev.map(x => x.id === a.id ? { ...x, destaque: novoDestaque } : x));
+    if (res.ok) {
+      setLista(prev => prev.map(x => x.id === a.id ? { ...x, destaque: novoDestaque } : x));
+    }
   };
 
   const excluir = async (id: string) => {
     if (!confirm('Excluir este anúncio?')) return;
-    await fetch('/api/admin/anuncios', {
+    const res = await fetchWithAuth('/api/admin/anuncios', {
       method: 'DELETE',
-
       body: JSON.stringify({ id }),
     });
-    setLista(prev => prev.filter(a => a.id !== id));
+    if (res.ok) {
+      setLista(prev => prev.filter(a => a.id !== id));
+    }
   };
 
   const filtrados = filtro === 'todos' ? lista : lista.filter(a => a.status === filtro);

@@ -14,6 +14,7 @@ interface Person {
   whatsapp?: string;
   status?: string;
   date_of_birth?: string;
+  email?: string;
 }
 
 interface Member {
@@ -319,6 +320,14 @@ export default function GroupDetail() {
     return phone ? `https://wa.me/55${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
   };
 
+  // Serafim só pode gerenciar grupos dos quais é membro
+  const isMyGroup =
+    role !== 'Serafim' ||
+    members.some((m) => m.person.email?.toLowerCase() === user?.email?.toLowerCase());
+
+  // Pode escrever no grupo: Arcanjo/Querubim sempre; Serafim só se for membro
+  const canWrite = role === 'Arcanjo' || role === 'Querubim' || (role === 'Serafim' && isMyGroup);
+
   // --- Stats calculadas ---
   const getUpcomingBirthdays = () => {
     const today = new Date();
@@ -556,7 +565,7 @@ export default function GroupDetail() {
                   {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400">Endereco: {group.meeting_address}</p>}
                 </div>
                 <div className="flex gap-2">
-                  {role !== 'Anjinho' && (
+                  {canWrite && (
                     <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
                       <Edit2 className="w-5 h-5" />Editar
                     </button>
@@ -676,7 +685,7 @@ export default function GroupDetail() {
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-950 dark:text-white">Membros ({members.length})</h2>
-              {role !== 'Anjinho' && (
+              {canWrite && (
                 <button onClick={handleOpenAddForm} className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
                   <Plus className="w-5 h-5" />Adicionar Membro
                 </button>
@@ -754,7 +763,7 @@ export default function GroupDetail() {
                       <h3 className="font-bold text-gray-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{member.person.full_name}</h3>
                       {member.person.phone && <p className="text-sm text-gray-600 dark:text-gray-400">{member.person.phone}</p>}
                     </div>
-                    {role !== 'Anjinho' && (
+                    {canWrite && (
                       <button onClick={() => handleRemoveMember(member.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded">
                         <TrashIcon className="w-5 h-5" />
                       </button>

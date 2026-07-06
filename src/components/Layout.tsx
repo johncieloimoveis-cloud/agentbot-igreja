@@ -26,8 +26,8 @@ const LIDERANCA: UserRole[] = ['Arcanjo', 'Querubim', 'Serafim'];
 
 // Rotas e roles mínimos para acesso
 const ROUTE_ROLES: Record<string, UserRole[]> = {
-  '/dashboard':            ALL_ROLES,
-  '/organogram':           ALL_ROLES,
+  '/dashboard':            LIDERANCA,
+  '/organogram':           LIDERANCA,
   '/people':               LIDERANCA,
   '/people/new':           GESTAO,
   '/groups':               ALL_ROLES,
@@ -86,7 +86,9 @@ export function Layout({ children }: LayoutProps) {
     if (!role) return;
     const allowed = getAllowedRoles(router.pathname);
     if (!allowed.includes(role)) {
-      router.replace('/dashboard');
+      // Anjinho só acessa grupos — redireciona para lá
+      const fallback = role === 'Anjinho' ? '/groups' : '/dashboard';
+      router.replace(fallback);
     }
   }, [router.pathname, role]);
 
@@ -105,7 +107,7 @@ export function Layout({ children }: LayoutProps) {
       label: '📊 Dashboard',
       icon: Home,
       href: '/dashboard',
-      allowedRoles: ALL_ROLES,
+      allowedRoles: LIDERANCA,
       submenu: [],
     },
     {
@@ -113,7 +115,7 @@ export function Layout({ children }: LayoutProps) {
       label: '🏛️ Organograma',
       icon: Users,
       href: '/organogram',
-      allowedRoles: ALL_ROLES,
+      allowedRoles: LIDERANCA,
       submenu: [],
     },
     {

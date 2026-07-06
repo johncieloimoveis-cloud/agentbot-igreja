@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
 import { getGroupMembers, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups } from '@/services/groups';
 import { getPeople } from '@/services/people';
 import { getGroupAttendanceStats, MemberAttendanceStat, Quadrant } from '@/services/attendance';
@@ -31,7 +32,7 @@ interface Group {
 
 export default function GroupDetail() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { id } = router.query;
 
   const [group, setGroup] = useState<Group | null>(null);
@@ -341,9 +342,8 @@ export default function GroupDetail() {
   const handleRemoveMember = async (memberId: string) => {
     if (!confirm('Remover membro do grupo?')) return;
     try {
-      const res = await fetch('/api/groups/remove-member', {
+      const res = await fetchWithAuth('/api/groups/remove-member', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ membershipId: memberId }),
       });
       const data = await res.json();
@@ -556,12 +556,16 @@ export default function GroupDetail() {
                   {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400">Endereco: {group.meeting_address}</p>}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
-                    <Edit2 className="w-5 h-5" />Editar
-                  </button>
-                  <button onClick={handleDeleteGroup} className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
-                    <TrashIcon className="w-5 h-5" />Deletar
-                  </button>
+                  {role !== 'Anjinho' && (
+                    <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
+                      <Edit2 className="w-5 h-5" />Editar
+                    </button>
+                  )}
+                  {role === 'Arcanjo' && (
+                    <button onClick={handleDeleteGroup} className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                      <TrashIcon className="w-5 h-5" />Deletar
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -672,9 +676,11 @@ export default function GroupDetail() {
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-950 dark:text-white">Membros ({members.length})</h2>
-              <button onClick={handleOpenAddForm} className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
-                <Plus className="w-5 h-5" />Adicionar Membro
-              </button>
+              {role !== 'Anjinho' && (
+                <button onClick={handleOpenAddForm} className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
+                  <Plus className="w-5 h-5" />Adicionar Membro
+                </button>
+              )}
             </div>
 
             {showAddForm && (
@@ -748,9 +754,11 @@ export default function GroupDetail() {
                       <h3 className="font-bold text-gray-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{member.person.full_name}</h3>
                       {member.person.phone && <p className="text-sm text-gray-600 dark:text-gray-400">{member.person.phone}</p>}
                     </div>
-                    <button onClick={() => handleRemoveMember(member.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded">
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
+                    {role !== 'Anjinho' && (
+                      <button onClick={() => handleRemoveMember(member.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded">
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

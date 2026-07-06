@@ -15,9 +15,8 @@
 -- Garantir que a coluna role está com os valores corretos
 UPDATE users u SET role = r.name FROM roles r WHERE r.id = u.role_id;
 
--- Atualizar o usuário administrador para Arcanjo
--- (ajuste o email conforme necessário)
-UPDATE users SET role = 'Arcanjo' WHERE email = 'yasmin.yuriko@sheepcare.local';
+-- Garantir que o admin principal é Arcanjo
+UPDATE users SET role = 'Arcanjo' WHERE email = 'johndeltavideo@gmail.com';
 
 -- Recriar função de role (sem mudança necessária — já lê users.role)
 CREATE OR REPLACE FUNCTION get_my_role()

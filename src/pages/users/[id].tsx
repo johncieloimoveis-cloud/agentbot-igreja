@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
 import { getUser, updateUser, isArcanjo } from '@/services/users';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
@@ -134,9 +135,8 @@ export default function EditUser() {
     setSuccess('');
 
     try {
-      const res = await fetch('/api/admin/update-user', {
+      const res = await fetchWithAuth('/api/admin/update-user', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: id,
           full_name: formData.full_name.trim(),

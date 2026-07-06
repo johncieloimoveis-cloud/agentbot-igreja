@@ -35,16 +35,30 @@ export async function getAuthUser(req: NextApiRequest): Promise<AuthUser | null>
 
   const { data: profile } = await supabaseAdmin
     .from('users')
-    .select('church_id, role')
+    .select('church_id, role_id')
     .eq('id', user.id)
     .single();
 
-  if (!profile?.role || !profile?.church_id) return null;
+  if (!profile?.church_id) return null;
+
+  // Lê o role sempre da tabela roles via role_id (fonte da verdade)
+  // Assim, alterações de role via UI valem imediatamente sem sync manual
+  let roleName: string | null = null;
+  if (profile.role_id) {
+    const { data: roleData } = await supabaseAdmin
+      .from('roles')
+      .select('name')
+      .eq('id', profile.role_id)
+      .single();
+    roleName = roleData?.name ?? null;
+  }
+
+  if (!roleName) return null;
 
   return {
     id: user.id,
     email: user.email!,
-    role: profile.role as UserRole,
+    role: roleName as UserRole,
     church_id: profile.church_id,
   };
 }

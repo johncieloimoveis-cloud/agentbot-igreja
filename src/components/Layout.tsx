@@ -39,6 +39,7 @@ const ROUTE_ROLES: Record<string, UserRole[]> = {
   '/estudo/plano-leitura': ALL_ROLES,
   '/estudo/anotacoes':     ALL_ROLES,
   '/estudo/devocionais':   ALL_ROLES,
+  '/estudo/analise-letra': ALL_ROLES,
   '/users':                GESTAO,
   '/admin/anuncios':       ['Arcanjo'],
   '/admin/planos':         ['Arcanjo'],
@@ -159,10 +160,11 @@ export function Layout({ children }: LayoutProps) {
       href: '/estudo',
       allowedRoles: ALL_ROLES,
       submenu: [
-        { label: 'Bíblia',           href: '/estudo/biblia',        allowedRoles: ALL_ROLES },
-        { label: 'Plano de Leitura', href: '/estudo/plano-leitura', allowedRoles: ALL_ROLES },
-        { label: 'Anotações',        href: '/estudo/anotacoes',     allowedRoles: ALL_ROLES },
-        { label: 'Devocionais',      href: '/estudo/devocionais',   allowedRoles: ALL_ROLES },
+        { label: 'Bíblia',             href: '/estudo/biblia',         allowedRoles: ALL_ROLES },
+        { label: 'Plano de Leitura',  href: '/estudo/plano-leitura',  allowedRoles: ALL_ROLES },
+        { label: 'Anotações',         href: '/estudo/anotacoes',      allowedRoles: ALL_ROLES },
+        { label: 'Devocionais',       href: '/estudo/devocionais',    allowedRoles: ALL_ROLES },
+        { label: '🎵 Análise de Letra', href: '/estudo/analise-letra', allowedRoles: ALL_ROLES },
       ],
     },
     {

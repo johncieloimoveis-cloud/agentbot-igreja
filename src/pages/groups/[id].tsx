@@ -29,6 +29,8 @@ interface Group {
   meeting_time?: string;
   meeting_address?: string;
   parent_group_id?: string;
+  leader_id?: string;
+  leader?: { id: string; full_name: string } | null;
 }
 
 export default function GroupDetail() {
@@ -515,7 +517,11 @@ export default function GroupDetail() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lider do Grupo</label>
                   <select value={formData.leader_id} onChange={(e) => setFormData({ ...formData, leader_id: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="">Selecione um lider</option>
+                    <option value="">Selecione um líder</option>
+                    {/* Inclui o líder atual mesmo que não seja membro */}
+                    {group?.leader && !members.some((m) => m.person.id === group.leader?.id) && (
+                      <option key={group.leader.id} value={group.leader.id}>{group.leader.full_name}</option>
+                    )}
                     {members.map((m) => <option key={m.person.id} value={m.person.id}>{m.person.full_name}</option>)}
                   </select>
                 </div>
@@ -561,8 +567,9 @@ export default function GroupDetail() {
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-gray-950 dark:text-white">{group?.name}</h1>
                   {parentGroup && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Subgrupo de: <span className="font-semibold">{parentGroup.name}</span></p>}
-                  {group?.meeting_day && <p className="text-gray-600 dark:text-gray-400 mt-2">{group.meeting_day} as {group.meeting_time || 'Horario nao definido'}</p>}
-                  {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400">Endereco: {group.meeting_address}</p>}
+                  {group?.leader && <p className="text-gray-600 dark:text-gray-400 mt-2">👤 Líder: <span className="font-semibold text-gray-800 dark:text-gray-200">{group.leader.full_name}</span></p>}
+                  {group?.meeting_day && <p className="text-gray-600 dark:text-gray-400 mt-1">{group.meeting_day} às {group.meeting_time || 'Horário não definido'}</p>}
+                  {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400">Endereço: {group.meeting_address}</p>}
                 </div>
                 <div className="flex gap-2">
                   {canWrite && (
@@ -761,21 +768,4 @@ export default function GroupDetail() {
                   <div key={member.id} className="bg-gray-50 dark:bg-slate-700 p-4 rounded-lg flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-600 transition">
                     <div className="cursor-pointer flex-1" onClick={() => router.push(`/people/${member.person.id}`)}>
                       <h3 className="font-bold text-gray-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{member.person.full_name}</h3>
-                      {member.person.phone && <p className="text-sm text-gray-600 dark:text-gray-400">{member.person.phone}</p>}
-                    </div>
-                    {canWrite && (
-                      <button onClick={() => handleRemoveMember(member.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded">
-                        <TrashIcon className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
+           

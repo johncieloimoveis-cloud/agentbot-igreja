@@ -280,7 +280,7 @@ export default function Dashboard() {
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-t-4 border-red-400">
                       <div className="flex items-center gap-2 mb-4">
                         <Cake className="w-5 h-5 text-red-500" />
-                        <h4 className="font-bold text-gray-900 dark:text-white">Aniversariantes do ês 🎂</h4>
+                        <h4 className="font-bold text-gray-900 dark:text-white">Aniversariantes do Mês 🎂</h4>
                         <span className="ml-auto text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full">{stats.birthdays.length}</span>
                       </div>
                       <div className="space-y-2">

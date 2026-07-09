@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { CheckCircle, ChevronDown, Search, UserCheck, UserPlus } from 'lucide-react';
+import { CheckCircle, ChevronDown, Search, UserCheck, UserPlus, AlertTriangle } from 'lucide-react';
 
 const POSICOES = [
-  'NÃO',
+  'NAO',
   'Pastor(a)',
   'Aspirante(a)',
-  'Presbítero(a)',
-  'Diácono(isa)',
-  'Missionário(a)',
-  'Secretário(a)',
+  'Presbitero(a)',
+  'Diacono(isa)',
+  'Missionario(a)',
+  'Secretario(a)',
 ];
 
-type Step = 'phone' | 'form' | 'done';
+type Step = 'phone' | 'name' | 'form' | 'done';
 
 interface FormData {
   full_name: string;
@@ -27,7 +27,7 @@ interface FormData {
 const EMPTY_FORM: FormData = {
   full_name: '',
   email: '',
-  oficial: 'NÃO',
+  oficial: 'NAO',
   date_of_birth: '',
   address: '',
   city: '',
@@ -38,17 +38,18 @@ const EMPTY_FORM: FormData = {
 export default function Cadastro() {
   const [step, setStep] = useState<Step>('phone');
   const [phoneInput, setPhoneInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
 
-  // Pessoa encontrada no banco
   const [foundId, setFoundId] = useState<string | null>(null);
+  const [foundByName, setFoundByName] = useState(false);
 
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
 
-  /* ── Passo 1: busca por telefone ── */
+  /* Passo 1: busca por telefone */
   const handlePhoneSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneInput.trim()) return;
@@ -58,26 +59,66 @@ export default function Cadastro() {
     try {
       const res = await fetch(`/api/public/find-person?phone=${encodeURIComponent(phoneInput.trim())}`);
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || 'Erro ao buscar');
 
       if (data.person) {
         setFoundId(data.person.id);
+        setFoundByName(false);
         setForm({
           full_name: data.person.full_name || '',
           email: data.person.email || '',
-          oficial: data.person.oficial || 'NÃO',
+          oficial: data.person.oficial || 'NAO',
           date_of_birth: data.person.date_of_birth || '',
           address: data.person.address || '',
           city: data.person.city || '',
           phone: data.person.phone || phoneInput.trim(),
           whatsapp: data.person.whatsapp || '',
         });
+        setStep('form');
       } else {
+        // Nao encontrado por telefone — pedir nome para segunda busca
         setFoundId(null);
         setForm({ ...EMPTY_FORM, phone: phoneInput.trim() });
+        setStep('name');
       }
+    } catch (err: any) {
+      setSearchError(err.message || 'Erro ao buscar. Tente novamente.');
+    } finally {
+      setSearching(false);
+    }
+  };
 
+  /* Passo 1b: busca por nome (quando telefone nao achou) */
+  const handleNameSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nameInput.trim()) return;
+    setSearching(true);
+    setSearchError('');
+
+    try {
+      const res = await fetch(`/api/public/find-person?name=${encodeURIComponent(nameInput.trim())}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao buscar');
+
+      if (data.person) {
+        setFoundId(data.person.id);
+        setFoundByName(true);
+        setForm({
+          full_name: data.person.full_name || nameInput.trim(),
+          email: data.person.email || '',
+          oficial: data.person.oficial || 'NAO',
+          date_of_birth: data.person.date_of_birth || '',
+          address: data.person.address || '',
+          city: data.person.city || '',
+          phone: phoneInput.trim(), // atualiza o telefone
+          whatsapp: data.person.whatsapp || '',
+        });
+      } else {
+        // Genuinamente novo — preenche nome que ja digitou
+        setFoundId(null);
+        setFoundByName(false);
+        setForm({ ...EMPTY_FORM, phone: phoneInput.trim(), full_name: nameInput.trim() });
+      }
       setStep('form');
     } catch (err: any) {
       setSearchError(err.message || 'Erro ao buscar. Tente novamente.');
@@ -86,7 +127,14 @@ export default function Cadastro() {
     }
   };
 
-  /* ── Passo 2: submit do formulário ── */
+  const skipNameSearch = () => {
+    setFoundId(null);
+    setFoundByName(false);
+    setForm({ ...EMPTY_FORM, phone: phoneInput.trim() });
+    setStep('form');
+  };
+
+  /* Passo 2: submit do formulario */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -94,7 +142,6 @@ export default function Cadastro() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-
     if (!form.full_name.trim()) {
       setFormError('Por favor, informe seu nome completo.');
       return;
@@ -120,7 +167,7 @@ export default function Cadastro() {
     }
   };
 
-  /* ── Tela de confirmação ── */
+  /* Tela de confirmacao */
   if (step === 'done') {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
@@ -131,8 +178,8 @@ export default function Cadastro() {
           </h2>
           <p className="text-gray-400">
             {foundId
-              ? 'Suas informações foram atualizadas com sucesso.'
-              : 'Obrigado! Suas informações foram recebidas com sucesso.'}
+              ? 'Suas informacoes foram atualizadas com sucesso.'
+              : 'Obrigado! Suas informacoes foram recebidas com sucesso.'}
           </p>
         </div>
       </div>
@@ -147,13 +194,13 @@ export default function Cadastro() {
           {/* Header */}
           <div className="text-center mb-8">
             <img src="/lobot-logo.svg" alt="Logo" className="w-16 h-16 rounded-lg mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white">Atualização de Cadastro</h1>
+            <h1 className="text-2xl font-bold text-white">Atualizacao de Cadastro</h1>
             <p className="text-gray-400 text-sm mt-2">
-              Mantenha seus dados atualizados na nossa família.
+              Mantenha seus dados atualizados na nossa familia.
             </p>
           </div>
 
-          {/* ── PASSO 1: Celular ── */}
+          {/* PASSO 1: Celular */}
           {step === 'phone' && (
             <form onSubmit={handlePhoneSearch} className="space-y-5">
               {searchError && (
@@ -161,10 +208,9 @@ export default function Cadastro() {
                   <p className="text-red-400 text-sm">{searchError}</p>
                 </div>
               )}
-
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Seu número de celular <span className="text-red-400">*</span>
+                  Seu numero de celular <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="tel"
@@ -175,10 +221,9 @@ export default function Cadastro() {
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1.5">
-                  Usaremos seu número para localizar seu cadastro existente.
+                  Usaremos seu numero para localizar seu cadastro existente.
                 </p>
               </div>
-
               <button
                 type="submit"
                 disabled={searching}
@@ -190,23 +235,89 @@ export default function Cadastro() {
             </form>
           )}
 
-          {/* ── PASSO 2: Formulário ── */}
+          {/* PASSO 1b: Busca por nome */}
+          {step === 'name' && (
+            <div className="space-y-5">
+              <div className="flex items-start gap-3 p-3 bg-amber-900/30 border border-amber-700 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-amber-300 text-sm">
+                  Nao encontramos esse numero no cadastro. Digite seu nome para verificar se voce ja esta cadastrado com outro numero.
+                </p>
+              </div>
+
+              {searchError && (
+                <div className="p-3 bg-red-900/30 border border-red-700 rounded-lg">
+                  <p className="text-red-400 text-sm">{searchError}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleNameSearch} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                    Seu nome completo <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={e => setNameInput(e.target.value)}
+                    placeholder="Ex: Maria Silva"
+                    className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-500"
+                    autoFocus
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={searching}
+                  className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Search className="w-4 h-4" />
+                  {searching ? 'Buscando...' : 'Verificar nome'}
+                </button>
+              </form>
+
+              <div className="text-center">
+                <button
+                  onClick={skipNameSearch}
+                  className="text-xs text-gray-500 hover:text-gray-300 underline transition-colors"
+                >
+                  Sou novo aqui, nunca me cadastrei
+                </button>
+              </div>
+
+              <button
+                onClick={() => { setStep('phone'); setSearchError(''); }}
+                className="w-full border border-slate-600 text-gray-300 hover:bg-slate-700 font-semibold py-2.5 rounded-lg transition-colors text-sm"
+              >
+                Voltar
+              </button>
+            </div>
+          )}
+
+          {/* PASSO 2: Formulario */}
           {step === 'form' && (
             <form onSubmit={handleSubmit} className="space-y-5">
 
-              {/* Banner encontrado / não encontrado */}
-              {foundId ? (
+              {/* Banner encontrado / nao encontrado */}
+              {foundId && !foundByName ? (
                 <div className="flex items-start gap-3 p-3 bg-emerald-900/30 border border-emerald-700 rounded-lg">
                   <UserCheck className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
                   <p className="text-emerald-300 text-sm">
                     Encontramos seu cadastro! Confirme e atualize seus dados abaixo.
                   </p>
                 </div>
+              ) : foundId && foundByName ? (
+                <div className="flex items-start gap-3 p-3 bg-emerald-900/30 border border-emerald-700 rounded-lg">
+                  <UserCheck className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-emerald-300 text-sm">
+                    Encontramos seu cadastro pelo nome! Seu numero de celular sera atualizado.
+                  </p>
+                </div>
               ) : (
                 <div className="flex items-start gap-3 p-3 bg-blue-900/30 border border-blue-700 rounded-lg">
                   <UserPlus className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                   <p className="text-blue-300 text-sm">
-                    Número não encontrado. Preencha seus dados para se cadastrar.
+                    Nao encontramos seu cadastro. Preencha seus dados para se cadastrar.
                   </p>
                 </div>
               )}
@@ -235,9 +346,7 @@ export default function Cadastro() {
 
               {/* Celular */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Celular
-                </label>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Celular</label>
                 <input
                   type="tel"
                   name="phone"
@@ -278,10 +387,10 @@ export default function Cadastro() {
                 />
               </div>
 
-              {/* Posição Oficial */}
+              {/* Posicao Oficial */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Posição Oficial <span className="text-gray-500 text-xs">(opcional)</span>
+                  Posicao Oficial <span className="text-gray-500 text-xs">(opcional)</span>
                 </label>
                 <div className="relative">
                   <select
@@ -292,7 +401,7 @@ export default function Cadastro() {
                   >
                     {POSICOES.map(p => (
                       <option key={p} value={p}>
-                        {p === 'NÃO' ? 'Não possuo posição oficial' : p}
+                        {p === 'NAO' ? 'Nao possuo posicao oficial' : p}
                       </option>
                     ))}
                   </select>
@@ -314,17 +423,17 @@ export default function Cadastro() {
                 />
               </div>
 
-              {/* Endereço */}
+              {/* Endereco */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                  Endereço <span className="text-gray-500 text-xs">(opcional)</span>
+                  Endereco <span className="text-gray-500 text-xs">(opcional)</span>
                 </label>
                 <input
                   type="text"
                   name="address"
                   value={form.address}
                   onChange={handleChange}
-                  placeholder="Rua, número, complemento"
+                  placeholder="Rua, numero, complemento"
                   className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-500"
                 />
               </div>
@@ -344,11 +453,11 @@ export default function Cadastro() {
                 />
               </div>
 
-              {/* Botões */}
+              {/* Botoes */}
               <div className="flex gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => { setStep('phone'); setFormError(''); }}
+                  onClick={() => { setStep(foundId ? 'phone' : 'name'); setFormError(''); }}
                   className="flex-1 border border-slate-600 text-gray-300 hover:bg-slate-700 font-semibold py-3 rounded-lg transition-colors"
                 >
                   Voltar
@@ -358,11 +467,7 @@ export default function Cadastro() {
                   disabled={loading}
                   className="flex-[2] bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors"
                 >
-                  {loading
-                    ? 'Enviando...'
-                    : foundId
-                    ? 'Atualizar Cadastro'
-                    : 'Enviar Cadastro'}
+                  {loading ? 'Enviando...' : foundId ? 'Atualizar Cadastro' : 'Enviar Cadastro'}
                 </button>
               </div>
             </form>

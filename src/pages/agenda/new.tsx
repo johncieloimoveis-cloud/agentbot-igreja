@@ -7,7 +7,6 @@ import { getPeople } from '@/services/people';
 import { Users, User, Check, Search } from 'lucide-react';
 import { HelpTooltip } from '@/components/HelpTooltip';
 
-const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
 
 const DAY_OPTIONS = [
   { value: 0, label: 'Domingo' },
@@ -28,7 +27,7 @@ const WEEK_OPTIONS = [
 
 export default function NewAgendaEvent() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
 
   const [form, setForm] = useState({
     title: '',
@@ -57,8 +56,8 @@ export default function NewAgendaEvent() {
 
   useEffect(() => {
     if (!user) return;
-    getGroups(CHURCH_ID).then(({ data }) => setGroups(data || []));
-    getPeople(CHURCH_ID).then(({ data }) => setAllPeople(data || []));
+    getGroups(church_id || '').then(({ data }) => setGroups(data || []));
+    getPeople(church_id || '').then(({ data }) => setAllPeople(data || []));
   }, [user]);
 
   const set = (field: string, value: any) => setForm(f => ({ ...f, [field]: value }));
@@ -107,7 +106,7 @@ export default function NewAgendaEvent() {
         payload.event_date = form.event_date;
       }
 
-      const { error: err } = await createRecurringEvent(CHURCH_ID, payload);
+      const { error: err } = await createRecurringEvent(church_id || '', payload);
       if (err) throw err;
       router.push('/agenda');
     } catch (err: any) {

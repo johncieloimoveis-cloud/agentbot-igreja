@@ -12,7 +12,6 @@ import {
   Clock, MapPin, Users, User, Repeat, Check, Building2
 } from 'lucide-react';
 
-const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
   culto: 'bg-blue-500',
@@ -42,7 +41,7 @@ const DAY_NAMES_SHORT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
 export default function AgendaPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
 
   const today = new Date();
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
@@ -74,8 +73,8 @@ export default function AgendaPage() {
     setLoading(true);
     try {
       const [{ data: evData }, { data: grpData }] = await Promise.all([
-        getRecurringEvents(CHURCH_ID),
-        getGroups(CHURCH_ID),
+        getRecurringEvents(church_id || ''),
+        getGroups(church_id || ''),
       ]);
       setManualEvents(evData || []);
       // Grupos → gerar eventos automáticos (via group_meetings ou meeting_day)
@@ -88,7 +87,7 @@ export default function AgendaPage() {
   };
 
   const loadAttendanceEvents = async () => {
-    const { data } = await getAttendanceEvents(CHURCH_ID);
+    const { data } = await getAttendanceEvents(church_id || '');
     setAttendanceEvents(data || []);
   };
 
@@ -120,7 +119,7 @@ export default function AgendaPage() {
     setCreatingAttendance(key);
     try {
       const dateStr = toLocalDateStr(inst.date);
-      const { data, error } = await createAttendanceEvent(CHURCH_ID, {
+      const { data, error } = await createAttendanceEvent(church_id || '', {
         name: inst.recurring_event.title,
         event_type: inst.recurring_event.event_type,
         event_date: dateStr,

@@ -6,7 +6,7 @@ import { supabase } from '@/services/supabase';
 import { Upload, CheckCircle, AlertCircle } from 'lucide-react';
 export default function ImportPeople() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [contacts, setContacts] = useState<ParsedContact[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -62,7 +62,7 @@ export default function ImportPeople() {
     setImporting(true);
     setError('');
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       // Preparar dados para inserção (apenas os selecionados)
       const dataToInsert = contacts
         .map((contact, idx) => ({

@@ -7,7 +7,7 @@ import { AlertCircle, Edit2, Trash2, X, Sparkles, MessageCircle, Copy, Check } f
 
 export default function TaskDetail() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const { id } = router.query;
   const [task, setTask] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -65,7 +65,7 @@ export default function TaskDetail() {
 
   const loadPeople = async () => {
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const { data, error } = await getPeople(churchId);
       if (error) throw error;
       setPeople(data || []);

@@ -6,7 +6,7 @@ import { AlertCircle } from 'lucide-react';
 import { HelpTooltip } from '@/components/HelpTooltip';
 export default function NewAttendanceEvent() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -33,7 +33,7 @@ export default function NewAttendanceEvent() {
     }
     setLoading(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const eventDateTime = formData.event_time
         ? `${formData.event_date}T${formData.event_time}:00`
         : `${formData.event_date}T00:00:00`;

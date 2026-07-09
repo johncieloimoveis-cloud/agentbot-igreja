@@ -8,11 +8,9 @@ const supabaseAdmin = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-
 export default withAuth(
   ['Arcanjo', 'Querubim'],
-  async (req: NextApiRequest, res: NextApiResponse, _user: AuthUser) => {
+  async (req: NextApiRequest, res: NextApiResponse, user: AuthUser) => {
     if (req.method !== 'GET') return res.status(405).end();
 
     const { aba } = req.query; // 'atualizados' | 'pendentes'
@@ -20,7 +18,7 @@ export default withAuth(
     const base = supabaseAdmin
       .from('people')
       .select('id, full_name, phone, whatsapp, email, cadastro_atualizado_em')
-      .eq('church_id', CHURCH_ID)
+      .eq('church_id', user.church_id)
       .order('full_name');
 
     let query;

@@ -13,7 +13,7 @@ interface Person {
 }
 export default function PeopleList() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const [people, setPeople] = useState<Person[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -25,8 +25,7 @@ export default function PeopleList() {
   const loadPeople = async () => {
     setLoading(true);
     try {
-      // TODO: Obter church_id do user ou context
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20'; // Substitua pelo ID real
+      const churchId = church_id || '';
       const { data, error } = await getPeople(
         churchId,
         status || undefined,

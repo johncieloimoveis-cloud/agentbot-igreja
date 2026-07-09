@@ -15,7 +15,7 @@ interface Group {
 
 export default function Groups() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -34,8 +34,7 @@ export default function Groups() {
   const loadGroups = async () => {
     setLoading(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20'; // Church ID real
-      console.log('Carregando grupos para churchId:', churchId);
+      const churchId = church_id || '';
       const { data, error } = await getGroups(churchId);
       console.log('Dados retornados:', data);
       console.log('Erro:', error);

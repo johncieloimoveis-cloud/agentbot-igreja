@@ -22,7 +22,7 @@ interface AttendanceRecord {
 }
 export default function AttendanceDetail() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const { id } = router.query;
   const [event, setEvent] = useState<any>(null);
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
@@ -60,7 +60,7 @@ export default function AttendanceDetail() {
   const loadAvailablePeople = async () => {
     setLoadingPeople(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const { data, error } = await getPeople(churchId, undefined, searchPeople || undefined);
       if (error) throw error;
       // Filtrar pessoas que já estão registradas
@@ -207,7 +207,7 @@ export default function AttendanceDetail() {
                         if (e.target.value.length > 0) {
                           setLoadingPeople(true);
                           setTimeout(() => {
-                            const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+                            const churchId = church_id || '';
                             getPeople(churchId, undefined, e.target.value).then(({ data }) => {
                               const attendedPersonIds = attendances.map((a) => a.person.id);
                               const filteredPeople = (data || []).filter(

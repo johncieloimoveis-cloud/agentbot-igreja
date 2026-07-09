@@ -9,10 +9,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+    const churchId = process.env.DEFAULT_CHURCH_ID || '';  // TODO Fase 2: resolver por auth
 
     // Usar service role key para contornar RLS
-    const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZnl3a2VoaXF4cWpucnVjdHl5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDQwNDI4NSwiZXhwIjoyMDk1OTgwMjg1fQ.o9JjD6j416BHhpebmNzMqPq4aHnCL0j_6z65K_egKsg';
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
     const supabaseAdmin = createClient(
       'https://hdfywkehiqxqjnructyy.supabase.co',

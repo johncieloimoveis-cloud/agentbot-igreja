@@ -6,7 +6,7 @@ import { createPerson } from '@/services/people';
 import { AlertCircle } from 'lucide-react';
 export default function NewPerson() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const handleSubmit = async (data: PersonFormData) => {
@@ -17,7 +17,7 @@ export default function NewPerson() {
   setLoading(true);
   setError('');
   try {
-    const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+    const churchId = church_id || '';
     // Limpar campos vazios (converter "" em undefined)
     const cleanData = {
       full_name: data.full_name,

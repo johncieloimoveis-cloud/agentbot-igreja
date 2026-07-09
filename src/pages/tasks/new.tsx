@@ -7,7 +7,7 @@ import { AlertCircle } from 'lucide-react';
 import { HelpTooltip } from '@/components/HelpTooltip';
 export default function NewTask() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [error, setError] = useState('');
@@ -27,7 +27,7 @@ export default function NewTask() {
   const loadPeople = async () => {
     setLoadingPeople(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const { data, error } = await getPeople(churchId);
       if (error) throw error;
       setPeople(data || []);
@@ -46,7 +46,7 @@ export default function NewTask() {
     }
     setLoading(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const { error: err } = await createTask(churchId, {
         title: formData.title,
         description: formData.description || null,

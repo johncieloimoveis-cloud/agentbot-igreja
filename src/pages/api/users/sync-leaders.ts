@@ -111,7 +111,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+    const churchId = process.env.DEFAULT_CHURCH_ID || '';  // TODO Fase 2: resolver por auth
 
     const { data: allGroups } = await adminClient
       .from('groups')

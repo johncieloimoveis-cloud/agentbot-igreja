@@ -1,21 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { withAuth } from '@/lib/withAuth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default withAuth([], async (req, res, user) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+  const churchId = user.church_id;
   const weeksThreshold = Number(req.query.weeks || 2);
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - weeksThreshold * 7);
 
   try {
-    // 1. Buscar todos os eventos da igreja, ordenados por data
     const { data: events, error: eventsError } = await supabase
       .from('attendance_events')
       .select('id, event_date')
@@ -35,7 +36,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (olderEventIds.length === 0) return res.status(200).json({ data: [] });
 
-    // 2. Pessoas que já compareceram antes do período recente
     const { data: historicRecords, error: historicError } = await supabase
       .from('attendance_records')
       .select('person_id, person:people(id, full_name, phone, whatsapp)')
@@ -45,7 +45,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (historicError) throw historicError;
     if (!historicRecords || historicRecords.length === 0) return res.status(200).json({ data: [] });
 
-    // Mapa de pessoas únicas que já compareceram antes
     const historicMap = new Map<string, any>();
     for (const r of historicRecords) {
       if (r.person_id && r.person && !historicMap.has(r.person_id)) {
@@ -53,7 +52,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // 3. Pessoas que compareceram em eventos recentes
     const recentAttendees = new Set<string>();
     if (recentEventIds.length > 0) {
       const { data: recentRecords } = await supabase
@@ -61,11 +59,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .select('person_id')
         .in('event_id', recentEventIds)
         .eq('attended', true);
-
       (recentRecords || []).forEach((r) => recentAttendees.add(r.person_id));
     }
 
-    // 4. Ausentes = estiveram antes mas não nos últimos N eventos
     const absent = Array.from(historicMap.entries())
       .filter(([personId]) => !recentAttendees.has(personId))
       .map(([, person]) => person)
@@ -76,4 +72,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('Erro detect-absences:', error);
     return res.status(500).json({ error: error.message || 'Erro interno' });
   }
-}
+});

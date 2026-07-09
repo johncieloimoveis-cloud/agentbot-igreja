@@ -16,7 +16,7 @@ interface Meeting {
 
 export default function NewGroup() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     meeting_address: '',
@@ -44,7 +44,7 @@ export default function NewGroup() {
 
   const loadData = async () => {
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const [groupsRes, peopleRes] = await Promise.all([
         getGroups(churchId),
         getPeople(churchId),
@@ -88,7 +88,7 @@ export default function NewGroup() {
 
     setSaving(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const dataToSubmit = {
         name: formData.name,
         meeting_address: formData.meeting_address || null,

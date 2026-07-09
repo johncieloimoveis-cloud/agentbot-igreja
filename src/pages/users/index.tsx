@@ -17,7 +17,7 @@ interface User {
 
 export default function UsersManagement() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, church_id } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [error, setError] = useState('');
@@ -44,7 +44,7 @@ export default function UsersManagement() {
   const loadUsers = async () => {
     setUsersLoading(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const { data, error: err } = await getUsers(churchId);
       if (err) throw err;
       setUsers((data as User[]) || []);

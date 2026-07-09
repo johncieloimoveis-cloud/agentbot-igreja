@@ -8,8 +8,6 @@ const supabaseAdmin = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-
 /** Remove acentos, cedilha e caracteres especiais */
 function stripAccents(str: string): string {
   return str.normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -30,7 +28,7 @@ function toUsername(fullName: string): string {
 
 export default withAuth(
   ['Arcanjo', 'Querubim'],
-  async (req: NextApiRequest, res: NextApiResponse, _user: AuthUser) => {
+  async (req: NextApiRequest, res: NextApiResponse, user: AuthUser) => {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { personId, personName, oficialPosition } = req.body;
@@ -139,7 +137,7 @@ export default withAuth(
       id: authUserId,
       email,
       full_name: personName,
-      church_id: CHURCH_ID,
+      church_id: user.church_id,
       role_id: roleId,
       people_id: personId,
       is_active: true,

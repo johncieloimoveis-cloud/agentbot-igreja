@@ -20,7 +20,7 @@ interface AbsentPerson {
 
 export default function AttendanceList() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const [events, setEvents] = useState<AttendanceEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [eventType, setEventType] = useState('');
@@ -50,7 +50,7 @@ export default function AttendanceList() {
   const loadEvents = async () => {
     setLoading(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const { data, error } = await getAttendanceEvents(churchId, eventType || undefined);
       if (error) throw error;
       setEvents(data || []);

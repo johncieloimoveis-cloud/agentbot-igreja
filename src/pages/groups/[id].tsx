@@ -48,7 +48,7 @@ const DAY_LABELS: Record<string, string> = {
 
 export default function GroupDetail() {
   const router = useRouter();
-  const { user, role } = useAuth();
+  const { user, role, church_id } = useAuth();
   const { id } = router.query;
 
   const [group, setGroup] = useState<Group | null>(null);
@@ -101,7 +101,7 @@ export default function GroupDetail() {
   const loadGroupData = async () => {
     setLoading(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const { data: groupData, error: groupError } = await getGroup(id as string);
       if (groupError) throw groupError;
 
@@ -429,7 +429,7 @@ export default function GroupDetail() {
   const loadAvailablePeople = async () => {
     setLoadingPeople(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const { data, error } = await getPeople(churchId, undefined, searchPeople || undefined);
       if (error) throw error;
       const memberPersonIds = members.map((m) => m.person.id);
@@ -779,7 +779,7 @@ export default function GroupDetail() {
                         if (e.target.value.length > 0) {
                           setLoadingPeople(true);
                           setTimeout(() => {
-                            const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+                            const churchId = church_id || '';
                             getPeople(churchId, undefined, e.target.value).then(({ data }) => {
                               const ids = members.map((m) => m.person.id);
                               setAvailablePeople((data || []).filter((p: any) => !ids.includes(p.id)));

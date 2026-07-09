@@ -23,7 +23,7 @@ interface AiCard {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, logout, loading, role, group_ids } = useAuth();
+  const { user, logout, loading, role, group_ids, church_id } = useAuth();
   const [dashLoading, setDashLoading] = useState(false);
   const [stats, setStats] = useState<{
     people: any;
@@ -66,7 +66,7 @@ export default function Dashboard() {
   const loadDashboardData = async () => {
     setDashLoading(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const [peopleRes, groupsRes, ministriesRes, birthdaysRes, visitorsRes, attendanceRes, absentRes, cadastrosRes] =
         await Promise.all([
           getPeopleStats(churchId),

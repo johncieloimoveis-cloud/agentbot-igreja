@@ -15,7 +15,7 @@ interface Task {
 }
 export default function TasksList() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, church_id } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('pending');
@@ -26,7 +26,7 @@ export default function TasksList() {
   const loadTasks = async () => {
     setLoading(true);
     try {
-      const churchId = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
+      const churchId = church_id || '';
       const { data, error } = await getTasks(churchId, status || undefined);
       if (error) throw error;
       setTasks(data || []);

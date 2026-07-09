@@ -23,7 +23,7 @@ interface AiCard {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading, role, group_ids } = useAuth();
   const [dashLoading, setDashLoading] = useState(false);
   const [stats, setStats] = useState<{
     people: any;
@@ -72,10 +72,10 @@ export default function Dashboard() {
           getPeopleStats(churchId),
           getGroupsStats(churchId),
           getMinistriesStats(churchId),
-          getUpcomingBirthdays(churchId),
-          getRecentVisitors(churchId, 30),
+          getUpcomingBirthdays(churchId, role === 'Serafim' ? group_ids : undefined),
+          getRecentVisitors(churchId, 30, role === 'Serafim' ? group_ids : undefined),
           getAverageAttendance(churchId),
-          getAbsentPeople(churchId, 10),
+          getAbsentPeople(churchId, 10, role === 'Serafim' ? group_ids : undefined),
           supabase.from('people').select('*', { count: 'exact', head: true }).not('cadastro_atualizado_em', 'is', null),
         ]);
       setStats({
@@ -273,7 +273,7 @@ export default function Dashboard() {
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="w-5 h-5 text-violet-500" />
-                  <h3 className="text-xl font-bold text-gray-950 dark:text-white">Ações Pastorais com IA</h3>
+                  <h3 className="text-xl font-bold text-gray-950 dark:text-white">Ações Pastorais com IA{role === 'Serafim' && group_ids.length > 0 ? ' — Meu Grupo' : ''}</h3>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {stats.birthdays.length > 0 && (

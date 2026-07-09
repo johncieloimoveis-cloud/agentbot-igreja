@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-// Total de pessoas por status
+
 export const getPeopleStats = async (churchId: string) => {
   const { data, error } = await supabase
     .from('people')
@@ -18,7 +18,7 @@ export const getPeopleStats = async (churchId: string) => {
   };
   return { data: stats };
 };
-// Total de grupos
+
 export const getGroupsStats = async (churchId: string) => {
   const { data, error } = await supabase
     .from('groups')
@@ -27,7 +27,7 @@ export const getGroupsStats = async (churchId: string) => {
   if (error) return { error };
   return { data: { total: data?.length || 0 } };
 };
-// Total de ministerios
+
 export const getMinistriesStats = async (churchId: string) => {
   const { data, error } = await supabase
     .from('departments')
@@ -36,16 +36,37 @@ export const getMinistriesStats = async (churchId: string) => {
   if (error) return { error };
   return { data: { total: data?.length || 0 } };
 };
-// Aniversariantes do mes
-export const getUpcomingBirthdays = async (churchId: string) => {
-  const today = new Date();
-  const currentMonth = today.getMonth() + 1; // 1-12
 
-  const { data, error } = await supabase
+// Retorna IDs de pessoas em qualquer dos grupos fornecidos
+async function getPeopleIdsInGroups(groupIds: string[]): Promise<string[]> {
+  if (!groupIds.length) return [];
+  const { data } = await supabase
+    .from('group_members')
+    .select('person_id')
+    .in('group_id', groupIds);
+  return [...new Set((data || []).map((r: any) => r.person_id))];
+}
+
+// Aniversariantes do mes — filtrado por grupo se groupIds fornecido
+export const getUpcomingBirthdays = async (churchId: string, groupIds?: string[]) => {
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+
+  let peopleIds: string[] | null = null;
+  if (groupIds && groupIds.length > 0) {
+    peopleIds = await getPeopleIdsInGroups(groupIds);
+    if (peopleIds.length === 0) return { data: [] };
+  }
+
+  let query = supabase
     .from('people')
     .select('id, full_name, date_of_birth, phone, whatsapp')
     .eq('church_id', churchId)
     .not('date_of_birth', 'is', null);
+
+  if (peopleIds) query = query.in('id', peopleIds);
+
+  const { data, error } = await query;
   if (error) return { error };
 
   const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -65,33 +86,54 @@ export const getUpcomingBirthdays = async (churchId: string) => {
 
   return { data: birthdays };
 };
-// Visitantes recentes
-export const getRecentVisitors = async (churchId: string, days: number = 30) => {
+
+// Visitantes recentes — filtrado por grupo se groupIds fornecido
+export const getRecentVisitors = async (churchId: string, days: number = 30, groupIds?: string[]) => {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
-  const { data, error } = await supabase
+
+  let peopleIds: string[] | null = null;
+  if (groupIds && groupIds.length > 0) {
+    peopleIds = await getPeopleIdsInGroups(groupIds);
+    if (peopleIds.length === 0) return { data: [] };
+  }
+
+  let query = supabase
     .from('people')
     .select('id, full_name, created_at')
     .eq('church_id', churchId)
     .eq('status', 'visitor')
     .gte('created_at', startDate.toISOString())
     .order('created_at', { ascending: false });
-  if (error) return { error };
-  return { data: data || [] };
-};
-// Pessoas ausentes (status = absent)
-export const getAbsentPeople = async (churchId: string, limit: number = 10) => {
-  const { data, error } = await supabase
-    .from('people')
-    .select('id, full_name, phone, whatsapp')
-    .eq('church_id', churchId)
-    .eq('status', 'absent')
-    .limit(limit);
+
+  if (peopleIds) query = query.in('id', peopleIds);
+
+  const { data, error } = await query;
   if (error) return { error };
   return { data: data || [] };
 };
 
-// Frequencia media
+// Afastados — filtrado por grupo se groupIds fornecido
+export const getAbsentPeople = async (churchId: string, limit: number = 10, groupIds?: string[]) => {
+  let peopleIds: string[] | null = null;
+  if (groupIds && groupIds.length > 0) {
+    peopleIds = await getPeopleIdsInGroups(groupIds);
+    if (peopleIds.length === 0) return { data: [] };
+  }
+
+  let query = supabase
+    .from('people')
+    .select('id, full_name, phone, whatsapp')
+    .eq('church_id', churchId)
+    .eq('status', 'absent');
+
+  if (peopleIds) query = query.in('id', peopleIds);
+
+  const { data, error } = await query.limit(limit);
+  if (error) return { error };
+  return { data: data || [] };
+};
+
 export const getAverageAttendance = async (churchId: string) => {
   const { data, error } = await supabase
     .from('attendance_events')
@@ -101,7 +143,6 @@ export const getAverageAttendance = async (churchId: string) => {
   if (!data || data.length === 0) {
     return { data: { total_events: 0, average: 0 } };
   }
-  // Contar total de presencas
   const { data: records, error: recordsError } = await supabase
     .from('attendance_records')
     .select('id')

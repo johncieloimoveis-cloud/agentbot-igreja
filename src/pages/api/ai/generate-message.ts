@@ -1,3 +1,4 @@
+import { getAuthUser } from '@/lib/withAuth';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
@@ -30,6 +31,15 @@ Máximo 3 frases.`,
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Verifica autenticacao e plano
+  const authUser = await getAuthUser(req);
+  if (!authUser) {
+    return res.status(401).json({ error: 'Nao autenticado' });
+  }
+  if (authUser.plano !== 'pagante') {
+    return res.status(403).json({ error: 'Recurso disponivel apenas no plano pagante', upgrade: true });
   }
 
   const { messageType, personName, weeksAbsent, taskTitle } = req.body;

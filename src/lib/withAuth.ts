@@ -10,6 +10,7 @@ export interface AuthUser {
   church_id: string;
   people_id: string | null;
   group_ids: string[]; // grupos que este usuario lidera
+  plano: 'gratuito' | 'pagante';
 }
 
 const supabaseAdmin = createClient(
@@ -59,6 +60,15 @@ export async function getAuthUser(req: NextApiRequest): Promise<AuthUser | null>
     group_ids = (ledGroups || []).map((g: any) => g.id);
   }
 
+  // Busca o plano da igreja
+  let plano: 'gratuito' | 'pagante' = 'gratuito';
+  const { data: churchData } = await supabaseAdmin
+    .from('churches')
+    .select('plano')
+    .eq('id', profile.church_id)
+    .single();
+  if (churchData?.plano === 'pagante') plano = 'pagante';
+
   return {
     id: user.id,
     email: user.email!,
@@ -66,6 +76,7 @@ export async function getAuthUser(req: NextApiRequest): Promise<AuthUser | null>
     church_id: profile.church_id,
     people_id: profile.people_id ?? null,
     group_ids,
+    plano,
   };
 }
 

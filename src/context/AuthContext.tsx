@@ -10,6 +10,7 @@ export interface AuthContextType {
   church_id: string | null;
   people_id: string | null;
   group_ids: string[];
+  plano: 'gratuito' | 'pagante';
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -22,6 +23,7 @@ async function fetchProfile(token: string): Promise<{
   church_id: string;
   people_id: string | null;
   group_ids: string[];
+  plano: 'gratuito' | 'pagante';
 } | null> {
   try {
     const res = await fetch('/api/me', {
@@ -40,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [church_id, setChurchId] = useState<string | null>(null);
   const [people_id, setPeopleId] = useState<string | null>(null);
   const [group_ids, setGroupIds] = useState<string[]>([]);
+  const [plano, setPlano] = useState<'gratuito' | 'pagante'>('gratuito');
   const [loading, setLoading] = useState(true);
 
   const applyProfile = async (token: string) => {
@@ -49,11 +52,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setChurchId(profile.church_id);
       setPeopleId(profile.people_id ?? null);
       setGroupIds(profile.group_ids ?? []);
+      setPlano(profile.plano ?? 'gratuito');
     } else {
       setRole(null);
       setChurchId(null);
       setPeopleId(null);
       setGroupIds([]);
+      setPlano('gratuito');
     }
   };
 
@@ -62,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setChurchId(null);
     setPeopleId(null);
     setGroupIds([]);
+    setPlano('gratuito');
   };
 
   useEffect(() => {
@@ -99,8 +105,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearProfile();
   };
 
+  const ctx: AuthContextType = {
+    user,
+    role,
+    church_id,
+    people_id,
+    group_ids,
+    plano,
+    loading,
+    login,
+    logout,
+  };
+
   return (
-    <AuthContext.Provider value={{ user, role, church_id, people_id, group_ids, loading, login, logout }}>
+    <AuthContext.Provider value={ctx}>
       {children}
     </AuthContext.Provider>
   );

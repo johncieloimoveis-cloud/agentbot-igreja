@@ -14,5 +14,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     church_id: user.church_id,
     people_id: user.people_id,
     group_ids: user.group_ids,
+    plano: user.plano,
   });
 }

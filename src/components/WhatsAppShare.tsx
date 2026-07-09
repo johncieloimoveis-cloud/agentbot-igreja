@@ -47,7 +47,7 @@ export function WhatsAppShare({ phone = '', message, onCopy, size = 'sm' }: What
     <div className="flex items-center gap-1.5 flex-wrap">
       <a
         href={buildUrl(phone, message, false)}
-        target="_blank"
+        target="whatsapp-personal"
         rel="noopener noreferrer"
         className={`flex items-center gap-1 ${px} bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors`}
         title="WhatsApp Pessoal"
@@ -57,7 +57,7 @@ export function WhatsAppShare({ phone = '', message, onCopy, size = 'sm' }: What
       </a>
       <a
         href={buildUrl(phone, message, true)}
-        target="_blank"
+        target="whatsapp-business"
         rel="noopener noreferrer"
         className={`flex items-center gap-1 ${px} bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg transition-colors`}
         title="WhatsApp Business"

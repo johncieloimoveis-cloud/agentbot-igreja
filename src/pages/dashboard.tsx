@@ -11,7 +11,8 @@ import {
   getAbsentPeople,
 } from '@/services/dashboard';
 import { supabase } from '@/services/supabase';
-import { LogOut, Users, Users2, UserCheck, Calendar, TrendingUp, Cake, Heart, Sparkles, MessageCircle, X, Copy, Check, ClipboardCheck } from 'lucide-react';
+import { LogOut, Users, Users2, UserCheck, Calendar, TrendingUp, Cake, Heart, Sparkles, X, ClipboardCheck } from 'lucide-react';
+import { WhatsAppShare } from '@/components/WhatsAppShare';
 
 interface AiCard {
   personId: string;
@@ -130,12 +131,6 @@ export default function Dashboard() {
     });
   };
 
-  const buildWhatsAppUrl = (person: any, message: string) => {
-    const phone = (person.whatsapp || person.phone || '').replace(/\D/g, '');
-    const encoded = encodeURIComponent(message);
-    return phone ? `https://wa.me/55${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
-  };
-
   const handleLogout = async () => {
     try { await logout(); router.push('/login'); } catch (e) { console.error(e); }
   };
@@ -195,23 +190,12 @@ export default function Dashboard() {
         {card?.message && (
           <div className="bg-violet-50 dark:bg-violet-900/20 p-3 border-t border-violet-100 dark:border-violet-800">
             <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-3">{card.message}</p>
-            <div className="flex gap-2">
-              <a
-                href={buildWhatsAppUrl(person, card.message)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors"
-              >
-                <MessageCircle className="w-3 h-3" />
-                WhatsApp
-              </a>
-              <button
-                onClick={() => handleCopy(person.id, card.message)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg transition-colors"
-              >
-                {copied[person.id] ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
-                {copied[person.id] ? 'Copiado!' : 'Copiar'}
-              </button>
+            <div className="flex gap-2 flex-wrap">
+              <WhatsAppShare
+                phone={person.whatsapp || person.phone || ''}
+                message={card.message}
+                onCopy={() => setCopied((p) => ({ ...p, [person.id]: true }))}
+              />
               <button
                 onClick={() => handleGenerate(person, messageType)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-xs font-semibold rounded-lg transition-colors"

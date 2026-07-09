@@ -7,22 +7,22 @@ const supabaseAdmin = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // POST = novo cadastro, PATCH = atualiza existente
   if (req.method !== 'POST' && req.method !== 'PATCH') return res.status(405).end();
 
-  const { id, full_name, email, oficial, date_of_birth, address, city, phone, whatsapp } = req.body;
+  const { id, church_id, full_name, email, oficial, date_of_birth, address, city, phone, whatsapp } = req.body;
 
   if (!full_name?.trim()) {
-    return res.status(400).json({ error: 'Nome completo é obrigatório' });
+    return res.status(400).json({ error: 'Nome completo e obrigatorio' });
+  }
+  if (!church_id) {
+    return res.status(400).json({ error: 'church_id e obrigatorio' });
   }
 
   const payload = {
     full_name: full_name.trim(),
     email: email?.trim() || null,
-    oficial: oficial || 'NÃO',
+    oficial: oficial || 'NAO',
     date_of_birth: date_of_birth || null,
     address: address?.trim() || null,
     city: city?.trim() || null,
@@ -32,14 +32,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   if (req.method === 'PATCH') {
-    // Atualiza registro existente
-    if (!id) return res.status(400).json({ error: 'ID é obrigatório para atualização' });
-
+    if (!id) return res.status(400).json({ error: 'ID e obrigatorio para atualizacao' });
     const { error } = await supabaseAdmin
       .from('people')
       .update(payload)
-      .eq('id', id);
-
+      .eq('id', id)
+      .eq('church_id', church_id); // garante que o id pertence a esta igreja
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ success: true, updated: true });
   }
@@ -48,9 +46,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { error } = await supabaseAdmin.from('people').insert({
     ...payload,
     status: 'active_member',
-    church_id: CHURCH_ID,
+    church_id,
   });
-
   if (error) return res.status(500).json({ error: error.message });
   return res.status(200).json({ success: true, created: true });
 }

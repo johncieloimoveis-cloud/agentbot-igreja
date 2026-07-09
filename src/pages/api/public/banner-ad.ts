@@ -7,16 +7,17 @@ const supabaseAdmin = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-const CHURCH_ID = '90e649c3-13ea-4fdc-a1c8-f352ef794b20';
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).end();
+
+  const church_id = (req.query.church_id as string) || '';
+  if (!church_id) return res.status(400).json({ error: 'church_id obrigatorio' });
 
   // Verifica o plano da igreja
   const { data: church } = await supabaseAdmin
     .from('churches')
     .select('plano')
-    .eq('id', CHURCH_ID)
+    .eq('id', church_id)
     .single();
 
   const plano = church?.plano || 'gratuito';

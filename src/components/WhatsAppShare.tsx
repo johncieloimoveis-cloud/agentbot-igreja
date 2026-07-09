@@ -8,6 +8,10 @@ interface WhatsAppShareProps {
   size?: 'sm' | 'md';
 }
 
+// Referências persistentes entre renders — reutiliza a mesma aba
+let waWindow: Window | null = null;
+let waBizWindow: Window | null = null;
+
 function buildUrl(phone: string, message: string, business = false) {
   const cleaned = phone.replace(/\D/g, '');
   const encoded = encodeURIComponent(message);
@@ -30,6 +34,24 @@ function buildUrl(phone: string, message: string, business = false) {
   return num ? `https://wa.me/${num}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
 }
 
+function openWA(url: string, business: boolean) {
+  if (business) {
+    if (!waBizWindow || waBizWindow.closed) {
+      waBizWindow = window.open(url, 'whatsapp-business');
+    } else {
+      waBizWindow.location.href = url;
+      waBizWindow.focus();
+    }
+  } else {
+    if (!waWindow || waWindow.closed) {
+      waWindow = window.open(url, 'whatsapp-personal');
+    } else {
+      waWindow.location.href = url;
+      waWindow.focus();
+    }
+  }
+}
+
 export function WhatsAppShare({ phone = '', message, onCopy, size = 'sm' }: WhatsAppShareProps) {
   const [copied, setCopied] = useState(false);
 
@@ -43,28 +65,49 @@ export function WhatsAppShare({ phone = '', message, onCopy, size = 'sm' }: What
     onCopy?.();
   };
 
+  // Em mobile usa <a> direto (intent/scheme); em desktop usa window.open com reutilização
+  const isMobile = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      <a
-        href={buildUrl(phone, message, false)}
-        target="whatsapp-personal"
-        rel="noopener noreferrer"
-        className={`flex items-center gap-1 ${px} bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors`}
-        title="WhatsApp Pessoal"
-      >
-        <MessageCircle className={icon} />
-        WA
-      </a>
-      <a
-        href={buildUrl(phone, message, true)}
-        target="whatsapp-business"
-        rel="noopener noreferrer"
-        className={`flex items-center gap-1 ${px} bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg transition-colors`}
-        title="WhatsApp Business"
-      >
-        <MessageCircle className={icon} />
-        WA Biz
-      </a>
+      {isMobile ? (
+        <a
+          href={buildUrl(phone, message, false)}
+          className={`flex items-center gap-1 ${px} bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors`}
+          title="WhatsApp Pessoal"
+        >
+          <MessageCircle className={icon} />WA
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={() => openWA(buildUrl(phone, message, false), false)}
+          className={`flex items-center gap-1 ${px} bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors`}
+          title="WhatsApp Pessoal"
+        >
+          <MessageCircle className={icon} />WA
+        </button>
+      )}
+
+      {isMobile ? (
+        <a
+          href={buildUrl(phone, message, true)}
+          className={`flex items-center gap-1 ${px} bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg transition-colors`}
+          title="WhatsApp Business"
+        >
+          <MessageCircle className={icon} />WA Biz
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={() => openWA(buildUrl(phone, message, true), true)}
+          className={`flex items-center gap-1 ${px} bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg transition-colors`}
+          title="WhatsApp Business"
+        >
+          <MessageCircle className={icon} />WA Biz
+        </button>
+      )}
+
       <button
         type="button"
         onClick={handleCopy}

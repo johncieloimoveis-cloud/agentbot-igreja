@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getAttendanceEvents } from '@/services/attendance';
-import { Plus, Calendar, Sparkles, MessageCircle, AlertTriangle, ChevronDown, ChevronUp, X, Copy, Check } from 'lucide-react';
+import { Plus, Calendar, Sparkles, AlertTriangle, ChevronUp, ChevronDown, X } from 'lucide-react';
+import { WhatsAppShare } from '@/components/WhatsAppShare';
 
 interface AttendanceEvent {
   id: string;
@@ -97,12 +98,6 @@ export default function AttendanceList() {
     } finally {
       setAiLoading((prev) => ({ ...prev, [person.id]: false }));
     }
-  };
-
-  const buildWhatsAppUrl = (person: AbsentPerson, message: string) => {
-    const phone = (person.whatsapp || person.phone || '').replace(/\D/g, '');
-    const encoded = encodeURIComponent(message);
-    return phone ? `https://wa.me/55${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
   };
 
   const getEventTypeLabel = (type: string) => {
@@ -213,23 +208,12 @@ export default function AttendanceList() {
                     {aiMessages[person.id] && (
                       <div className="bg-violet-50 dark:bg-violet-900/20 p-3 border-t border-violet-100 dark:border-violet-800">
                         <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-3">{aiMessages[person.id]}</p>
-                        <div className="flex gap-2">
-                          <a
-                            href={buildWhatsAppUrl(person, aiMessages[person.id])}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors"
-                          >
-                            <MessageCircle className="w-3 h-3" />
-                            WhatsApp
-                          </a>
-                          <button
-                            onClick={() => handleCopy(person.id, aiMessages[person.id])}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg transition-colors"
-                          >
-                            {copied[person.id] ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
-                            {copied[person.id] ? 'Copiado!' : 'Copiar'}
-                          </button>
+                        <div className="flex gap-2 flex-wrap">
+                          <WhatsAppShare
+                            phone={person.whatsapp || person.phone || ''}
+                            message={aiMessages[person.id]}
+                            onCopy={() => setCopied((p) => ({ ...p, [person.id]: true }))}
+                          />
                           <button
                             onClick={() => handleGenerateMessage(person)}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-xs font-semibold rounded-lg transition-colors"

@@ -76,4 +76,6 @@ export const getGroupMeetings = async (groupId: string) => {
 export const deleteGroupMeeting = async (meetingId: string) => {
   return supabase
     .from('group_meetings')
-    
+        .delete()
+    .eq('id', meetingId);
+};

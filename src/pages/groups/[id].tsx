@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
-import { getGroupMembers, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups } from '@/services/groups';
+import { getGroupMembers, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups, getGroupMeetings, addGroupMeeting, deleteGroupMeeting } from '@/services/groups';
 import { getPeople } from '@/services/people';
 import { getGroupAttendanceStats, MemberAttendanceStat, Quadrant } from '@/services/attendance';
-import { TrashIcon, Plus, Edit2, X, Search, Sparkles, MessageCircle, Copy, Check, Cake, Users, UserCheck, UserMinus, TrendingUp, TrendingDown, Minus, BarChart2 } from 'lucide-react';
+import { TrashIcon, Plus, Edit2, X, Search, Sparkles, Cake, Users, UserCheck, UserMinus, TrendingUp, TrendingDown, Minus, BarChart2 } from 'lucide-react';
+import { WhatsAppShare } from '@/components/WhatsAppShare';
 
 interface Person {
   id: string;
@@ -22,6 +23,13 @@ interface Member {
   person: Person;
 }
 
+interface GroupMeeting {
+  id: string;
+  day_of_week: string;
+  time?: string;
+  meeting_type?: string;
+}
+
 interface Group {
   id: string;
   name: string;
@@ -32,6 +40,11 @@ interface Group {
   leader_id?: string;
   leader?: { id: string; full_name: string } | null;
 }
+
+const DAY_LABELS: Record<string, string> = {
+  segunda: 'Segunda', terca: 'Terca', quarta: 'Quarta',
+  quinta: 'Quinta', sexta: 'Sexta', sabado: 'Sabado', domingo: 'Domingo',
+};
 
 export default function GroupDetail() {
   const router = useRouter();
@@ -62,6 +75,11 @@ export default function GroupDetail() {
     parent_group_id: '',
     leader_id: '',
   });
+
+  // Reunioes do grupo
+  const [meetings, setMeetings] = useState<GroupMeeting[]>([]);
+  const [newMeeting, setNewMeeting] = useState({ day_of_week: 'domingo', time: '19:00', meeting_type: '' });
+  const [addingMeeting, setAddingMeeting] = useState(false);
 
   // Abas
   const [activeTab, setActiveTab] = useState<'geral' | 'frequencia' | 'membros'>('geral');
@@ -108,6 +126,9 @@ export default function GroupDetail() {
       const { data: membersData, error: membersError } = await getGroupMembers(id as string);
       if (membersError) throw membersError;
       setMembers(membersData || []);
+
+      const { data: meetingsData } = await getGroupMeetings(id as string);
+      setMeetings(meetingsData || []);
     } catch (error) {
       console.error('Erro:', error);
       setError('Erro ao carregar grupo');
@@ -257,18 +278,11 @@ export default function GroupDetail() {
                       <div className="bg-violet-50 dark:bg-violet-900/20 p-3 rounded-lg border border-violet-100 dark:border-violet-800">
                         <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-3">{aiMessages[stat.person_id]}</p>
                         <div className="flex gap-2 flex-wrap">
-                          <button onClick={() => handleCopy(stat.person_id, aiMessages[stat.person_id])}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg">
-                            {copied[stat.person_id] ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
-                            {copied[stat.person_id] ? 'Copiado!' : 'Copiar'}
-                          </button>
-                          {(stat.whatsapp || stat.phone) && (
-                            <a href={buildWhatsAppUrl({ id: stat.person_id, full_name: stat.full_name, phone: stat.phone, whatsapp: stat.whatsapp }, aiMessages[stat.person_id])}
-                              target="_blank" rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg">
-                              <MessageCircle className="w-3 h-3" />WhatsApp
-                            </a>
-                          )}
+                          <WhatsAppShare
+                            phone={stat.whatsapp || stat.phone || ''}
+                            message={aiMessages[stat.person_id]}
+                            onCopy={() => setCopied((p) => ({ ...p, [stat.person_id]: true }))}
+                          />
                           <button onClick={() => handleGenerate({ id: stat.person_id, full_name: stat.full_name, phone: stat.phone, whatsapp: stat.whatsapp }, stat.quadrant === 'sumindo' ? 'resgate' : 'checkin')}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-semibold rounded-lg">
                             <Sparkles className="w-3 h-3" />Regerar
@@ -314,12 +328,6 @@ export default function GroupDetail() {
     navigator.clipboard.writeText(msg);
     setCopied((p) => ({ ...p, [personId]: true }));
     setTimeout(() => setCopied((p) => ({ ...p, [personId]: false })), 2000);
-  };
-
-  const buildWhatsAppUrl = (person: Person, message: string) => {
-    const phone = (person.whatsapp || person.phone || '').replace(/\D/g, '');
-    const encoded = encodeURIComponent(message);
-    return phone ? `https://wa.me/55${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
   };
 
   // Serafim só pode gerenciar grupos dos quais é membro
@@ -393,6 +401,31 @@ export default function GroupDetail() {
     } catch (error) { console.error('Erro:', error); setError('Erro ao deletar grupo'); }
   };
 
+  const handleAddMeeting = async () => {
+    if (!newMeeting.day_of_week) return;
+    setAddingMeeting(true);
+    try {
+      const { error: err } = await addGroupMeeting(id as string, {
+        day_of_week: newMeeting.day_of_week,
+        time: newMeeting.time || null,
+        meeting_type: newMeeting.meeting_type || null,
+      });
+      if (err) throw err;
+      const { data } = await getGroupMeetings(id as string);
+      setMeetings(data || []);
+      setNewMeeting({ day_of_week: 'domingo', time: '19:00', meeting_type: '' });
+    } catch (e) { console.error(e); setError('Erro ao adicionar reuniao'); }
+    finally { setAddingMeeting(false); }
+  };
+
+  const handleDeleteMeeting = async (meetingId: string) => {
+    try {
+      const { error: err } = await deleteGroupMeeting(meetingId);
+      if (err) throw err;
+      setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+    } catch (e) { console.error(e); setError('Erro ao remover reuniao'); }
+  };
+
   const loadAvailablePeople = async () => {
     setLoadingPeople(true);
     try {
@@ -440,23 +473,12 @@ export default function GroupDetail() {
       {aiMessages[person.id] && (
         <div className="bg-violet-50 dark:bg-violet-900/20 p-3 border-t border-violet-100 dark:border-violet-800">
           <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-3">{aiMessages[person.id]}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleCopy(person.id, aiMessages[person.id])}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg transition-colors"
-            >
-              {copied[person.id] ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
-              {copied[person.id] ? 'Copiado!' : 'Copiar'}
-            </button>
-            <a
-              href={buildWhatsAppUrl(person, aiMessages[person.id])}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors"
-            >
-              <MessageCircle className="w-3 h-3" />
-              WhatsApp
-            </a>
+          <div className="flex gap-2 flex-wrap">
+            <WhatsAppShare
+              phone={person.whatsapp || person.phone || ''}
+              message={aiMessages[person.id]}
+              onCopy={() => setCopied((p) => ({ ...p, [person.id]: true }))}
+            />
             <button
               onClick={() => handleGenerate(person, messageType)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-semibold rounded-lg"
@@ -517,33 +539,60 @@ export default function GroupDetail() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lider do Grupo</label>
                   <select value={formData.leader_id} onChange={(e) => setFormData({ ...formData, leader_id: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <option value="">Selecione um líder</option>
-                    {/* Inclui o líder atual mesmo que não seja membro */}
-                    {group?.leader && !members.some((m) => m.person.id === group.leader?.id) && (
-                      <option key={group.leader.id} value={group.leader.id}>{group.leader.full_name}</option>
+                    <option value="">Selecione um lider</option>
+                    {formData.leader_id && !members.some((m) => m.person.id === formData.leader_id) && group?.leader && (
+                      <option value={formData.leader_id}>{group.leader.full_name}</option>
                     )}
                     {members.map((m) => <option key={m.person.id} value={m.person.id}>{m.person.full_name}</option>)}
                   </select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dia da Reuniao</label>
-                    <select value={formData.meeting_day} onChange={(e) => setFormData({ ...formData, meeting_day: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-                      <option value="">Selecione</option>
-                      <option value="segunda">Segunda</option>
-                      <option value="terca">Terca</option>
-                      <option value="quarta">Quarta</option>
-                      <option value="quinta">Quinta</option>
-                      <option value="sexta">Sexta</option>
-                      <option value="sabado">Sabado</option>
-                      <option value="domingo">Domingo</option>
-                    </select>
+                {/* Reunioes multiplas */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reunioes</label>
+                  {meetings.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {meetings.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between bg-gray-50 dark:bg-slate-700 px-3 py-2 rounded-lg">
+                          <span className="text-sm text-gray-800 dark:text-gray-200">
+                            {DAY_LABELS[m.day_of_week] || m.day_of_week}
+                            {m.time ? ` ${m.time}` : ''}
+                            {m.meeting_type ? ` — ${m.meeting_type}` : ''}
+                          </span>
+                          <button type="button" onClick={() => handleDeleteMeeting(m.id)} className="text-red-500 hover:text-red-700 p-1">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-4 gap-2 items-end">
+                    <div className="col-span-2">
+                      <select value={newMeeting.day_of_week} onChange={(e) => setNewMeeting({ ...newMeeting, day_of_week: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="segunda">Segunda</option>
+                        <option value="terca">Terca</option>
+                        <option value="quarta">Quarta</option>
+                        <option value="quinta">Quinta</option>
+                        <option value="sexta">Sexta</option>
+                        <option value="sabado">Sabado</option>
+                        <option value="domingo">Domingo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <input type="time" value={newMeeting.time} onChange={(e) => setNewMeeting({ ...newMeeting, time: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                    </div>
+                    <div>
+                      <button type="button" onClick={handleAddMeeting} disabled={addingMeeting}
+                        className="w-full flex items-center justify-center gap-1 px-3 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg">
+                        <Plus className="w-4 h-4" />{addingMeeting ? '...' : 'Add'}
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Horario</label>
-                    <input type="time" value={formData.meeting_time} onChange={(e) => setFormData({ ...formData, meeting_time: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                  <div className="mt-2">
+                    <input type="text" placeholder="Tipo (ex: culto, celula, treino)" value={newMeeting.meeting_type}
+                      onChange={(e) => setNewMeeting({ ...newMeeting, meeting_type: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                 </div>
                 <div>
@@ -567,9 +616,19 @@ export default function GroupDetail() {
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-gray-950 dark:text-white">{group?.name}</h1>
                   {parentGroup && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Subgrupo de: <span className="font-semibold">{parentGroup.name}</span></p>}
-                  {group?.leader && <p className="text-gray-600 dark:text-gray-400 mt-2">👤 Líder: <span className="font-semibold text-gray-800 dark:text-gray-200">{group.leader.full_name}</span></p>}
-                  {group?.meeting_day && <p className="text-gray-600 dark:text-gray-400 mt-1">{group.meeting_day} às {group.meeting_time || 'Horário não definido'}</p>}
-                  {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400">Endereço: {group.meeting_address}</p>}
+                  {group?.leader && <p className="text-gray-600 dark:text-gray-400 mt-2">Lider: <span className="font-semibold text-gray-800 dark:text-gray-200">{group.leader.full_name}</span></p>}
+                  {meetings.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {meetings.map((m) => (
+                        <p key={m.id} className="text-gray-600 dark:text-gray-400 text-sm">
+                          📅 {DAY_LABELS[m.day_of_week] || m.day_of_week}
+                          {m.time ? ` as ${m.time}` : ''}
+                          {m.meeting_type ? ` — ${m.meeting_type}` : ''}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">📍 {group.meeting_address}</p>}
                 </div>
                 <div className="flex gap-2">
                   {canWrite && (
@@ -768,4 +827,21 @@ export default function GroupDetail() {
                   <div key={member.id} className="bg-gray-50 dark:bg-slate-700 p-4 rounded-lg flex justify-between items-center hover:bg-gray-100 dark:hover:bg-slate-600 transition">
                     <div className="cursor-pointer flex-1" onClick={() => router.push(`/people/${member.person.id}`)}>
                       <h3 className="font-bold text-gray-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{member.person.full_name}</h3>
-           
+                      {member.person.phone && <p className="text-sm text-gray-600 dark:text-gray-400">{member.person.phone}</p>}
+                    </div>
+                    {canWrite && (
+                      <button onClick={() => handleRemoveMember(member.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded">
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

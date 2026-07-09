@@ -27,7 +27,7 @@ export const getGroupsStats = async (churchId: string) => {
   if (error) return { error };
   return { data: { total: data?.length || 0 } };
 };
-// Total de ministérios
+// Total de ministerios
 export const getMinistriesStats = async (churchId: string) => {
   const { data, error } = await supabase
     .from('departments')
@@ -36,33 +36,33 @@ export const getMinistriesStats = async (churchId: string) => {
   if (error) return { error };
   return { data: { total: data?.length || 0 } };
 };
-// Aniversariantes do mês
-export const getUpcomingBirthdays = async (churchId: string, days: number = 7) => {
+// Aniversariantes do mes
+export const getUpcomingBirthdays = async (churchId: string) => {
   const today = new Date();
-  const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + days);
+  const currentMonth = today.getMonth() + 1; // 1-12
+
   const { data, error } = await supabase
     .from('people')
-    .select('id, full_name, date_of_birth')
+    .select('id, full_name, date_of_birth, phone, whatsapp')
     .eq('church_id', churchId)
-    .not('date_of_birth', 'is', null)
-    .order('date_of_birth');
+    .not('date_of_birth', 'is', null);
   if (error) return { error };
-  // Filtrar aniversariantes nos próximos N dias
-  const birthdays = (data || []).filter((person: any) => {
-    if (!person.date_of_birth) return false;
-    // Parse a data ISO manualmente para evitar problemas de timezone
-    const [year, month, day] = person.date_of_birth.split('T')[0].split('-').map(Number);
-    const thisYearBirthday = new Date(today.getFullYear(), month - 1, day);
-    // Normalizar datas para comparação (remover hora)
-    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const futureDateNormalized = new Date(futureDate.getFullYear(), futureDate.getMonth(), futureDate.getDate());
-    // Se já passou este ano, próximo será no próximo ano
-    if (thisYearBirthday < todayDate) {
-      thisYearBirthday.setFullYear(thisYearBirthday.getFullYear() + 1);
-    }
-    return thisYearBirthday >= todayDate && thisYearBirthday <= futureDateNormalized;
-  });
+
+  const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const birthdays = (data || [])
+    .map((person: any) => {
+      const [, month, day] = person.date_of_birth.split('T')[0].split('-').map(Number);
+      return { ...person, birth_month: month, birth_day: day };
+    })
+    .filter((p: any) => p.birth_month === currentMonth)
+    .map((p: any) => {
+      const bday = new Date(today.getFullYear(), p.birth_month - 1, p.birth_day);
+      const diffDays = Math.round((bday.getTime() - todayNorm.getTime()) / 86400000);
+      return { ...p, days_until: diffDays };
+    })
+    .sort((a: any, b: any) => a.birth_day - b.birth_day);
+
   return { data: birthdays };
 };
 // Visitantes recentes
@@ -91,7 +91,7 @@ export const getAbsentPeople = async (churchId: string, limit: number = 10) => {
   return { data: data || [] };
 };
 
-// Frequência média
+// Frequencia media
 export const getAverageAttendance = async (churchId: string) => {
   const { data, error } = await supabase
     .from('attendance_events')
@@ -101,7 +101,7 @@ export const getAverageAttendance = async (churchId: string) => {
   if (!data || data.length === 0) {
     return { data: { total_events: 0, average: 0 } };
   }
-  // Contar total de presenças
+  // Contar total de presencas
   const { data: records, error: recordsError } = await supabase
     .from('attendance_records')
     .select('id')

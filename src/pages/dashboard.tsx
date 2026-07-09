@@ -72,7 +72,7 @@ export default function Dashboard() {
           getPeopleStats(churchId),
           getGroupsStats(churchId),
           getMinistriesStats(churchId),
-          getUpcomingBirthdays(churchId, 7),
+          getUpcomingBirthdays(churchId),
           getRecentVisitors(churchId, 30),
           getAverageAttendance(churchId),
           getAbsentPeople(churchId, 10),
@@ -280,13 +280,68 @@ export default function Dashboard() {
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6 border-t-4 border-red-400">
                       <div className="flex items-center gap-2 mb-4">
                         <Cake className="w-5 h-5 text-red-500" />
-                        <h4 className="font-bold text-gray-900 dark:text-white">Aniversariantes (7 dias)</h4>
+                        <h4 className="font-bold text-gray-900 dark:text-white">Aniversariantes do ês 🎂</h4>
                         <span className="ml-auto text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full">{stats.birthdays.length}</span>
                       </div>
                       <div className="space-y-2">
-                        {stats.birthdays.map((person: any) =>
-                          renderAiPersonRow(person, 'aniversario', 'bg-red-50 dark:bg-red-900/10')
-                        )}
+                        {stats.birthdays.map((person: any) => {
+                          const isToday = person.days_until === 0;
+                          const label = isToday ? '🎉 Hoje!' : person.days_until > 0 ? `em ${person.days_until}d` : `dia ${person.birth_day}`;
+                          return (
+                            <div key={person.id} className={`rounded-lg overflow-hidden border ${isToday ? 'border-red-400' : 'border-transparent'}`}>
+                              <div className={`flex justify-between items-center p-3 ${isToday ? 'bg-red-100 dark:bg-red-900/30' : 'bg-red-50 dark:bg-red-900/10'}`}>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-gray-900 dark:text-white text-sm">{person.full_name}</p>
+                                    <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${isToday ? 'bg-red-500 text-white' : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400'}`}>{label}</span>
+                                  </div>
+                                  {person.phone && <p className="text-xs text-gray-500 dark:text-gray-400">{person.phone}</p>}
+                                </div>
+                                {!aiCards[person.id] ? (
+                                  <button
+                                    onClick={() => handleGenerate(person, 'aniversario')}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white transition-colors"
+                                  >
+                                    <Sparkles className="w-3 h-3" />
+                                    Mensagem IA
+                                  </button>
+                                ) : aiCards[person.id].loading ? (
+                                  <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400">
+                                    <div className="w-3 h-3 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
+                                    Gerando...
+                                  </div>
+                                ) : aiCards[person.id].error ? (
+                                  <span className="text-xs text-red-500">{aiCards[person.id].error}</span>
+                                ) : null}
+                              </div>
+                              {aiCards[person.id]?.message && (
+                                <div className="bg-violet-50 dark:bg-violet-900/20 p-3 border-t border-violet-100 dark:border-violet-800">
+                                  <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-3">{aiCards[person.id].message}</p>
+                                  <div className="flex gap-2 flex-wrap">
+                                    <WhatsAppShare
+                                      phone={person.whatsapp || person.phone || ''}
+                                      message={aiCards[person.id].message}
+                                      onCopy={() => setCopied((p) => ({ ...p, [person.id]: true }))}
+                                    />
+                                    <button
+                                      onClick={() => handleGenerate(person, 'aniversario')}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 text-violet-700 dark:text-violet-300 text-xs font-semibold rounded-lg transition-colors"
+                                    >
+                                      <Sparkles className="w-3 h-3" />
+                                      Regerar
+                                    </button>
+                                    <button
+                                      onClick={() => dismissCard(person.id)}
+                                      className="ml-auto p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}

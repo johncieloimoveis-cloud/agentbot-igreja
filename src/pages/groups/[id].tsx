@@ -78,7 +78,9 @@ export default function GroupDetail() {
 
   // Reunioes do grupo
   const [meetings, setMeetings] = useState<GroupMeeting[]>([]);
-  const [newMeeting, setNewMeeting] = useState({ day_of_week: 'domingo', time: '19:00', event_type: '' });
+  const [newMeeting, setNewMeeting] = useState({ day_of_week: 'domingo', time: '19:00', event_type: 'gceu' });
+  const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
+  const [editingMeetingData, setEditingMeetingData] = useState({ day_of_week: 'domingo', time: '19:00', event_type: 'gceu' });
   const [addingMeeting, setAddingMeeting] = useState(false);
 
   // Abas

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ClipboardCheck, Clock, UserCheck, UserX, Phone, Mail, RefreshCw, Copy } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { ClipboardCheck, Clock, UserCheck, UserX, Phone, Mail, RefreshCw, Copy, MessageSquare, X } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Pessoa {
@@ -19,6 +19,11 @@ export default function AdminCadastros() {
   const [loading, setLoading] = useState(true);
   const [copiado, setCopiado] = useState(false);
 
+  // Para a mensagem precisamos sempre da lista de atualizados
+  const [atualizados, setAtualizados] = useState<Pessoa[]>([]);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [msgCopiada, setMsgCopiada] = useState(false);
+
   const carregar = async (a: Aba) => {
     setLoading(true);
     const res = await fetchWithAuth(`/api/admin/cadastros?aba=${a}`);
@@ -27,14 +32,22 @@ export default function AdminCadastros() {
     setLoading(false);
   };
 
-  useEffect(() => { carregar(aba); }, [aba]);
+  // Mantém atualizados sempre em cache (necessário para gerar mensagem)
+  const carregarAtualizados = useCallback(async () => {
+    const res = await fetchWithAuth('/api/admin/cadastros?aba=atualizados');
+    const data = await res.json();
+    setAtualizados(Array.isArray(data) ? data : []);
+  }, []);
 
-  const contato = (p: Pessoa) => p.whatsapp || p.phone || p.email || '—';
+  useEffect(() => { carregar(aba); }, [aba]);
+  useEffect(() => { carregarAtualizados(); }, [carregarAtualizados]);
+  // Sincroniza cache quando aba ativa for atualizados
+  useEffect(() => { if (aba === 'atualizados') setAtualizados(lista); }, [aba, lista]);
+
+  const contato = (p: Pessoa) => p.whatsapp || p.phone || p.email || '';
 
   const copiarLista = () => {
-    const texto = lista
-      .map(p => `${p.full_name} — ${contato(p)}`)
-      .join('\n');
+    const texto = lista.map(p => `${p.full_name} — ${contato(p)}`).join('\n');
     navigator.clipboard.writeText(texto).then(() => {
       setCopiado(true);
       setTimeout(() => setCopiado(false), 2000);
@@ -45,6 +58,32 @@ export default function AdminCadastros() {
     const d = new Date(iso);
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) +
       ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const gerarMensagem = () => {
+    const nomes = atualizados.map(p => p.full_name).join('\n');
+    const total = atualizados.length;
+    const link = typeof window !== 'undefined'
+      ? `${window.location.origin}/cadastro`
+      : 'https://agentbot-igreja.vercel.app/cadastro';
+
+    return `A paz do SENHOR, irmãos.
+Estamos passando aqui para agradecer aos ${total} irmão${total !== 1 ? 's' : ''} que já atualizaram seus cadastros:
+${nomes}
+
+Aos irmãos que ainda não atualizaram, peço, por gentileza, que reservem apenas *1 minutinho* para fazê-lo. A atualização é simples, rápida e nos ajudará muito a manter os dados da igreja sempre corretos.
+
+Acessem o link:
+👉 ${link}
+
+Que Deus abençoe a todos! 🙏`;
+  };
+
+  const copiarMensagem = () => {
+    navigator.clipboard.writeText(gerarMensagem()).then(() => {
+      setMsgCopiada(true);
+      setTimeout(() => setMsgCopiada(false), 2000);
+    });
   };
 
   return (
@@ -61,6 +100,14 @@ export default function AdminCadastros() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setModalAberto(true)}
+            title="Gerar mensagem para o grupo"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 rounded-lg transition-colors font-medium"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Mensagem grupo
+          </button>
           {lista.length > 0 && (
             <button
               onClick={copiarLista}
@@ -72,7 +119,7 @@ export default function AdminCadastros() {
             </button>
           )}
           <button
-            onClick={() => carregar(aba)}
+            onClick={() => { carregar(aba); carregarAtualizados(); }}
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
             title="Atualizar"
           >
@@ -144,7 +191,6 @@ export default function AdminCadastros() {
                   : 'border-gray-200 dark:border-slate-700'
               }`}
             >
-              {/* Nome + contato */}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900 dark:text-white truncate">{p.full_name}</p>
                 <div className="flex items-center gap-3 mt-1 flex-wrap">
@@ -162,8 +208,6 @@ export default function AdminCadastros() {
                   )}
                 </div>
               </div>
-
-              {/* Data de atualização (aba atualizados) */}
               {aba === 'atualizados' && p.cadastro_atualizado_em && (
                 <div className="flex-shrink-0 flex items-center gap-1.5 text-xs text-teal-600 dark:text-teal-400">
                   <Clock className="w-3.5 h-3.5" />
@@ -172,6 +216,43 @@ export default function AdminCadastros() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal de mensagem */}
+      {modalAberto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-slate-700">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-green-500" />
+                <h2 className="font-bold text-gray-900 dark:text-white">Mensagem para o grupo</h2>
+              </div>
+              <button onClick={() => setModalAberto(false)} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5">
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-slate-900 rounded-xl p-4 font-sans leading-relaxed max-h-80 overflow-y-auto border border-gray-200 dark:border-slate-700">
+                {gerarMensagem()}
+              </pre>
+            </div>
+            <div className="flex justify-end gap-3 px-5 pb-5">
+              <button
+                onClick={() => setModalAberto(false)}
+                className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                Fechar
+              </button>
+              <button
+                onClick={copiarMensagem}
+                className="flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                <Copy className="w-4 h-4" />
+                {msgCopiada ? 'Copiado!' : 'Copiar mensagem'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

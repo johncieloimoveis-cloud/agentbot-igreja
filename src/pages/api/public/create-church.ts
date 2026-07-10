@@ -40,10 +40,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(409).json({ error: 'Esse slug ja esta em uso. Escolha outro nome.' });
   }
 
+  // Busca o limite padrao configurado
+  const { data: defaultSetting } = await supabaseAdmin
+    .from('settings')
+    .select('value')
+    .eq('key', 'default_people_limit')
+    .maybeSingle();
+  const defaultLimit = parseInt(defaultSetting?.value || '50', 10);
+
   // Cria a igreja
   const { data: church, error: churchError } = await supabaseAdmin
     .from('churches')
-    .insert({ name: church_name.trim(), slug, plano: 'gratuito' })
+    .insert({ name: church_name.trim(), slug, plano: 'gratuito', people_limit: defaultLimit })
     .select('id, name, slug')
     .single();
 

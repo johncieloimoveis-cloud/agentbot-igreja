@@ -43,7 +43,7 @@ export const createPerson = async (
   ]);
 
   const total = countRes.count ?? 0;
-  const limit = churchRes.data?.people_limit ?? 150;
+  const limit = churchRes.data?.people_limit ?? 50;
   const plano = churchRes.data?.plano ?? 'gratuito';
 
   if (plano === 'gratuito' && total >= limit) {

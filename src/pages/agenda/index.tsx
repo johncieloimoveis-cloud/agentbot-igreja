@@ -58,7 +58,7 @@ export default function AgendaPage() {
   const [attendanceEvents, setAttendanceEvents] = useState<any[]>([]);
   const [creatingAttendance, setCreatingAttendance] = useState<string | null>(null);
 
-  useEffect(() => { if (user) loadAll(); }, [user]);
+  useEffect(() => { if (user && church_id) loadAll(); }, [user, church_id]);
 
   useEffect(() => {
     const merged = [...manualEvents, ...groupEvents];
@@ -449,7 +449,4 @@ export default function AgendaPage() {
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">Nenhum evento nos próximos 28 dias</div>
           )}
         </div>
-      )}
-    </div>
-  );
-}
+   

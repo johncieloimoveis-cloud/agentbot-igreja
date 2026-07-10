@@ -99,3 +99,11 @@ export const deleteGroupMeeting = async (meetingId: string) => {
         .delete()
     .eq('id', meetingId);
 };
+export const updateGroupMeeting = async (meetingId: string, data: any) => {
+  return supabase
+    .from('group_meetings')
+    .update(data)
+    .eq('id', meetingId)
+    .select()
+    .single();
+};

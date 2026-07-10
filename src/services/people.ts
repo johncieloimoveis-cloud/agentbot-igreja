@@ -31,11 +31,31 @@ export const getPeople = async (
   if (search) query = query.ilike('full_name', `%${search}%`);
   return query;
 };
-// Criar pessoa
+// Criar pessoa (com verificacao de limite)
 export const createPerson = async (
   churchId: string,
   data: Partial<Person>
 ) => {
+  // Verifica limite de pessoas da igreja
+  const [countRes, churchRes] = await Promise.all([
+    supabase.from('people').select('id', { count: 'exact', head: true }).eq('church_id', churchId).eq('is_active', true),
+    supabase.from('churches').select('people_limit, plano').eq('id', churchId).single(),
+  ]);
+
+  const total = countRes.count ?? 0;
+  const limit = churchRes.data?.people_limit ?? 150;
+  const plano = churchRes.data?.plano ?? 'gratuito';
+
+  if (plano === 'gratuito' && total >= limit) {
+    return {
+      data: null,
+      error: {
+        message: `Limite de ${limit} pessoas atingido. Atualize para o plano pagante ou ajuste o limite no painel admin.`,
+        code: 'LIMIT_REACHED',
+      },
+    };
+  }
+
   return supabase
     .from('people')
     .insert({

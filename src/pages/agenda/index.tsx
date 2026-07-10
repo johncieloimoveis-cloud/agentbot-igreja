@@ -449,4 +449,7 @@ export default function AgendaPage() {
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">Nenhum evento nos próximos 28 dias</div>
           )}
         </div>
-   
+         )}
+    </div>
+  );
+}

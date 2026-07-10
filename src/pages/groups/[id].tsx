@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
-import { getGroupMembers, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups, getGroupMeetings, addGroupMeeting, deleteGroupMeeting } from '@/services/groups';
+import { getGroupMembers, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups, getGroupMeetings, addGroupMeeting, updateGroupMeeting, deleteGroupMeeting } from '@/services/groups';
 import { getPeople } from '@/services/people';
 import { getGroupAttendanceStats, MemberAttendanceStat, Quadrant } from '@/services/attendance';
 import { TrashIcon, Plus, Edit2, X, Search, Sparkles, Cake, Users, UserCheck, UserMinus, TrendingUp, TrendingDown, Minus, BarChart2 } from 'lucide-react';
@@ -426,6 +426,20 @@ export default function GroupDetail() {
     } catch (e) { console.error(e); setError('Erro ao remover reuniao'); }
   };
 
+  const startEditMeeting = (m: any) => {
+    setEditingMeetingId(m.id);
+    setEditingMeetingData({ day_of_week: m.day_of_week, time: m.time || '19:00', event_type: m.event_type || 'gceu' });
+  };
+
+  const handleUpdateMeeting = async (meetingId: string) => {
+    try {
+      const { error: err } = await updateGroupMeeting(meetingId, editingMeetingData);
+      if (err) throw err;
+      setMeetings((prev) => prev.map((m) => m.id === meetingId ? { ...m, ...editingMeetingData } : m));
+      setEditingMeetingId(null);
+    } catch (e) { console.error(e); setError('Erro ao atualizar reuniao'); }
+  };
+
   const loadAvailablePeople = async () => {
     setLoadingPeople(true);
     try {
@@ -552,15 +566,64 @@ export default function GroupDetail() {
                   {meetings.length > 0 && (
                     <div className="space-y-2 mb-3">
                       {meetings.map((m) => (
-                        <div key={m.id} className="flex items-center justify-between bg-gray-50 dark:bg-slate-700 px-3 py-2 rounded-lg">
-                          <span className="text-sm text-gray-800 dark:text-gray-200">
-                            {DAY_LABELS[m.day_of_week] || m.day_of_week}
-                            {m.time ? ` ${m.time}` : ''}
-                            {m.event_type ? ` — ${m.event_type}` : ''}
-                          </span>
-                          <button type="button" onClick={() => handleDeleteMeeting(m.id)} className="text-red-500 hover:text-red-700 p-1">
-                            <X className="w-4 h-4" />
-                          </button>
+                        <div key={m.id} className="bg-gray-50 dark:bg-slate-700 px-3 py-2 rounded-lg">
+                          {editingMeetingId === m.id ? (
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                <select value={editingMeetingData.day_of_week}
+                                  onChange={(e) => setEditingMeetingData({ ...editingMeetingData, day_of_week: e.target.value })}
+                                  className="px-2 py-1 text-sm border border-primary-400 rounded-lg bg-white dark:bg-slate-600 text-gray-900 dark:text-white focus:outline-none">
+                                  <option value="segunda">Segunda</option>
+                                  <option value="terca">Terca</option>
+                                  <option value="quarta">Quarta</option>
+                                  <option value="quinta">Quinta</option>
+                                  <option value="sexta">Sexta</option>
+                                  <option value="sabado">Sabado</option>
+                                  <option value="domingo">Domingo</option>
+                                </select>
+                                <input type="time" value={editingMeetingData.time}
+                                  onChange={(e) => setEditingMeetingData({ ...editingMeetingData, time: e.target.value })}
+                                  className="px-2 py-1 text-sm border border-primary-400 rounded-lg bg-white dark:bg-slate-600 text-gray-900 dark:text-white focus:outline-none" />
+                              </div>
+                              <select value={editingMeetingData.event_type}
+                                onChange={(e) => setEditingMeetingData({ ...editingMeetingData, event_type: e.target.value })}
+                                className="w-full px-2 py-1 text-sm border border-primary-400 rounded-lg bg-white dark:bg-slate-600 text-gray-900 dark:text-white focus:outline-none">
+                                <option value="gceu">GCEU / Grupo</option>
+                                <option value="culto">Culto</option>
+                                <option value="estudo_biblico">Estudo Biblico</option>
+                                <option value="reuniao_ministerio">Reuniao de Ministerio</option>
+                                <option value="missoes">Missoes</option>
+                                <option value="evangelismo">Evangelismo</option>
+                                <option value="outro">Outro</option>
+                              </select>
+                              <div className="flex gap-2">
+                                <button type="button" onClick={() => handleUpdateMeeting(m.id)}
+                                  className="flex-1 px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-lg">
+                                  Salvar
+                                </button>
+                                <button type="button" onClick={() => setEditingMeetingId(null)}
+                                  className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                  Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-800 dark:text-gray-200">
+                                {DAY_LABELS[m.day_of_week] || m.day_of_week}
+                                {m.time ? ` ${m.time}` : ''}
+                                {m.event_type ? ` — ${m.event_type}` : ''}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <button type="button" onClick={() => startEditMeeting(m)} className="text-gray-400 hover:text-primary-500 p-1">
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button type="button" onClick={() => handleDeleteMeeting(m.id)} className="text-red-500 hover:text-red-700 p-1">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

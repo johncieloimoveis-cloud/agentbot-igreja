@@ -20,16 +20,15 @@ export default function Groups() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    loadGroups();
-  }, [user]);
+    if (user && church_id) loadGroups();
+  }, [user, church_id]);
 
   useEffect(() => {
     // Recarrega quando volta para a página
-    if (router.isReady && router.pathname === '/groups') {
+    if (router.isReady && router.pathname === '/groups' && church_id) {
       loadGroups();
     }
-  }, [router.asPath]);
+  }, [router.asPath, church_id]);
 
   const loadGroups = async () => {
     setLoading(true);

@@ -590,9 +590,17 @@ export default function GroupDetail() {
                     </div>
                   </div>
                   <div className="mt-2">
-                    <input type="text" placeholder="Tipo (ex: culto, celula, treino)" value={newMeeting.event_type}
+                    <select value={newMeeting.event_type}
                       onChange={(e) => setNewMeeting({ ...newMeeting, event_type: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                      <option value="gceu">GCEU / Grupo</option>
+                      <option value="culto">Culto</option>
+                      <option value="estudo_biblico">Estudo Biblico</option>
+                      <option value="reuniao_ministerio">Reuniao de Ministerio</option>
+                      <option value="missoes">Missoes</option>
+                      <option value="evangelismo">Evangelismo</option>
+                      <option value="outro">Outro</option>
+                    </select>
                   </div>
                 </div>
                 <div>

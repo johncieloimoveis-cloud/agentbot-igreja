@@ -27,7 +27,7 @@ interface GroupMeeting {
   id: string;
   day_of_week: string;
   time?: string;
-  meeting_type?: string;
+  event_type?: string;
 }
 
 interface Group {
@@ -78,7 +78,7 @@ export default function GroupDetail() {
 
   // Reunioes do grupo
   const [meetings, setMeetings] = useState<GroupMeeting[]>([]);
-  const [newMeeting, setNewMeeting] = useState({ day_of_week: 'domingo', time: '19:00', meeting_type: '' });
+  const [newMeeting, setNewMeeting] = useState({ day_of_week: 'domingo', time: '19:00', event_type: '' });
   const [addingMeeting, setAddingMeeting] = useState(false);
 
   // Abas
@@ -408,12 +408,12 @@ export default function GroupDetail() {
       const { error: err } = await addGroupMeeting(id as string, {
         day_of_week: newMeeting.day_of_week,
         time: newMeeting.time || null,
-        meeting_type: newMeeting.meeting_type || null,
+        event_type: newMeeting.event_type || null,
       });
       if (err) throw err;
       const { data } = await getGroupMeetings(id as string);
       setMeetings(data || []);
-      setNewMeeting({ day_of_week: 'domingo', time: '19:00', meeting_type: '' });
+      setNewMeeting({ day_of_week: 'domingo', time: '19:00', event_type: '' });
     } catch (e) { console.error(e); setError('Erro ao adicionar reuniao'); }
     finally { setAddingMeeting(false); }
   };
@@ -556,7 +556,7 @@ export default function GroupDetail() {
                           <span className="text-sm text-gray-800 dark:text-gray-200">
                             {DAY_LABELS[m.day_of_week] || m.day_of_week}
                             {m.time ? ` ${m.time}` : ''}
-                            {m.meeting_type ? ` — ${m.meeting_type}` : ''}
+                            {m.event_type ? ` — ${m.event_type}` : ''}
                           </span>
                           <button type="button" onClick={() => handleDeleteMeeting(m.id)} className="text-red-500 hover:text-red-700 p-1">
                             <X className="w-4 h-4" />
@@ -590,8 +590,8 @@ export default function GroupDetail() {
                     </div>
                   </div>
                   <div className="mt-2">
-                    <input type="text" placeholder="Tipo (ex: culto, celula, treino)" value={newMeeting.meeting_type}
-                      onChange={(e) => setNewMeeting({ ...newMeeting, meeting_type: e.target.value })}
+                    <input type="text" placeholder="Tipo (ex: culto, celula, treino)" value={newMeeting.event_type}
+                      onChange={(e) => setNewMeeting({ ...newMeeting, event_type: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
                   </div>
                 </div>
@@ -623,7 +623,7 @@ export default function GroupDetail() {
                         <p key={m.id} className="text-gray-600 dark:text-gray-400 text-sm">
                           📅 {DAY_LABELS[m.day_of_week] || m.day_of_week}
                           {m.time ? ` as ${m.time}` : ''}
-                          {m.meeting_type ? ` — ${m.meeting_type}` : ''}
+                          {m.event_type ? ` — ${m.event_type}` : ''}
                         </p>
                       ))}
                     </div>

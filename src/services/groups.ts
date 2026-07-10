@@ -8,6 +8,26 @@ export const getGroups = async (churchId: string) => {
     .order('name');
 };
 export const createGroup = async (churchId: string, data: any) => {
+  // Regra: apenas um grupo raiz por igreja
+  if (!data.parent_group_id) {
+    const { count } = await supabase
+      .from('groups')
+      .select('id', { count: 'exact', head: true })
+      .eq('church_id', churchId)
+      .is('parent_group_id', null)
+      .eq('status', 'active');
+
+    if ((count ?? 0) > 0) {
+      return {
+        data: null,
+        error: {
+          message: 'Esta igreja ja possui um grupo raiz. Todo novo grupo deve ter um grupo pai.',
+          code: 'ROOT_GROUP_EXISTS',
+        },
+      };
+    }
+  }
+
   return supabase
     .from('groups')
     .insert({

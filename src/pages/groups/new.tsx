@@ -35,6 +35,7 @@ export default function NewGroup() {
   const [groups, setGroups] = useState<any[]>([]);
   const [people, setPeople] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [hasRootGroup, setHasRootGroup] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -49,8 +50,10 @@ export default function NewGroup() {
         getGroups(churchId),
         getPeople(churchId),
       ]);
-      setGroups(groupsRes.data || []);
+      const grps = groupsRes.data || [];
+      setGroups(grps);
       setPeople(peopleRes.data || []);
+      setHasRootGroup(grps.some((g: any) => !g.parent_group_id));
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
     } finally {
@@ -83,6 +86,11 @@ export default function NewGroup() {
 
     if (!formData.leader_id) {
       setError('Selecione um líder para o grupo');
+      return;
+    }
+
+    if (hasRootGroup && !formData.parent_group_id) {
+      setError('Esta igreja ja possui um grupo raiz. Selecione um grupo pai.');
       return;
     }
 
@@ -204,7 +212,9 @@ export default function NewGroup() {
             disabled={loadingData}
             className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
           >
-            <option value="">Nenhum (grupo raiz)</option>
+            <option value="" disabled={hasRootGroup}>
+              {hasRootGroup ? 'Grupo raiz ja existe — selecione um pai abaixo' : 'Nenhum (grupo raiz)'}
+            </option>
             {groups.map((group) => (
               <option key={group.id} value={group.id}>
                 {group.name}

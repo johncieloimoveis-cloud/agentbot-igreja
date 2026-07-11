@@ -104,7 +104,10 @@ export default function PeopleMapa() {
     const located = people.filter((p) => p.lat && p.lon);
     if (located.length === 0) return;
 
-    const cluster = (L as any).markerClusterGroup({ maxClusterRadius: 50 });
+    const cluster = (L as any).markerClusterGroup({
+      maxClusterRadius: 30,
+      disableClusteringAtZoom: 16,
+    });
     clusterRef.current = cluster;
 
     located.forEach((p) => {
@@ -129,7 +132,7 @@ export default function PeopleMapa() {
 
     // Ajusta zoom para mostrar todos
     const bounds = (L as any).latLngBounds(located.map((p) => [p.lat!, p.lon!]));
-    mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+    mapRef.current.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
   };
 
   const located = people.filter((p) => p.lat && p.lon);

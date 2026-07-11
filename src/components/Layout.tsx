@@ -30,6 +30,7 @@ const ROUTE_ROLES: Record<string, UserRole[]> = {
   '/organogram':           LIDERANCA,
   '/people':               LIDERANCA,
   '/people/new':           GESTAO,
+  '/people/mapa':          LIDERANCA,
   '/groups':               ALL_ROLES,
   '/groups/new':           GESTAO,
   '/agenda':               LIDERANCA,
@@ -128,8 +129,9 @@ export function Layout({ children }: LayoutProps) {
       href: '/people',
       allowedRoles: LIDERANCA,
       submenu: [
-        { label: 'Todas as Pessoas', href: '/people',     allowedRoles: LIDERANCA },
-        { label: 'Nova Pessoa',       href: '/people/new', allowedRoles: GESTAO },
+        { label: 'Todas as Pessoas', href: '/people',       allowedRoles: LIDERANCA },
+        { label: 'Nova Pessoa',       href: '/people/new',  allowedRoles: GESTAO },
+        { label: '🗺️ Mapa',          href: '/people/mapa', allowedRoles: LIDERANCA },
       ],
     },
     {

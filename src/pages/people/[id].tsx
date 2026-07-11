@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
-import { getPerson, updatePerson, deletePerson } from '@/services/people';
-import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Send, Copy, Check, KeyRound, UserPlus } from 'lucide-react';
+import { getPerson, updatePerson, deletePerson, getPersonRelationships, addPersonRelationship, removePersonRelationship, getPeopleWithAddress, RELATIONSHIP_LABELS } from '@/services/people';
+import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Send, Copy, Check, KeyRound, UserPlus, Users, MapPin, ExternalLink, Plus, Loader2 } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Person {
@@ -37,6 +37,23 @@ export default function PersonDetail() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Familia
+  const [relationships, setRelationships] = useState<any[]>([]);
+  const [showAddRel, setShowAddRel] = useState(false);
+  const [relSearch, setRelSearch] = useState('');
+  const [relSearchResults, setRelSearchResults] = useState<any[]>([]);
+  const [relSelectedPerson, setRelSelectedPerson] = useState<any>(null);
+  const [relType, setRelType] = useState('conjuge');
+  const [savingRel, setSavingRel] = useState(false);
+  const [relError, setRelError] = useState('');
+  const [allPeople, setAllPeople] = useState<any[]>([]);
+
+  // Mapa do endereco
+  const [showMap, setShowMap] = useState(false);
+  const [mapCoords, setMapCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+  const [mapError, setMapError] = useState('');
 
   // Login state
   const [creatingLogin, setCreatingLogin] = useState(false);
@@ -96,7 +113,80 @@ export default function PersonDetail() {
   useEffect(() => {
     if (!id) return;
     loadPerson();
+    loadRelationships();
   }, [id]);
+
+  useEffect(() => {
+    if (!relSearch.trim() || relSearch.length < 2) { setRelSearchResults([]); return; }
+    const q = relSearch.toLowerCase();
+    setRelSearchResults(allPeople.filter((p) => p.full_name.toLowerCase().includes(q) && p.id !== id).slice(0, 8));
+  }, [relSearch, allPeople, id]);
+
+  const loadRelationships = async () => {
+    if (!id) return;
+    const { data } = await getPersonRelationships(id as string);
+    setRelationships(data ?? []);
+  };
+
+  const loadAllPeople = async () => {
+    if (allPeople.length > 0 || !person) return;
+    const churchId = (person as any).church_id;
+    const { data } = await getPeopleWithAddress(churchId);
+    setAllPeople(data ?? []);
+  };
+
+  const handleAddRelationship = async () => {
+    if (!relSelectedPerson || !person) return;
+    setSavingRel(true);
+    setRelError('');
+    try {
+      const { error: err } = await addPersonRelationship(
+        (person as any).church_id,
+        person.id,
+        relSelectedPerson.id,
+        relType
+      );
+      if (err) throw err;
+      await loadRelationships();
+      setShowAddRel(false);
+      setRelSelectedPerson(null);
+      setRelSearch('');
+      setRelType('conjuge');
+    } catch (err: any) {
+      setRelError(err.message || 'Erro ao salvar vinculo');
+    } finally {
+      setSavingRel(false);
+    }
+  };
+
+  const handleRemoveRelationship = async (rel: any) => {
+    await removePersonRelationship(rel.id, id as string, rel.related_person_id, rel.relationship_type);
+    await loadRelationships();
+  };
+
+  const geocodeAddress = async () => {
+    if (!person?.address) return;
+    setGeocoding(true);
+    setMapError('');
+    try {
+      const query = [person.address, (person as any).city, 'Brasil'].filter(Boolean).join(', ');
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
+        { headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' } }
+      );
+      const data = await res.json();
+      if (data.length > 0) {
+        setMapCoords({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
+        setShowMap(true);
+      } else {
+        setMapError('Endereco nao encontrado. Tente incluir o nome da cidade.');
+      }
+    } catch {
+      setMapError('Erro ao buscar endereco.');
+    } finally {
+      setGeocoding(false);
+    }
+  };
 
   const loadPerson = async () => {
     try {
@@ -314,6 +404,149 @@ export default function PersonDetail() {
                 Enviar WhatsApp
               </a>
             </div>
+          </div>
+        )}
+
+        {/* Secao Familia */}
+        <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-500" />
+              <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Familia</h2>
+            </div>
+            <button
+              onClick={() => { setShowAddRel(true); setRelError(''); loadAllPeople(); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Adicionar
+            </button>
+          </div>
+          {relationships.length === 0 ? (
+            <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum vinculo cadastrado.</p>
+          ) : (
+            <div className="space-y-2">
+              {relationships.map((rel) => (
+                <div key={rel.id} className="flex items-center justify-between bg-gray-50 dark:bg-slate-700/50 rounded-lg px-3 py-2">
+                  <div>
+                    <span className="font-medium text-gray-900 dark:text-slate-100 text-sm">{rel.related?.full_name}</span>
+                    <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                      {RELATIONSHIP_LABELS[rel.relationship_type] ?? rel.relationship_type}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveRelationship(rel)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    title="Remover vinculo"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {showAddRel && (
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Buscar pessoa</label>
+                <input
+                  type="text"
+                  value={relSearch}
+                  onChange={(e) => { setRelSearch(e.target.value); setRelSelectedPerson(null); }}
+                  placeholder="Digite o nome..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
+                />
+                {relSearchResults.length > 0 && !relSelectedPerson && (
+                  <div className="mt-1 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                    {relSearchResults.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => { setRelSelectedPerson(p); setRelSearch(p.full_name); setRelSearchResults([]); }}
+                        className="w-full text-left px-3 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors"
+                      >
+                        {p.full_name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tipo de vinculo</label>
+                <select
+                  value={relType}
+                  onChange={(e) => setRelType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm"
+                >
+                  {Object.entries(RELATIONSHIP_LABELS).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              {relError && <p className="text-xs text-red-500">{relError}</p>}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddRelationship}
+                  disabled={!relSelectedPerson || savingRel}
+                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                >
+                  {savingRel ? 'Salvando...' : 'Salvar vinculo'}
+                </button>
+                <button
+                  onClick={() => { setShowAddRel(false); setRelSearch(''); setRelSelectedPerson(null); }}
+                  className="px-4 py-2 border border-gray-300 dark:border-slate-600 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-gray-600 dark:text-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mapa do endereco */}
+        {(person.address || (person as any).city) && (
+          <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-emerald-500" />
+                <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Localizacao</h2>
+              </div>
+              <div className="flex gap-2">
+                {!showMap && (
+                  <button
+                    onClick={geocodeAddress}
+                    disabled={geocoding}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                  >
+                    {geocoding ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                    {geocoding ? 'Buscando...' : 'Ver no Mapa'}
+                  </button>
+                )}
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([person.address, (person as any).city, 'Brasil'].filter(Boolean).join(', '))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 text-sm font-semibold rounded-lg transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Google Maps
+                </a>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              {[person.address, (person as any).city].filter(Boolean).join(' - ')}
+            </p>
+            {mapError && <p className="text-sm text-red-500">{mapError}</p>}
+            {showMap && mapCoords && (
+              <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-slate-600">
+                <iframe
+                  title="Mapa do endereco"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapCoords.lon - 0.01}%2C${mapCoords.lat - 0.01}%2C${mapCoords.lon + 0.01}%2C${mapCoords.lat + 0.01}&layer=mapnik&marker=${mapCoords.lat}%2C${mapCoords.lon}`}
+                  width="100%"
+                  height="220"
+                  style={{ border: 0 }}
+                />
+              </div>
+            )}
           </div>
         )}
 

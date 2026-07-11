@@ -89,3 +89,95 @@ export const getPerson = async (id: string) => {
     .eq('id', id)
     .single();
 };
+// ─── Vínculos familiares ──────────────────────────────────────────────────────
+
+export const RELATIONSHIP_LABELS: Record<string, string> = {
+  conjuge:      'Cônjuge',
+  pai:          'Pai',
+  mae:          'Mãe',
+  filho:        'Filho',
+  filha:        'Filha',
+  irmao:        'Irmão',
+  irma:         'Irmã',
+  avo:          'Avô',
+  avo_materna:  'Avó',
+  neto:         'Neto',
+  neta:         'Neta',
+  outro:        'Outro',
+};
+
+export const RELATIONSHIP_INVERSE: Record<string, string> = {
+  conjuge:     'conjuge',
+  pai:         'filho',
+  mae:         'filha',
+  filho:       'pai',
+  filha:       'mae',
+  irmao:       'irmao',
+  irma:        'irma',
+  avo:         'neto',
+  avo_materna: 'neta',
+  neto:        'avo',
+  neta:        'avo_materna',
+  outro:       'outro',
+};
+
+export const getPersonRelationships = async (personId: string) => {
+  return supabase
+    .from('person_relationships')
+    .select(`
+      id,
+      relationship_type,
+      related_person_id,
+      related:people!person_relationships_related_person_id_fkey(id, full_name)
+    `)
+    .eq('person_id', personId)
+    .order('relationship_type');
+};
+
+export const addPersonRelationship = async (
+  churchId: string,
+  personId: string,
+  relatedPersonId: string,
+  relationshipType: string
+) => {
+  const inverse = RELATIONSHIP_INVERSE[relationshipType] ?? 'outro';
+  const [a, b] = await Promise.all([
+    supabase.from('person_relationships').upsert(
+      { church_id: churchId, person_id: personId, related_person_id: relatedPersonId, relationship_type: relationshipType },
+      { onConflict: 'person_id,related_person_id,relationship_type' }
+    ),
+    supabase.from('person_relationships').upsert(
+      { church_id: churchId, person_id: relatedPersonId, related_person_id: personId, relationship_type: inverse },
+      { onConflict: 'person_id,related_person_id,relationship_type' }
+    ),
+  ]);
+  return a.error ? a : b;
+};
+
+export const removePersonRelationship = async (
+  relationshipId: string,
+  personId: string,
+  relatedPersonId: string,
+  relationshipType: string
+) => {
+  const inverse = RELATIONSHIP_INVERSE[relationshipType] ?? 'outro';
+  await Promise.all([
+    supabase.from('person_relationships').delete().eq('id', relationshipId),
+    supabase.from('person_relationships').delete()
+      .eq('person_id', relatedPersonId)
+      .eq('related_person_id', personId)
+      .eq('relationship_type', inverse),
+  ]);
+};
+
+// Listar todas as pessoas com endereço (para mapa da congregação)
+export const getPeopleWithAddress = async (churchId: string) => {
+  return supabase
+    .from('people')
+    .select('id, full_name, address, city, status')
+    .eq('church_id', churchId)
+    .eq('is_active', true)
+    .not('address', 'is', null)
+    .neq('address', '')
+    .order('full_name');
+};

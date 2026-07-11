@@ -191,21 +191,31 @@ export default function PersonDetail() {
   };
 
   const geocodeForSave = async (address: string, city: string): Promise<{ lat: number; lon: number } | null> => {
-    const queries = [
-      [address, city, 'Brasil'].filter(Boolean).join(', '),
-      city ? [city, 'Brasil'].join(', ') : '',
-    ].filter(Boolean);
-    for (const q of queries) {
+    // Nominatim structured search (street + city separados) e free-text como fallback.
+    // countrycodes=br garante resultados apenas no Brasil.
+    const HEADERS = { 'Accept-Language': 'pt-BR,pt;q=0.9', 'User-Agent': 'SheepCare/1.0' };
+    const BASE = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br';
+
+    const attempts: string[] = [];
+    if (address && city) {
+      // 1) busca estruturada: rua + cidade (mais precisa)
+      attempts.push(`${BASE}&street=${encodeURIComponent(address)}&city=${encodeURIComponent(city)}`);
+      // 2) free-text com rua e cidade
+      attempts.push(`${BASE}&q=${encodeURIComponent(`${address}, ${city}`)}`);
+    } else if (address) {
+      attempts.push(`${BASE}&q=${encodeURIComponent(address)}`);
+    }
+    // 3) fallback: só cidade
+    if (city) attempts.push(`${BASE}&q=${encodeURIComponent(city)}`);
+
+    for (const url of attempts) {
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
-          { headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' } }
-        );
+        const res = await fetch(url, { headers: HEADERS });
         const data = await res.json();
-        if (data.length > 0) {
+        if (Array.isArray(data) && data.length > 0) {
           return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
         }
-      } catch { /* ignora erro de geocoding */ }
+      } catch { /* ignora erro de rede */ }
     }
     return null;
   };

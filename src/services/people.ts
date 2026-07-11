@@ -14,6 +14,8 @@ export interface Person {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  lat?: number | null;
+  lon?: number | null;
 }
 // Listar pessoas
 export const getPeople = async (
@@ -174,7 +176,7 @@ export const removePersonRelationship = async (
 export const getPeopleWithAddress = async (churchId: string) => {
   return supabase
     .from('people')
-    .select('id, full_name, address, city, status')
+    .select('id, full_name, address, city, status, lat, lon')
     .eq('church_id', churchId)
     .eq('is_active', true)
     .not('address', 'is', null)

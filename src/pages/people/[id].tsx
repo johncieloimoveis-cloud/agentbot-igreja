@@ -18,6 +18,8 @@ interface Person {
   city?: string;
   notes?: string;
   oficial?: string;
+  lat?: number;
+  lon?: number;
 }
 
 const MESSAGE_TYPES = [
@@ -165,34 +167,33 @@ export default function PersonDetail() {
   };
 
   const geocodeAddress = async () => {
-    if (!person?.address && !(person as any).city) return;
-    setGeocoding(true);
+    if (!person) return;
     setMapError('');
-    try {
-      const city = (person as any).city ?? '';
-      const queries = [
-        [person.address, city, 'Brasil'].filter(Boolean).join(', '),
-        city ? [city, 'Brasil'].join(', ') : '',
-      ].filter(Boolean);
 
-      let found = false;
-      for (let i = 0; i < queries.length; i++) {
-        const q = queries[i];
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
-          { headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' } }
-        );
-        const data = await res.json();
-        if (data.length > 0) {
-          setMapCoords({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
-          setShowMap(true);
-          found = true;
-          if (i > 0) setMapError('Endereco exato nao localizado. Mostrando regiao da cidade.');
-          break;
-        }
-        await new Promise((r) => setTimeout(r, 300));
+    // Usa coordenadas ja salvas no banco (instantaneo)
+    if (person.lat && person.lon) {
+      setMapCoords({ lat: person.lat, lon: person.lon });
+      setShowMap(true);
+      return;
+    }
+
+    // Sem coordenadas salvas: geocodifica e salva no banco
+    if (!person.address && !person.city) {
+      setMapError('Endereco nao cadastrado.');
+      return;
+    }
+    setGeocoding(true);
+    try {
+      const coords = await geocodeForSave(person.address ?? '', person.city ?? '');
+      if (coords) {
+        // Salva no banco para proximas vezes
+        await updatePerson(person.id, coords);
+        setPerson((prev) => prev ? { ...prev, ...coords } : prev);
+        setMapCoords(coords);
+        setShowMap(true);
+      } else {
+        setMapError('Endereco nao encontrado. Salve o cadastro com endereço completo.');
       }
-      if (!found) setMapError('Endereco nao encontrado. Verifique se esta correto no cadastro.');
     } catch {
       setMapError('Erro ao buscar endereco.');
     } finally {
@@ -214,13 +215,43 @@ export default function PersonDetail() {
     }
   };
 
+  const geocodeForSave = async (address: string, city: string): Promise<{ lat: number; lon: number } | null> => {
+    const queries = [
+      [address, city, 'Brasil'].filter(Boolean).join(', '),
+      city ? [city, 'Brasil'].join(', ') : '',
+    ].filter(Boolean);
+    for (const q of queries) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
+          { headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' } }
+        );
+        const data = await res.json();
+        if (data.length > 0) {
+          return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+        }
+      } catch { /* ignora erro de geocoding */ }
+    }
+    return null;
+  };
+
   const handleSubmit = async (data: PersonFormData) => {
     if (!person) return;
     setSaving(true);
     setError('');
     setSuccess('');
     try {
-      const cleanData = {
+      const addressChanged =
+        (data.address ?? '') !== (person.address ?? '') ||
+        (data.city ?? '') !== (person.city ?? '');
+      const needsGeocode = addressChanged || (!person.lat && (data.address || data.city));
+
+      let coords: { lat: number; lon: number } | null = null;
+      if (needsGeocode && (data.address || data.city)) {
+        coords = await geocodeForSave(data.address ?? '', data.city ?? '');
+      }
+
+      const cleanData: any = {
         full_name: data.full_name,
         status: data.status,
         phone: data.phone || undefined,
@@ -232,6 +263,11 @@ export default function PersonDetail() {
         notes: data.notes || undefined,
         oficial: data.oficial || 'NAO',
       };
+      if (needsGeocode) {
+        cleanData.lat = coords?.lat ?? null;
+        cleanData.lon = coords?.lon ?? null;
+      }
+
       const { error: err } = await updatePerson(person.id, cleanData);
       if (err) throw err;
       setSuccess('Pessoa atualizada com sucesso!');

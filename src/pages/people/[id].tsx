@@ -165,22 +165,34 @@ export default function PersonDetail() {
   };
 
   const geocodeAddress = async () => {
-    if (!person?.address) return;
+    if (!person?.address && !(person as any).city) return;
     setGeocoding(true);
     setMapError('');
     try {
-      const query = [person.address, (person as any).city, 'Brasil'].filter(Boolean).join(', ');
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
-        { headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' } }
-      );
-      const data = await res.json();
-      if (data.length > 0) {
-        setMapCoords({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
-        setShowMap(true);
-      } else {
-        setMapError('Endereco nao encontrado. Tente incluir o nome da cidade.');
+      const city = (person as any).city ?? '';
+      const queries = [
+        [person.address, city, 'Brasil'].filter(Boolean).join(', '),
+        city ? [city, 'Brasil'].join(', ') : '',
+      ].filter(Boolean);
+
+      let found = false;
+      for (let i = 0; i < queries.length; i++) {
+        const q = queries[i];
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
+          { headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' } }
+        );
+        const data = await res.json();
+        if (data.length > 0) {
+          setMapCoords({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
+          setShowMap(true);
+          found = true;
+          if (i > 0) setMapError('Endereco exato nao localizado. Mostrando regiao da cidade.');
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 300));
       }
+      if (!found) setMapError('Endereco nao encontrado. Verifique se esta correto no cadastro.');
     } catch {
       setMapError('Erro ao buscar endereco.');
     } finally {

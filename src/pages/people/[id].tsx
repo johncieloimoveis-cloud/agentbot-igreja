@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
 import { getPerson, updatePerson, deletePerson, getPersonRelationships, addPersonRelationship, removePersonRelationship, getPeopleWithAddress, RELATIONSHIP_LABELS } from '@/services/people';
-import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Send, Copy, Check, KeyRound, UserPlus, Users, MapPin, ExternalLink, Plus, Loader2 } from 'lucide-react';
+import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Copy, Check, KeyRound, UserPlus, Users, MapPin, ExternalLink, Plus } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Person {
@@ -113,10 +113,10 @@ export default function PersonDetail() {
   };
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !user) return;
     loadPerson();
     loadRelationships();
-  }, [id]);
+  }, [id, user]);
 
   useEffect(() => {
     if (!relSearch.trim() || relSearch.length < 2) { setRelSearchResults([]); return; }
@@ -166,39 +166,14 @@ export default function PersonDetail() {
     await loadRelationships();
   };
 
-  const geocodeAddress = async () => {
+  const geocodeAddress = () => {
     if (!person) return;
-    setMapError('');
-
-    // Usa coordenadas ja salvas no banco (instantaneo)
-    if (person.lat && person.lon) {
-      setMapCoords({ lat: person.lat, lon: person.lon });
-      setShowMap(true);
-      return;
-    }
-
-    // Sem coordenadas salvas: geocodifica e salva no banco
-    if (!person.address && !person.city) {
+    if (!person.address && !(person as any).city) {
       setMapError('Endereco nao cadastrado.');
       return;
     }
-    setGeocoding(true);
-    try {
-      const coords = await geocodeForSave(person.address ?? '', person.city ?? '');
-      if (coords) {
-        // Salva no banco para proximas vezes
-        await updatePerson(person.id, coords);
-        setPerson((prev) => prev ? { ...prev, ...coords } : prev);
-        setMapCoords(coords);
-        setShowMap(true);
-      } else {
-        setMapError('Endereco nao encontrado. Salve o cadastro com endereço completo.');
-      }
-    } catch {
-      setMapError('Erro ao buscar endereco.');
-    } finally {
-      setGeocoding(false);
-    }
+    setMapError('');
+    setShowMap(true);
   };
 
   const loadPerson = async () => {
@@ -562,11 +537,10 @@ export default function PersonDetail() {
                 {!showMap && (
                   <button
                     onClick={geocodeAddress}
-                    disabled={geocoding}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors"
                   >
-                    {geocoding ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
-                    {geocoding ? 'Buscando...' : 'Ver no Mapa'}
+                    <MapPin className="w-4 h-4" />
+                    Ver no Mapa
                   </button>
                 )}
                 <a
@@ -584,14 +558,15 @@ export default function PersonDetail() {
               {[person.address, (person as any).city].filter(Boolean).join(' - ')}
             </p>
             {mapError && <p className="text-sm text-red-500">{mapError}</p>}
-            {showMap && mapCoords && (
+            {showMap && (
               <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-slate-600">
                 <iframe
                   title="Mapa do endereco"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapCoords.lon - 0.01}%2C${mapCoords.lat - 0.01}%2C${mapCoords.lon + 0.01}%2C${mapCoords.lat + 0.01}&layer=mapnik&marker=${mapCoords.lat}%2C${mapCoords.lon}`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent([person.address, (person as any).city, 'Brasil'].filter(Boolean).join(', '))}&output=embed`}
                   width="100%"
                   height="220"
                   style={{ border: 0 }}
+                  loading="lazy"
                 />
               </div>
             )}

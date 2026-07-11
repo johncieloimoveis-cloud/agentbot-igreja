@@ -191,31 +191,39 @@ export default function PersonDetail() {
   };
 
   const geocodeForSave = async (address: string, city: string): Promise<{ lat: number; lon: number } | null> => {
-    // Nominatim structured search (street + city separados) e free-text como fallback.
-    // countrycodes=br garante resultados apenas no Brasil.
-    const HEADERS = { 'Accept-Language': 'pt-BR,pt;q=0.9', 'User-Agent': 'SheepCare/1.0' };
-    const BASE = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br';
+    // Usa /api/geocode (Google Maps server-side) quando GOOGLE_MAPS_KEY estiver configurada.
+    // Sem a key o endpoint retorna 503 e caímos no fallback Nominatim.
+    try {
+      const params = new URLSearchParams();
+      if (address) params.set('address', address);
+      if (city)    params.set('city', city);
+      const res = await fetch(`/api/geocode?${params}`);
+      if (res.ok) {
+        const { lat, lon } = await res.json();
+        if (lat && lon) return { lat, lon };
+      }
+    } catch { /* fallback abaixo */ }
 
+    // Fallback: Nominatim estruturado (menos preciso, mas sem chave)
+    const BASE = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br';
+    const HEADERS = { 'Accept-Language': 'pt-BR,pt;q=0.9', 'User-Agent': 'SheepCare/1.0' };
     const attempts: string[] = [];
     if (address && city) {
-      // 1) busca estruturada: rua + cidade (mais precisa)
       attempts.push(`${BASE}&street=${encodeURIComponent(address)}&city=${encodeURIComponent(city)}`);
-      // 2) free-text com rua e cidade
       attempts.push(`${BASE}&q=${encodeURIComponent(`${address}, ${city}`)}`);
     } else if (address) {
       attempts.push(`${BASE}&q=${encodeURIComponent(address)}`);
     }
-    // 3) fallback: só cidade
     if (city) attempts.push(`${BASE}&q=${encodeURIComponent(city)}`);
 
     for (const url of attempts) {
       try {
-        const res = await fetch(url, { headers: HEADERS });
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+        const r = await fetch(url, { headers: HEADERS });
+        const d = await r.json();
+        if (Array.isArray(d) && d.length > 0) {
+          return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
         }
-      } catch { /* ignora erro de rede */ }
+      } catch { /* ignora */ }
     }
     return null;
   };

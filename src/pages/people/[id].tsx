@@ -554,7 +554,7 @@ export default function PersonDetail() {
         </div>
 
         {/* Mapa do endereco */}
-        {(person.address || (person as any).city) && (
+        {((person.address || (person as any).city) || (person.lat && person.lon)) && (
           <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -562,7 +562,7 @@ export default function PersonDetail() {
                 <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Localizacao</h2>
               </div>
               <div className="flex gap-2">
-                {!showMap && (
+                {!showMap && !person.lat && (person.address || (person as any).city) && (
                   <button
                     onClick={geocodeAddress}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors"
@@ -572,7 +572,11 @@ export default function PersonDetail() {
                   </button>
                 )}
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([person.address, (person as any).city, 'Brasil'].filter(Boolean).join(', '))}`}
+                  href={
+                    person.lat && person.lon
+                      ? `https://www.google.com/maps?q=${person.lat},${person.lon}`
+                      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([person.address, (person as any).city, 'Brasil'].filter(Boolean).join(', '))}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 text-sm font-semibold rounded-lg transition-colors"
@@ -584,13 +588,20 @@ export default function PersonDetail() {
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
               {[person.address, (person as any).city].filter(Boolean).join(' - ')}
+              {person.lat && person.lon && !person.address && !((person as any).city) && (
+                <span className="text-xs text-gray-400">{person.lat}, {person.lon}</span>
+              )}
             </p>
             {mapError && <p className="text-sm text-red-500">{mapError}</p>}
-            {showMap && (
+            {(showMap || (person.lat && person.lon)) && (
               <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-slate-600">
                 <iframe
                   title="Mapa do endereco"
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent([person.address, (person as any).city, 'Brasil'].filter(Boolean).join(', '))}&output=embed`}
+                  src={
+                    person.lat && person.lon
+                      ? `https://maps.google.com/maps?q=${person.lat},${person.lon}&output=embed`
+                      : `https://maps.google.com/maps?q=${encodeURIComponent([person.address, (person as any).city, 'Brasil'].filter(Boolean).join(', '))}&output=embed`
+                  }
                   width="100%"
                   height="220"
                   style={{ border: 0 }}

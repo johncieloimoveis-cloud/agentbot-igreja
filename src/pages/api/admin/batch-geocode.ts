@@ -67,7 +67,10 @@ async function geocodeOne(
         diag.push(info);
         continue;
       }
-      if (locType === 'GEOMETRIC_CENTER' && !route) {
+      const isHighway = /\b(br|pr|sp|mg|rs|sc|rj|ba|to|go|mt|ms)\s*[-]?\s*\d+\b/i.test(q)
+        || /\bkm\s*\d+/i.test(q)
+        || /\brodovia\b/i.test(q);
+      if (locType === 'GEOMETRIC_CENTER' && !route && !isHighway) {
         info.rejection = 'GEOMETRIC_CENTER without route rejected';
         diag.push(info);
         continue;

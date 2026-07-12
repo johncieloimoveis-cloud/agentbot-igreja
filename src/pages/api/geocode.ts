@@ -2,11 +2,18 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Proxy server-side para Google Maps Geocoding API.
 // Aceita ROOFTOP e RANGE_INTERPOLATED sempre.
-// Aceita GEOMETRIC_CENTER apenas se o resultado tiver uma "route" (rua) nos componentes,
-// o que indica nivel de rua (nao apenas cidade/bairro).
+// Aceita GEOMETRIC_CENTER se tiver componente "route" OU se o endereco for de rodovia (BR/PR/km).
+// Rejeita APPROXIMATE sempre.
 
 function hasRoute(components: any[]): boolean {
   return components.some((c: any) => c.types.includes('route'));
+}
+
+// Detecta enderecos de rodovia: "BR 153", "PR-158", "Km 24", etc.
+function isHighwayAddress(address: string): boolean {
+  return /\b(br|pr|sp|mg|rs|sc|rj|ba|to|go|mt|ms)\s*[-–]?\s*\d+\b/i.test(address)
+    || /\bkm\s*\d+/i.test(address)
+    || /\brodovia\b/i.test(address);
 }
 
 const norm = (s: string) =>
@@ -22,9 +29,9 @@ async function geocode(q: string, key: string, expectedCity?: string) {
   const locType: string = result.geometry.location_type;
   const components: any[] = result.address_components ?? [];
 
-  // Rejeita resultados de cidade/estado/pais (sem rua identificada)
+  // Rejeita resultados de cidade/estado/pais
   if (locType === 'APPROXIMATE') return null;
-  if (locType === 'GEOMETRIC_CENTER' && !hasRoute(components)) return null;
+  if (locType === 'GEOMETRIC_CENTER' && !hasRoute(components) && !isHighwayAddress(q)) return null;
 
   // Valida que o resultado esta na cidade esperada
   if (expectedCity) {

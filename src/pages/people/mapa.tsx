@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
-import { getPeopleWithAddress } from '@/services/people';
+import { getPeopleForMap } from '@/services/people';
 import { MapPin, Users, Loader2, AlertCircle, RefreshCw, Info } from 'lucide-react';
 
 interface PersonLocation {
@@ -63,7 +63,7 @@ export default function PeopleMapa() {
     setLoading(true);
     setError('');
     try {
-      const { data, error: err } = await getPeopleWithAddress(church_id!);
+      const { data, error: err } = await getPeopleForMap(church_id!);
       if (err) throw err;
       setPeople((data ?? []) as PersonLocation[]);
       await loadLeaflet();

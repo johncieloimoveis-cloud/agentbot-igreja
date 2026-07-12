@@ -183,3 +183,15 @@ export const getPeopleWithAddress = async (churchId: string) => {
     .neq('address', '')
     .order('full_name');
 };
+
+// Para o mapa: retorna todas as pessoas com coordenadas (independente de ter endereco)
+export const getPeopleForMap = async (churchId: string) => {
+  return supabase
+    .from('people')
+    .select('id, full_name, address, city, status, lat, lon')
+    .eq('church_id', churchId)
+    .eq('is_active', true)
+    .not('lat', 'is', null)
+    .not('lon', 'is', null)
+    .order('full_name');
+};

@@ -14,6 +14,8 @@ const personSchema = z.object({
   address: z.any().optional(),
   city: z.any().optional(),
   notes: z.any().optional(),
+  lat: z.any().optional(),
+  lon: z.any().optional(),
 });
 
 export type PersonFormData = z.infer<typeof personSchema>;
@@ -156,7 +158,30 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           placeholder="São Paulo" />
       </div>
 
-      {/* Observações */}
+      {/* Coordenadas manuais */}
+      <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="text-sm font-semibold text-gray-900 dark:text-white">Coordenadas (opcional)</span>
+          <HelpTooltip text="Preencha somente se o endereço nao for localizado automaticamente. Para obter: abra o Google Maps, clique com botao direito no local exato e copie as coordenadas." />
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Usado para enderecos em rodovias que o Google nao localiza (ex: BR 153, km 124).</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Latitude</label>
+            <input {...register('lat')} type="number" step="any"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              placeholder="-23.8453" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Longitude</label>
+            <input {...register('lon')} type="number" step="any"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              placeholder="-50.1906" />
+          </div>
+        </div>
+      </div>
+
+      {/* Observacoes */}
       <div>
         <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Observações

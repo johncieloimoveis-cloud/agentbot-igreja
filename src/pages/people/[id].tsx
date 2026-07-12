@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
-import { getPerson, updatePerson, deletePerson, getPersonRelationships, addPersonRelationship, removePersonRelationship, getPeopleWithAddress, RELATIONSHIP_LABELS } from '@/services/people';
+import { getPerson, updatePerson, deletePerson, getPersonRelationships, addPersonRelationship, removePersonRelationship, getPeople, RELATIONSHIP_LABELS } from '@/services/people';
 import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Copy, Check, KeyRound, UserPlus, Users, MapPin, ExternalLink, Plus } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
@@ -133,7 +133,7 @@ export default function PersonDetail() {
   const loadAllPeople = async () => {
     if (allPeople.length > 0 || !person) return;
     const churchId = (person as any).church_id;
-    const { data } = await getPeopleWithAddress(churchId);
+    const { data } = await getPeople(churchId);
     setAllPeople(data ?? []);
   };
 
@@ -234,10 +234,15 @@ export default function PersonDetail() {
     setError('');
     setSuccess('');
     try {
+      // Coordenadas manuais (preenchem quando geocodificacao automatica falha)
+      const manualLat = data.lat !== '' && data.lat != null ? Number(data.lat) : null;
+      const manualLon = data.lon !== '' && data.lon != null ? Number(data.lon) : null;
+      const hasManualCoords = manualLat !== null && !isNaN(manualLat) && manualLon !== null && !isNaN(manualLon);
+
       const addressChanged =
         (data.address ?? '') !== (person.address ?? '') ||
         (data.city ?? '') !== (person.city ?? '');
-      const needsGeocode = addressChanged || (!person.lat && (data.address || data.city));
+      const needsGeocode = !hasManualCoords && (addressChanged || (!person.lat && (data.address || data.city)));
 
       let coords: { lat: number; lon: number } | null = null;
       if (needsGeocode && (data.address || data.city)) {
@@ -256,7 +261,11 @@ export default function PersonDetail() {
         notes: data.notes || undefined,
         oficial: data.oficial || 'NAO',
       };
-      if (needsGeocode) {
+      if (hasManualCoords) {
+        cleanData.lat = manualLat;
+        cleanData.lon = manualLon;
+        cleanData.geocode_status = 'ok';
+      } else if (needsGeocode) {
         cleanData.lat = coords?.lat ?? null;
         cleanData.lon = coords?.lon ?? null;
         cleanData.geocode_status = coords ? 'ok' : 'failed';

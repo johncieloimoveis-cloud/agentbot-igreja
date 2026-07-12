@@ -1,8 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Proxy server-side para Google Maps Geocoding API.
-// So aceita ROOFTOP ou RANGE_INTERPOLATED E resultado na cidade correta.
-const PRECISE = ['ROOFTOP', 'RANGE_INTERPOLATED'];
+// Aceita ROOFTOP e RANGE_INTERPOLATED sempre.
+// Aceita GEOMETRIC_CENTER apenas se o resultado tiver uma "route" (rua) nos componentes,
+// o que indica nivel de rua (nao apenas cidade/bairro).
+
+function hasRoute(components: any[]): boolean {
+  return components.some((c) => c.types.includes('route'));
+}
 
 async function geocode(q: string, key: string, expectedCity?: string) {
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${key}&language=pt-BR&region=br`;
@@ -11,13 +16,15 @@ async function geocode(q: string, key: string, expectedCity?: string) {
   if (data.status !== 'OK' || !data.results?.length) return null;
 
   const result = data.results[0];
+  const locType: string = result.geometry.location_type;
+  const components: any[] = result.address_components ?? [];
 
-  // Rejeita resultados imprecisos (bairro / municipio / estado)
-  if (!PRECISE.includes(result.geometry.location_type)) return null;
+  // Rejeita resultados de cidade/estado/pais (sem rua identificada)
+  if (locType === 'APPROXIMATE') return null;
+  if (locType === 'GEOMETRIC_CENTER' && !hasRoute(components)) return null;
 
   // Valida que o resultado esta na cidade esperada
   if (expectedCity) {
-    const components: any[] = result.address_components ?? [];
     const locality = components.find((c) =>
       c.types.includes('locality') || c.types.includes('administrative_area_level_2')
     );
@@ -48,12 +55,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (address) {
       const coords = await geocode(`${address}, Brasil`, key);
-      if (coords) return res.status(200).json(coords);
-    }
-
-    return res.status(404).json({ error: 'Endereco nao encontrado com precisao suficiente' });
-  } catch (err) {
-    console.error('Geocode error:', err);
-    return res.status(500).json({ error: 'Erro ao geocodificar' });
-  }
-}

@@ -164,7 +164,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           <span className="text-sm font-semibold text-gray-900 dark:text-white">Coordenadas (opcional)</span>
           <HelpTooltip text="Preencha somente se o endereço nao for localizado automaticamente. Para obter: abra o Google Maps, clique com botao direito no local exato e copie as coordenadas." />
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Usado para enderecos em rodovias que o Google nao localiza (ex: BR 153, km 124).</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Informe as coordenadas (latitude e longitude) OU o endereço (rua, número, bairro, cidade).</p>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Latitude</label>

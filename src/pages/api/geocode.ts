@@ -1,17 +1,32 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Proxy server-side para Google Maps Geocoding API.
-// So aceita resultados precisos (rua/numero). Se o Google so resolve ate
-// bairro ou municipio, retorna 404 — melhor nao plotar do que plotar errado.
+// So aceita ROOFTOP ou RANGE_INTERPOLATED E resultado na cidade correta.
 const PRECISE = ['ROOFTOP', 'RANGE_INTERPOLATED'];
 
-async function geocode(q: string, key: string) {
+async function geocode(q: string, key: string, expectedCity?: string) {
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${key}&language=pt-BR&region=br`;
   const r = await fetch(url);
   const data = await r.json();
   if (data.status !== 'OK' || !data.results?.length) return null;
+
   const result = data.results[0];
+
+  // Rejeita resultados imprecisos (bairro / municipio / estado)
   if (!PRECISE.includes(result.geometry.location_type)) return null;
+
+  // Valida que o resultado esta na cidade esperada
+  if (expectedCity) {
+    const components: any[] = result.address_components ?? [];
+    const locality = components.find((c) =>
+      c.types.includes('locality') || c.types.includes('administrative_area_level_2')
+    );
+    if (locality) {
+      const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      if (!norm(locality.long_name).includes(norm(expectedCity))) return null;
+    }
+  }
+
   const { lat, lng } = result.geometry.location;
   return { lat, lon: lng };
 }
@@ -27,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (address && city) {
-      const coords = await geocode(`${address}, ${city}, Brasil`, key);
+      const coords = await geocode(`${address}, ${city}, Brasil`, key, city);
       if (coords) return res.status(200).json(coords);
     }
 

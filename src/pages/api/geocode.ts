@@ -6,8 +6,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 // o que indica nivel de rua (nao apenas cidade/bairro).
 
 function hasRoute(components: any[]): boolean {
-  return components.some((c) => c.types.includes('route'));
+  return components.some((c: any) => c.types.includes('route'));
 }
+
+const norm = (s: string) =>
+  s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 async function geocode(q: string, key: string, expectedCity?: string) {
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${key}&language=pt-BR&region=br`;
@@ -25,12 +28,11 @@ async function geocode(q: string, key: string, expectedCity?: string) {
 
   // Valida que o resultado esta na cidade esperada
   if (expectedCity) {
-    const locality = components.find((c) =>
+    const locality = components.find((c: any) =>
       c.types.includes('locality') || c.types.includes('administrative_area_level_2')
     );
-    if (locality) {
-      const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-      if (!norm(locality.long_name).includes(norm(expectedCity))) return null;
+    if (locality && !norm(locality.long_name).includes(norm(expectedCity))) {
+      return null;
     }
   }
 
@@ -55,3 +57,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (address) {
       const coords = await geocode(`${address}, Brasil`, key);
+      if (coords) return res.status(200).json(coords);
+    }
+
+    return res.status(404).json({ error: 'Endereco nao encontrado com precisao suficiente' });
+  } catch (err) {
+    console.error('Geocode error:', err);
+    return res.status(500).json({ error: 'Erro ao geocodificar' });
+  }
+}

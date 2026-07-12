@@ -50,13 +50,11 @@ export default function PeopleMapa() {
     if (user && church_id) load();
   }, [user, church_id]);
 
-  // Inicializa mapa após dados carregados
   useEffect(() => {
     if (!mapReady || !mapContainerRef.current) return;
     initMap();
   }, [mapReady]);
 
-  // Plota marcadores quando mapa e dados estiverem prontos
   useEffect(() => {
     if (mapRef.current && people.length > 0) plotMarkers();
   }, [people, mapReady]);
@@ -108,7 +106,6 @@ export default function PeopleMapa() {
     const L = (window as any).L;
     if (!L || !mapRef.current) return;
 
-    // Remove cluster anterior
     if (clusterRef.current) {
       mapRef.current.removeLayer(clusterRef.current);
     }
@@ -124,6 +121,7 @@ export default function PeopleMapa() {
 
     located.forEach((p) => {
       const color = STATUS_COLORS[p.status] ?? DEFAULT_COLOR;
+      const label = STATUS_LABELS[p.status] ?? p.status;
       const icon = L.divIcon({
         className: '',
         html: `<div style="width:14px;height:14px;background:${color};border:2.5px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.45);cursor:pointer"></div>`,
@@ -134,15 +132,14 @@ export default function PeopleMapa() {
         `<div style="min-width:180px;font-family:sans-serif">
           <strong style="font-size:14px;display:block;margin-bottom:4px">${p.full_name}</strong>
           <span style="font-size:12px;color:#6b7280">${p.address}${p.city ? `, ${p.city}` : ''}</span><br/>
-          <span style="font-size:11px;background:${color};color:white;padding:1px 8px;border-radius:9999px;display:inline-block;margin-top:5px">${STATUS_LABELS[p.status] ?? p.status}</span><br/>
-          <a href="/people/${p.id}" style="font-size:12px;color:#2563eb;text-decoration:underline;margin-top:7px;display:inline-block">Abrir ficha →</a>
+          <span style="font-size:11px;background:${color};color:white;padding:1px 8px;border-radius:9999px;display:inline-block;margin-top:5px">${label}</span><br/>
+          <a href="/people/${p.id}" style="font-size:12px;color:#2563eb;text-decoration:underline;margin-top:7px;display:inline-block">Abrir ficha</a>
         </div>`
       ).addTo(cluster);
     });
 
     mapRef.current.addLayer(cluster);
 
-    // Ajusta zoom para mostrar todos
     const bounds = (L as any).latLngBounds(located.map((p) => [p.lat!, p.lon!]));
     mapRef.current.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
   };
@@ -154,20 +151,19 @@ export default function PeopleMapa() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
-      {/* Cabeçalho */}
+      {/* Cabecalho */}
       <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors text-sm">
-              ← Voltar
+              Voltar
             </button>
             <div className="w-px h-5 bg-gray-300 dark:bg-slate-600" />
             <MapPin className="w-5 h-5 text-emerald-500" />
-            <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Mapa da Congregação</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Mapa da Congregacao</h1>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Legenda */}
             <div className="hidden sm:flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
               {Object.entries(STATUS_COLORS).map(([status, color]) => (
                 <span key={status} className="flex items-center gap-1.5">
@@ -187,15 +183,14 @@ export default function PeopleMapa() {
           </div>
         </div>
 
-        {/* Stats */}
         {!loading && (
           <div className="max-w-7xl mx-auto mt-3 flex flex-wrap items-center gap-5 text-sm">
             <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
               <Users className="w-4 h-4" />
-              <strong>{people.length}</strong> com endereço
+              <strong>{people.length}</strong> com endereco
             </span>
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-              ✓ <strong>{located.length}</strong> no mapa
+              <strong>{located.length}</strong> no mapa
             </span>
             {withoutCoords.length > 0 && (
               <span className="flex items-center gap-1.5 text-amber-500">
@@ -229,7 +224,17 @@ export default function PeopleMapa() {
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <div className="text-center text-gray-500 dark:text-gray-400 max-w-sm px-4">
               <MapPin className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="text-lg font-medium mb-1">Nenhuma localização disponível</p>
+              <p className="text-lg font-medium mb-1">Nenhuma localizacao disponivel</p>
               <p className="text-sm">
                 {people.length > 0
- 
+                  ? `${people.length} pessoa(s) com endereco mas sem coordenadas. Abra cada ficha e salve para gerar as coordenadas.`
+                  : 'Cadastre enderecos nas fichas individuais para eles aparecerem aqui.'}
+              </p>
+            </div>
+          </div>
+        )}
+        <div ref={mapContainerRef} style={{ height: 'calc(100vh - 130px)', width: '100%' }} />
+      </div>
+    </div>
+  );
+}

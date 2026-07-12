@@ -252,13 +252,13 @@ export default function PersonDetail() {
       const cleanData: any = {
         full_name: data.full_name,
         status: data.status,
-        phone: data.phone || undefined,
-        whatsapp: data.whatsapp || undefined,
-        email: data.email || undefined,
-        date_of_birth: data.date_of_birth || undefined,
-        address: data.address || undefined,
-        city: data.city || undefined,
-        notes: data.notes || undefined,
+        phone: data.phone || null,
+        whatsapp: data.whatsapp || null,
+        email: data.email || null,
+        date_of_birth: data.date_of_birth || null,
+        address: data.address || null,
+        city: data.city || null,
+        notes: data.notes || null,
         oficial: data.oficial || 'NAO',
       };
       if (hasManualCoords) {
@@ -765,3 +765,4 @@ export default function PersonDetail() {
     </div>
   );
 }
+                                   

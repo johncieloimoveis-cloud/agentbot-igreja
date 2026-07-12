@@ -87,6 +87,14 @@ async function geocodeOne(
             diag.push(info);
             continue;
           }
+        } else {
+          // Sem locality (comum em rodovias) — valida pelo endereço formatado
+          const formatted = norm(result.formatted_address ?? '');
+          if (!formatted.includes(norm(city))) {
+            info.rejection = `city not in formatted_address: "${result.formatted_address}"`;
+            diag.push(info);
+            continue;
+          }
         }
       }
 

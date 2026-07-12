@@ -38,8 +38,13 @@ async function geocode(q: string, key: string, expectedCity?: string) {
     const locality = components.find((c: any) =>
       c.types.includes('locality') || c.types.includes('administrative_area_level_2')
     );
-    if (locality && !norm(locality.long_name).includes(norm(expectedCity))) {
-      return null;
+    if (locality) {
+      // Temos componente de cidade — valida diretamente
+      if (!norm(locality.long_name).includes(norm(expectedCity))) return null;
+    } else {
+      // Sem componente locality (comum em rodovias) — valida pelo endereço formatado
+      const formatted = norm(result.formatted_address ?? '');
+      if (!formatted.includes(norm(expectedCity))) return null;
     }
   }
 
@@ -60,6 +65,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (address && city) {
       const coords = await geocode(`${address}, ${city}, Brasil`, key, city);
       if (coords) return res.status(200).json(coords);
+      // Nao faz fallback sem cidade — rodovias (BR/km) podem ser geocodificadas
+      // no estado errado se omitirmos a cidade da busca
+      return res.status(404).json({ error: 'Endereco nao encontrado com precisao suficiente' });
     }
 
     if (address) {

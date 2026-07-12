@@ -36,6 +36,10 @@ interface Group {
   meeting_day?: string;
   meeting_time?: string;
   meeting_address?: string;
+  meeting_city?: string;
+  lat?: number | null;
+  lon?: number | null;
+  geocode_status?: string | null;
   parent_group_id?: string;
   leader_id?: string;
   leader?: { id: string; full_name: string } | null;

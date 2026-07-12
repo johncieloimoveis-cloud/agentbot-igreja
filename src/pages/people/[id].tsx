@@ -765,4 +765,3 @@ export default function PersonDetail() {
     </div>
   );
 }
-                                   

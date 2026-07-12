@@ -15,10 +15,22 @@ interface PersonLocation {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  membro:      '#22c55e',
-  visitante:   '#f59e0b',
-  afastado:    '#ef4444',
-  transferido: '#8b5cf6',
+  active_member:    '#22c55e',
+  visitor:          '#3b82f6',
+  eventual:         '#f59e0b',
+  new_convert:      '#06b6d4',
+  in_discipleship:  '#8b5cf6',
+  absent:           '#ef4444',
+  transferred:      '#ec4899',
+};
+const STATUS_LABELS: Record<string, string> = {
+  active_member:    'Membro Ativo',
+  visitor:          'Visitante',
+  eventual:         'Eventual',
+  new_convert:      'Novo Convertido',
+  in_discipleship:  'Em Discipulado',
+  absent:           'Afastado',
+  transferred:      'Transferido',
 };
 const DEFAULT_COLOR = '#6b7280';
 
@@ -122,7 +134,7 @@ export default function PeopleMapa() {
         `<div style="min-width:180px;font-family:sans-serif">
           <strong style="font-size:14px;display:block;margin-bottom:4px">${p.full_name}</strong>
           <span style="font-size:12px;color:#6b7280">${p.address}${p.city ? `, ${p.city}` : ''}</span><br/>
-          <span style="font-size:11px;background:${color};color:white;padding:1px 8px;border-radius:9999px;display:inline-block;margin-top:5px">${p.status}</span><br/>
+          <span style="font-size:11px;background:${color};color:white;padding:1px 8px;border-radius:9999px;display:inline-block;margin-top:5px">${STATUS_LABELS[p.status] ?? p.status}</span><br/>
           <a href="/people/${p.id}" style="font-size:12px;color:#2563eb;text-decoration:underline;margin-top:7px;display:inline-block">Abrir ficha →</a>
         </div>`
       ).addTo(cluster);
@@ -160,7 +172,7 @@ export default function PeopleMapa() {
               {Object.entries(STATUS_COLORS).map(([status, color]) => (
                 <span key={status} className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full inline-block" style={{ background: color }} />
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  {STATUS_LABELS[status] ?? status}
                 </span>
               ))}
             </div>
@@ -220,14 +232,4 @@ export default function PeopleMapa() {
               <p className="text-lg font-medium mb-1">Nenhuma localização disponível</p>
               <p className="text-sm">
                 {people.length > 0
-                  ? `${people.length} pessoa(s) com endereço mas sem coordenadas. Abra cada ficha e salve para gerar as coordenadas.`
-                  : 'Cadastre endereços nas fichas individuais para eles aparecerem aqui.'}
-              </p>
-            </div>
-          </div>
-        )}
-        <div ref={mapContainerRef} style={{ height: 'calc(100vh - 130px)', width: '100%' }} />
-      </div>
-    </div>
-  );
-}
+ 

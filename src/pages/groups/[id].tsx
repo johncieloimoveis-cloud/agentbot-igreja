@@ -72,6 +72,7 @@ export default function GroupDetail() {
     meeting_day: '',
     meeting_time: '',
     meeting_address: '',
+    meeting_city: '',
     parent_group_id: '',
     leader_id: '',
   });
@@ -113,6 +114,7 @@ export default function GroupDetail() {
         meeting_day: groupData?.meeting_day || '',
         meeting_time: groupData?.meeting_time || '',
         meeting_address: groupData?.meeting_address || '',
+        meeting_city: groupData?.meeting_city || '',
         parent_group_id: groupData?.parent_group_id || '',
         leader_id: groupData?.leader_id || '',
       });
@@ -379,11 +381,30 @@ export default function GroupDetail() {
     if (!formData.name.trim()) { setError('Nome do grupo e obrigatorio'); return; }
     setSaving(true);
     try {
+      // Geocodificar endereço se preenchido
+      let lat: number | null = null;
+      let lon: number | null = null;
+      let geocode_status: string | null = null;
+      if (formData.meeting_address) {
+        try {
+          const params = new URLSearchParams({ address: formData.meeting_address });
+          if (formData.meeting_city) params.append('city', formData.meeting_city);
+          const geoRes = await fetch('/api/geocode?' + params.toString());
+          if (geoRes.ok) {
+            const coords = await geoRes.json();
+            lat = coords.lat; lon = coords.lon; geocode_status = 'ok';
+          } else { geocode_status = 'failed'; }
+        } catch { geocode_status = 'failed'; }
+      }
       const { error: err } = await updateGroup(id as string, {
         name: formData.name,
         meeting_day: formData.meeting_day || null,
         meeting_time: formData.meeting_time || null,
         meeting_address: formData.meeting_address || null,
+        meeting_city: formData.meeting_city || null,
+        lat: lat ?? undefined,
+        lon: lon ?? undefined,
+        geocode_status: geocode_status ?? undefined,
         parent_group_id: formData.parent_group_id || null,
         leader_id: formData.leader_id || null,
       });
@@ -673,6 +694,12 @@ export default function GroupDetail() {
                   <input type="text" value={formData.meeting_address} onChange={(e) => setFormData({ ...formData, meeting_address: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cidade</label>
+                  <input type="text" value={formData.meeting_city} onChange={(e) => setFormData({ ...formData, meeting_city: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Ex: Ibaiti" />
+                </div>
                 <div className="flex gap-3 pt-4">
                   <button type="submit" disabled={saving} className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg">
                     {saving ? 'Salvando...' : 'Salvar Alteracoes'}
@@ -701,7 +728,7 @@ export default function GroupDetail() {
                       ))}
                     </div>
                   )}
-                  {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">📍 {group.meeting_address}</p>}
+                  {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">📍 {group.meeting_address}{group?.meeting_city ? `, ${group.meeting_city}` : ''}</p>}
                 </div>
                 <div className="flex gap-2">
                   {canWrite && (

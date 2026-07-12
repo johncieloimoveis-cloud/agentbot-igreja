@@ -20,6 +20,7 @@ export default function NewGroup() {
   const [formData, setFormData] = useState({
     name: '',
     meeting_address: '',
+    meeting_city: '',
     parent_group_id: '',
     leader_id: '',
   });
@@ -97,9 +98,34 @@ export default function NewGroup() {
     setSaving(true);
     try {
       const churchId = church_id || '';
+
+      // Geocodificar endereço se preenchido
+      let lat: number | null = null;
+      let lon: number | null = null;
+      let geocode_status: string | null = null;
+      if (formData.meeting_address) {
+        try {
+          const params = new URLSearchParams({ address: formData.meeting_address });
+          if (formData.meeting_city) params.append('city', formData.meeting_city);
+          const geoRes = await fetch('/api/geocode?' + params.toString());
+          if (geoRes.ok) {
+            const coords = await geoRes.json();
+            lat = coords.lat;
+            lon = coords.lon;
+            geocode_status = 'ok';
+          } else {
+            geocode_status = 'failed';
+          }
+        } catch { geocode_status = 'failed'; }
+      }
+
       const dataToSubmit = {
         name: formData.name,
         meeting_address: formData.meeting_address || null,
+        meeting_city: formData.meeting_city || null,
+        lat,
+        lon,
+        geocode_status,
         parent_group_id: formData.parent_group_id ? formData.parent_group_id : null,
         leader_id: formData.leader_id,
       };
@@ -234,6 +260,19 @@ export default function NewGroup() {
             onChange={(e) => setFormData({ ...formData, meeting_address: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             placeholder="Rua, número, complemento"
+          />
+        </div>
+
+        <div>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Cidade
+          </label>
+          <input
+            type="text"
+            value={formData.meeting_city}
+            onChange={(e) => setFormData({ ...formData, meeting_city: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="Ex: Ibaiti"
           />
         </div>
 

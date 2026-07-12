@@ -337,4 +337,13 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </header>
 
-   
+        <BannerAd />
+
+        <div className="p-6 pb-12">{children}</div>
+      </main>
+
+      <Mascote />
+      <Ticker />
+    </div>
+  );
+}

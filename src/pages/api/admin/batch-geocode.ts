@@ -64,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .eq('is_active', true)
     .not('address', 'is', null)
     .neq('address', '')
-    .is('lat', null);
+    .or('lat.is.null,geocode_status.eq.failed');
 
   if (error) return res.status(500).json({ error: error.message });
   if (!people?.length) return res.status(200).json({ processed: 0, message: 'Nenhuma pessoa sem coordenadas' });
@@ -79,10 +79,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (coords) {
       await supabaseAdmin
         .from('people')
-        .update({ lat: coords.lat, lon: coords.lon })
+        .update({ lat: coords.lat, lon: coords.lon, geocode_status: 'ok' })
         .eq('id', person.id);
       results.ok++;
     } else {
+      await supabaseAdmin
+        .from('people')
+        .update({ lat: null, lon: null, geocode_status: 'failed' })
+        .eq('id', person.id);
       results.failed++;
       results.names_failed.push(person.full_name);
     }

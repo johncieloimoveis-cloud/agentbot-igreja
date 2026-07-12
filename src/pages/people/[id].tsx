@@ -259,6 +259,7 @@ export default function PersonDetail() {
       if (needsGeocode) {
         cleanData.lat = coords?.lat ?? null;
         cleanData.lon = coords?.lon ?? null;
+        cleanData.geocode_status = coords ? 'ok' : 'failed';
       }
 
       const { error: err } = await updatePerson(person.id, cleanData);

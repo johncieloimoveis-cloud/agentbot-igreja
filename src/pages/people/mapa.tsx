@@ -131,7 +131,7 @@ export default function PeopleMapa() {
       L.marker([p.lat!, p.lon!], { icon }).bindPopup(
         `<div style="min-width:180px;font-family:sans-serif">
           <strong style="font-size:14px;display:block;margin-bottom:4px">${p.full_name}</strong>
-          <span style="font-size:12px;color:#6b7280">${p.address}${p.city ? `, ${p.city}` : ''}</span><br/>
+          <span style="font-size:12px;color:#6b7280">${[p.address, p.city].filter(Boolean).join(', ') || 'Coordenadas manuais'}</span><br/>
           <span style="font-size:11px;background:${color};color:white;padding:1px 8px;border-radius:9999px;display:inline-block;margin-top:5px">${label}</span><br/>
           <a href="/people/${p.id}" style="font-size:12px;color:#2563eb;text-decoration:underline;margin-top:7px;display:inline-block">Abrir ficha</a>
         </div>`

@@ -404,16 +404,21 @@ export default function GroupDetail() {
       let effectiveAddress = formData.meeting_address;
       let effectiveCity = formData.meeting_city;
       if (!effectiveAddress && !effectiveCity && formData.host_id) {
-        const hostPerson = allChurchPeople.find((p) => p.id === formData.host_id);
-        if (hostPerson?.lat && hostPerson?.lon) {
+        // Fonte 1: dados do anfitrião já carregados via join (group?.host)
+        // Fonte 2: allChurchPeople (cobre caso de host recém-alterado no form)
+        const hostFromGroup = (group?.host_id === formData.host_id) ? group?.host : null;
+        const hostFromList = allChurchPeople.find((p) => p.id === formData.host_id);
+        const hostData = hostFromGroup ?? hostFromList ?? null;
+
+        if (hostData?.lat && hostData?.lon) {
           // Anfitrião já tem coordenadas — usar diretamente, sem geocodificar
-          lat = hostPerson.lat;
-          lon = hostPerson.lon;
+          lat = hostData.lat as number;
+          lon = hostData.lon as number;
           geocode_status = 'ok';
           geocodingAttempted = true;
-        } else {
-          effectiveAddress = hostPerson?.address || '';
-          effectiveCity = hostPerson?.city || '';
+        } else if (hostData?.address || hostData?.city) {
+          effectiveAddress = (hostData.address as string) || '';
+          effectiveCity = (hostData.city as string) || '';
         }
       }
 

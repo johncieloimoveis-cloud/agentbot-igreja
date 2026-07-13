@@ -79,7 +79,17 @@ export default function PeopleMapa() {
       ]);
       if (err) throw err;
       setPeople((data ?? []) as PersonLocation[]);
-      setGroups((grpData ?? []) as GroupLocation[]);
+      // Use host lat/lon as fallback when group has no explicit coordinates
+      // Supabase may return host as array or object depending on relation cardinality
+      type RawGroup = { id: string; name: string; meeting_city: string | null; lat: number | null; lon: number | null; host: { lat: number | null; lon: number | null } | { lat: number | null; lon: number | null }[] | null };
+      const rawGroups = (grpData ?? []) as unknown as RawGroup[];
+      const resolvedGroups: GroupLocation[] = rawGroups.map((g) => {
+        const hostObj = Array.isArray(g.host) ? g.host[0] : g.host;
+        const lat = g.lat ?? hostObj?.lat ?? null;
+        const lon = g.lon ?? hostObj?.lon ?? null;
+        return { id: g.id, name: g.name, meeting_city: g.meeting_city, lat: lat!, lon: lon! };
+      }).filter((g) => g.lat != null && g.lon != null);
+      setGroups(resolvedGroups);
       await loadLeaflet();
       setMapReady(true);
     } catch {

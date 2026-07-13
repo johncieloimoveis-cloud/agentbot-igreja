@@ -61,7 +61,7 @@ export const removeGroupMember = async (membershipId: string) => {
 export const getGroup = async (groupId: string) => {
   return supabase
     .from('groups')
-    .select('*, leader:people!leader_id(id, full_name)')
+    .select('*, leader:people!leader_id(id, full_name), host:people!host_id(id, full_name, address, city, lat, lon)')
     .eq('id', groupId)
     .single();
 };
@@ -111,9 +111,7 @@ export const updateGroupMeeting = async (meetingId: string, data: any) => {
 export const getGroupsForMap = async (churchId: string) => {
   return supabase
     .from('groups')
-    .select('id, name, meeting_city, lat, lon')
+    .select('id, name, meeting_city, lat, lon, host:people!host_id(lat, lon)')
     .eq('church_id', churchId)
-    .eq('status', 'active')
-    .not('lat', 'is', null)
-    .not('lon', 'is', null);
+    .eq('status', 'active');
 };

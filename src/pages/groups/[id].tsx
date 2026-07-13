@@ -43,6 +43,8 @@ interface Group {
   parent_group_id?: string;
   leader_id?: string;
   leader?: { id: string; full_name: string } | null;
+  host_id?: string;
+  host?: { id: string; full_name: string; address?: string; city?: string; lat?: number | null; lon?: number | null } | null;
 }
 
 const DAY_LABELS: Record<string, string> = {
@@ -64,6 +66,7 @@ export default function GroupDetail() {
   const [saving, setSaving] = useState(false);
 
   const [availablePeople, setAvailablePeople] = useState<any[]>([]);
+  const [allChurchPeople, setAllChurchPeople] = useState<any[]>([]);
   const [searchPeople, setSearchPeople] = useState('');
   const [loadingPeople, setLoadingPeople] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
@@ -79,6 +82,7 @@ export default function GroupDetail() {
     meeting_city: '',
     parent_group_id: '',
     leader_id: '',
+    host_id: '',
   });
 
   // Reunioes do grupo
@@ -121,6 +125,7 @@ export default function GroupDetail() {
         meeting_city: groupData?.meeting_city || '',
         parent_group_id: groupData?.parent_group_id || '',
         leader_id: groupData?.leader_id || '',
+        host_id: groupData?.host_id || '',
       });
 
       const { data: groupsData } = await getGroups(churchId);
@@ -134,6 +139,10 @@ export default function GroupDetail() {
       const { data: membersData, error: membersError } = await getGroupMembers(id as string);
       if (membersError) throw membersError;
       setMembers(membersData || []);
+
+      // Carrega todas as pessoas da igreja para o seletor de líder e anfitrião
+      const { data: allPeople } = await getPeople(churchId, undefined, undefined);
+      setAllChurchPeople(allPeople || []);
 
       const { data: meetingsData } = await getGroupMeetings(id as string);
       setMeetings(meetingsData || []);
@@ -414,6 +423,7 @@ export default function GroupDetail() {
         ...(geocodingAttempted ? { lat, lon, geocode_status } : {}),
         parent_group_id: formData.parent_group_id || null,
         leader_id: formData.leader_id || null,
+        host_id: formData.host_id || null,
       });
       if (err) throw err;
       setIsEditing(false);
@@ -584,11 +594,27 @@ export default function GroupDetail() {
                   <select value={formData.leader_id} onChange={(e) => setFormData({ ...formData, leader_id: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
                     <option value="">Selecione um lider</option>
-                    {formData.leader_id && !members.some((m) => m.person.id === formData.leader_id) && group?.leader && (
-                      <option value={formData.leader_id}>{group.leader.full_name}</option>
-                    )}
-                    {members.map((m) => <option key={m.person.id} value={m.person.id}>{m.person.full_name}</option>)}
+                    {allChurchPeople.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Anfitrião</label>
+                  <select value={formData.host_id} onChange={(e) => {
+                    const hostId = e.target.value;
+                    const hostPerson = allChurchPeople.find((p) => p.id === hostId);
+                    setFormData((prev) => ({
+                      ...prev,
+                      host_id: hostId,
+                      // Auto-preenche endereço se não houver endereço manual
+                      meeting_address: prev.meeting_address || (hostPerson?.address ?? ''),
+                      meeting_city: prev.meeting_city || (hostPerson?.city ?? ''),
+                    }));
+                  }}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Nenhum anfitrião</option>
+                    {allChurchPeople.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+                  </select>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">O endereço do anfitrião será usado como sede do grupo no mapa.</p>
                 </div>
                 {/* Reunioes multiplas */}
                 <div>
@@ -724,6 +750,7 @@ export default function GroupDetail() {
                   <h1 className="text-3xl font-bold text-gray-950 dark:text-white">{group?.name}</h1>
                   {parentGroup && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Subgrupo de: <span className="font-semibold">{parentGroup.name}</span></p>}
                   {group?.leader && <p className="text-gray-600 dark:text-gray-400 mt-2">Lider: <span className="font-semibold text-gray-800 dark:text-gray-200">{group.leader.full_name}</span></p>}
+                  {group?.host && <p className="text-gray-600 dark:text-gray-400 mt-1">Anfitrião: <span className="font-semibold text-gray-800 dark:text-gray-200">{group.host.full_name}</span></p>}
                   {meetings.length > 0 && (
                     <div className="mt-2 space-y-1">
                       {meetings.map((m) => (

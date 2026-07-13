@@ -84,6 +84,8 @@ export default function GroupDetail() {
     parent_group_id: '',
     leader_id: '',
     host_id: '',
+    lat: '',
+    lon: '',
   });
 
   // Reunioes do grupo
@@ -128,6 +130,8 @@ export default function GroupDetail() {
         parent_group_id: groupData?.parent_group_id || '',
         leader_id: groupData?.leader_id || '',
         host_id: groupData?.host_id || '',
+        lat: groupData?.lat != null ? String(groupData.lat) : '',
+        lon: groupData?.lon != null ? String(groupData.lon) : '',
       });
 
       const { data: groupsData } = await getGroups(churchId);
@@ -396,13 +400,24 @@ export default function GroupDetail() {
     if (!formData.name.trim()) { setError('Nome do grupo e obrigatorio'); return; }
     setSaving(true);
     try {
-      // Geocodificar endereço se preenchido (endereço OU cidade)
+      // Coordenadas manuais têm prioridade absoluta sobre geocodificação
+      const manualLat = formData.lat !== '' && formData.lat != null ? Number(formData.lat) : null;
+      const manualLon = formData.lon !== '' && formData.lon != null ? Number(formData.lon) : null;
+      const hasManualCoords = manualLat !== null && !isNaN(manualLat) && manualLon !== null && !isNaN(manualLon);
+
       let lat: number | null = null;
       let lon: number | null = null;
       let geocode_status: string | null = null;
       let geocodingAttempted = false;
 
-      // Se não há endereço mas há anfitrião, usar coords/endereço do anfitrião
+      if (hasManualCoords) {
+        // Coordenadas inseridas manualmente — salva direto, sem geocodificar
+        lat = manualLat;
+        lon = manualLon;
+        geocode_status = 'ok';
+        geocodingAttempted = true;
+      }
+
       // Combina logradouro + número para geocodificação
       const meetingFullStreet = [formData.meeting_address, formData.meeting_address_number].filter(Boolean).join(', ');
       let effectiveAddress = meetingFullStreet;
@@ -423,7 +438,7 @@ export default function GroupDetail() {
         }
       }
 
-      if (!geocodingAttempted && (effectiveAddress || effectiveCity)) {
+      if (!geocodingAttempted && !hasManualCoords && (effectiveAddress || effectiveCity)) {
         geocodingAttempted = true;
         try {
           const params = new URLSearchParams();
@@ -767,6 +782,26 @@ export default function GroupDetail() {
                   <input type="text" value={formData.meeting_city} onChange={(e) => setFormData({ ...formData, meeting_city: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="Ex: Ibaiti" />
+                </div>
+                <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">Coordenadas (opcional)</span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Preencha somente se o endereço não for localizado corretamente. Para obter: abra o Google Maps, clique com botão direito no local exato e copie as coordenadas.</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Latitude</label>
+                      <input type="number" step="any" value={formData.lat} onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                        placeholder="-23.8453" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Longitude</label>
+                      <input type="number" step="any" value={formData.lon} onChange={(e) => setFormData({ ...formData, lon: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                        placeholder="-50.1906" />
+                    </div>
+                  </div>
                 </div>
                 <div className="flex gap-3 pt-4">
                   <button type="submit" disabled={saving} className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg">

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 import { getGroupMembers, updateGroup, deleteGroup, getGroup, addGroupMember, getGroups, getGroupMeetings, addGroupMeeting, updateGroupMeeting, deleteGroupMeeting } from '@/services/groups';
-import { getPeople } from '@/services/people';
+import { getPeople, getPerson } from '@/services/people';
 import { getGroupAttendanceStats, MemberAttendanceStat, Quadrant } from '@/services/attendance';
 import { TrashIcon, Plus, Edit2, X, Search, Sparkles, Cake, Users, UserCheck, UserMinus, TrendingUp, TrendingDown, Minus, BarChart2 } from 'lucide-react';
 import { WhatsAppShare } from '@/components/WhatsAppShare';
@@ -404,12 +404,8 @@ export default function GroupDetail() {
       let effectiveAddress = formData.meeting_address;
       let effectiveCity = formData.meeting_city;
       if (!effectiveAddress && !effectiveCity && formData.host_id) {
-        // Fonte 1: dados do anfitrião já carregados via join (group?.host)
-        // Fonte 2: allChurchPeople (cobre caso de host recém-alterado no form)
-        const hostFromGroup = (group?.host_id === formData.host_id) ? group?.host : null;
-        const hostFromList = allChurchPeople.find((p) => p.id === formData.host_id);
-        const hostData = hostFromGroup ?? hostFromList ?? null;
-
+        // Busca dados do anfitrião diretamente do banco (mais confiável que estado do cliente)
+        const { data: hostData } = await getPerson(formData.host_id);
         if (hostData?.lat && hostData?.lon) {
           // Anfitrião já tem coordenadas — usar diretamente, sem geocodificar
           lat = hostData.lat as number;
@@ -417,8 +413,8 @@ export default function GroupDetail() {
           geocode_status = 'ok';
           geocodingAttempted = true;
         } else if (hostData?.address || hostData?.city) {
-          effectiveAddress = (hostData.address as string) || '';
-          effectiveCity = (hostData.city as string) || '';
+          effectiveAddress = hostData.address || '';
+          effectiveCity = hostData.city || '';
         }
       }
 

@@ -242,7 +242,12 @@ export default function PersonDetail() {
       const addressChanged =
         (data.address ?? '') !== (person.address ?? '') ||
         (data.city ?? '') !== (person.city ?? '');
-      const needsGeocode = !hasManualCoords && (addressChanged || (!person.lat && (data.address || data.city)));
+      const geocodeFailed = (person as any).geocode_status === 'failed';
+    const needsGeocode = !hasManualCoords && (
+      addressChanged ||
+      (!person.lat && (data.address || data.city)) ||
+      (geocodeFailed && (data.address || data.city))
+    );
 
       let coords: { lat: number; lon: number } | null = null;
       if (needsGeocode && (data.address || data.city)) {

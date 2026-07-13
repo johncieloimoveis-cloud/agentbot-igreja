@@ -399,14 +399,32 @@ export default function GroupDetail() {
       let lon: number | null = null;
       let geocode_status: string | null = null;
       let geocodingAttempted = false;
-      if (formData.meeting_address || formData.meeting_city) {
+
+      // Se não há endereço mas há anfitrião, usar coords/endereço do anfitrião
+      let effectiveAddress = formData.meeting_address;
+      let effectiveCity = formData.meeting_city;
+      if (!effectiveAddress && !effectiveCity && formData.host_id) {
+        const hostPerson = allChurchPeople.find((p) => p.id === formData.host_id);
+        if (hostPerson?.lat && hostPerson?.lon) {
+          // Anfitrião já tem coordenadas — usar diretamente, sem geocodificar
+          lat = hostPerson.lat;
+          lon = hostPerson.lon;
+          geocode_status = 'ok';
+          geocodingAttempted = true;
+        } else {
+          effectiveAddress = hostPerson?.address || '';
+          effectiveCity = hostPerson?.city || '';
+        }
+      }
+
+      if (!geocodingAttempted && (effectiveAddress || effectiveCity)) {
         geocodingAttempted = true;
         try {
           const params = new URLSearchParams();
-          if (formData.meeting_address) params.set('address', formData.meeting_address);
-          if (formData.meeting_city) params.set('city', formData.meeting_city);
+          if (effectiveAddress) params.set('address', effectiveAddress);
+          if (effectiveCity) params.set('city', effectiveCity);
           // Para grupos, aceita resultado aproximado (nivel de cidade e ok)
-          if (!formData.meeting_address && formData.meeting_city) params.set('city_only', '1');
+          if (!effectiveAddress && effectiveCity) params.set('city_only', '1');
           const geoRes = await fetch('/api/geocode?' + params.toString());
           if (geoRes.ok) {
             const coords = await geoRes.json();

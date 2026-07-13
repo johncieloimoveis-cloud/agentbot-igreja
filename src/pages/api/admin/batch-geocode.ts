@@ -127,6 +127,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (error) return res.status(500).json({ error: error.message });
   if (!people?.length) return res.status(200).json({ processed: 0, message: 'Nenhuma pessoa sem coordenadas' });
 
+  // Mapa de enderecos ja geocodificados nesta execucao ou no banco
+  const { data: geocoded } = await supabaseAdmin
+    .from('people')
+    .select('address, city, lat, lon')
+    .eq('is_active', true)
+    .eq('geocode_status', 'ok')
+    .not('lat', 'is', null)
+    .not('lon', 'is', null);
+
+  const coordCache = new Map<string, { lat: number; lon: number }>();
+  (geocoded ?? []).forEach((p: any) => {
+    const k = `${(p.address ?? '').toLowerCase()}|${(p.city ?? '').toLowerCase()}`;
+    if (p.lat && p.lon) coordCache.set(k, { lat: p.lat, lon: p.lon });
+  });
+
   const results = {
     ok: 0,
     failed: 0,
@@ -136,6 +151,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   for (const person of people) {
+    // Verifica cache de enderecos (reutiliza coords de outro membro no mesmo local)
+    const cacheKey = `${(person.address ?? '').toLowerCase()}|${(person.city ?? '').toLowerCase()}`;
+    const cached = coordCache.get(cacheKey);
+    if (cached) {
+      await supabaseAdmin
+        .from('people')
+        .update({ lat: cached.lat, lon: cached.lon, geocode_status: 'ok' })
+        .eq('id', person.id);
+      results.ok++;
+      continue;
+    }
+
     await new Promise((r) => setTimeout(r, 100));
 
     const { coords, diag } = await geocodeOne(person.address ?? '', person.city ?? '', key);
@@ -145,6 +172,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('people')
         .update({ lat: coords.lat, lon: coords.lon, geocode_status: 'ok' })
         .eq('id', person.id);
+      // Salva no cache para proximas pessoas com o mesmo endereço
+      coordCache.set(cacheKey, { lat: coords.lat, lon: coords.lon });
       results.ok++;
     } else {
       await supabaseAdmin

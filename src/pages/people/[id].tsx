@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
-import { getPerson, updatePerson, deletePerson, getPersonRelationships, addPersonRelationship, removePersonRelationship, getPeople, RELATIONSHIP_LABELS } from '@/services/people';
+import { getPerson, updatePerson, deletePerson, getPersonRelationships, addPersonRelationship, removePersonRelationship, getPeople, findCoordsForAddress, RELATIONSHIP_LABELS } from '@/services/people';
 import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Copy, Check, KeyRound, UserPlus, Users, MapPin, ExternalLink, Plus } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
@@ -251,7 +251,17 @@ export default function PersonDetail() {
 
       let coords: { lat: number; lon: number } | null = null;
       if (needsGeocode && (data.address || data.city)) {
-        coords = await geocodeForSave(data.address ?? '', data.city ?? '');
+        // Reutiliza coords de outro membro com mesmo endereço (familia/casa compartilhada)
+        const churchId = (person as any).church_id;
+        if (churchId) {
+          const { data: existing } = await findCoordsForAddress(
+            churchId, data.address ?? '', data.city ?? '', person.id
+          );
+          if (existing?.lat) coords = { lat: existing.lat, lon: existing.lon };
+        }
+        if (!coords) {
+          coords = await geocodeForSave(data.address ?? '', data.city ?? '');
+        }
       }
 
       const cleanData: any = {

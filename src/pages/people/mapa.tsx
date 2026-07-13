@@ -119,21 +119,36 @@ export default function PeopleMapa() {
     });
     clusterRef.current = cluster;
 
+    // Agrupa pessoas com mesmas coordenadas (mesmo endereco / familia)
+    const groups = new Map<string, typeof located>();
     located.forEach((p) => {
-      const color = STATUS_COLORS[p.status] ?? DEFAULT_COLOR;
-      const label = STATUS_LABELS[p.status] ?? p.status;
+      const key = `${p.lat},${p.lon}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(p);
+    });
+
+    groups.forEach((group) => {
+      const first = group[0];
+      const color = STATUS_COLORS[first.status] ?? DEFAULT_COLOR;
       const icon = L.divIcon({
         className: '',
-        html: `<div style="width:14px;height:14px;background:${color};border:2.5px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.45);cursor:pointer"></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
+        html: `<div style="width:${group.length > 1 ? 18 : 14}px;height:${group.length > 1 ? 18 : 14}px;background:${color};border:2.5px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.45);cursor:pointer;display:flex;align-items:center;justify-content:center">${group.length > 1 ? `<span style="font-size:9px;color:white;font-weight:700">${group.length}</span>` : ''}</div>`,
+        iconSize: [group.length > 1 ? 18 : 14, group.length > 1 ? 18 : 14],
+        iconAnchor: [group.length > 1 ? 9 : 7, group.length > 1 ? 9 : 7],
       });
-      L.marker([p.lat!, p.lon!], { icon }).bindPopup(
-        `<div style="min-width:180px;font-family:sans-serif">
-          <strong style="font-size:14px;display:block;margin-bottom:4px">${p.full_name}</strong>
-          <span style="font-size:12px;color:#6b7280">${[p.address, p.city].filter(Boolean).join(', ') || 'Coordenadas manuais'}</span><br/>
-          <span style="font-size:11px;background:${color};color:white;padding:1px 8px;border-radius:9999px;display:inline-block;margin-top:5px">${label}</span><br/>
-          <a href="/people/${p.id}" style="font-size:12px;color:#2563eb;text-decoration:underline;margin-top:7px;display:inline-block">Abrir ficha</a>
+      const addr = [first.address, first.city].filter(Boolean).join(', ') || 'Coordenadas manuais';
+      const peopleHtml = group.map((p) => {
+        const c = STATUS_COLORS[p.status] ?? DEFAULT_COLOR;
+        const lbl = STATUS_LABELS[p.status] ?? p.status;
+        return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
+          <a href="/people/${p.id}" style="font-size:12px;color:#2563eb;text-decoration:underline">${p.full_name}</a>
+          <span style="font-size:10px;background:${c};color:white;padding:1px 7px;border-radius:9999px;white-space:nowrap">${lbl}</span>
+        </div>`;
+      }).join('');
+      L.marker([first.lat!, first.lon!], { icon }).bindPopup(
+        `<div style="min-width:200px;font-family:sans-serif">
+          <span style="font-size:11px;color:#6b7280;display:block;margin-bottom:6px">${addr}</span>
+          ${peopleHtml}
         </div>`
       ).addTo(cluster);
     });

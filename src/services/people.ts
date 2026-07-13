@@ -195,3 +195,24 @@ export const getPeopleForMap = async (churchId: string) => {
     .not('lon', 'is', null)
     .order('full_name');
 };
+
+// Busca coordenadas já geocodificadas de outro membro com o mesmo endereço
+export const findCoordsForAddress = async (
+  churchId: string,
+  address: string,
+  city: string,
+  excludeId?: string
+) => {
+  let query = supabase
+    .from('people')
+    .select('lat, lon')
+    .eq('church_id', churchId)
+    .eq('is_active', true)
+    .eq('geocode_status', 'ok')
+    .not('lat', 'is', null)
+    .not('lon', 'is', null);
+  if (address) query = (query as any).eq('address', address);
+  if (city)    query = (query as any).eq('city', city);
+  if (excludeId) query = (query as any).neq('id', excludeId);
+  return (query as any).limit(1).maybeSingle();
+};

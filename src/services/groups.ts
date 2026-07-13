@@ -61,7 +61,7 @@ export const removeGroupMember = async (membershipId: string) => {
 export const getGroup = async (groupId: string) => {
   return supabase
     .from('groups')
-    .select('*, leader:people!leader_id(id, full_name), host:people!host_id(id, full_name, address, city, lat, lon)')
+    .select('*, leader:people!leader_id(id, full_name), host:people!host_id(id, full_name, address, address_number, city, lat, lon)')
     .eq('id', groupId)
     .single();
 };

@@ -7,6 +7,7 @@ export interface Person {
   whatsapp?: string;
   email?: string;
   address?: string;
+  address_number?: string;
   city?: string;
   status: string;
   date_of_birth?: string;

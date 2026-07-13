@@ -13,6 +13,7 @@ const personSchema = z.object({
   email: z.any().optional(),
   date_of_birth: z.any().optional(),
   address: z.any().optional(),
+  address_number: z.any().optional(),
   city: z.any().optional(),
   notes: z.any().optional(),
   lat: z.any().optional(),
@@ -160,14 +161,25 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
       </div>
 
       {/* Endereço */}
-      <div>
-        <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Endereço
-          <HelpTooltip text="Rua, número e complemento. Útil para visitas pastorais." />
-        </label>
-        <input {...register('address')} type="text"
-          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          placeholder="Rua, número, complemento" />
+      <div className="grid grid-cols-3 gap-3">
+        <div className="col-span-2">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Logradouro
+            <HelpTooltip text="Nome da rua, avenida ou travessa. Útil para visitas pastorais e geocodificação." />
+          </label>
+          <input {...register('address')} type="text"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="Rua das Flores" />
+        </div>
+        <div>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Número
+            <HelpTooltip text="Número da residência. Mantido separado para melhorar a localização no mapa." />
+          </label>
+          <input {...register('address_number')} type="text"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            placeholder="123" />
+        </div>
       </div>
 
       {/* Cidade */}

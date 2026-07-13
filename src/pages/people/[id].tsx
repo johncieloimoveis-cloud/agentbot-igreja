@@ -16,6 +16,7 @@ interface Person {
   status: string;
   date_of_birth?: string;
   address?: string;
+  address_number?: string;
   city?: string;
   notes?: string;
   oficial?: string;
@@ -242,26 +243,28 @@ export default function PersonDetail() {
 
       const addressChanged =
         (data.address ?? '') !== (person.address ?? '') ||
+        (data.address_number ?? '') !== (person.address_number ?? '') ||
         (data.city ?? '') !== (person.city ?? '');
       const geocodeFailed = (person as any).geocode_status === 'failed';
     const needsGeocode = !hasManualCoords && (
       addressChanged ||
-      (!person.lat && (data.address || data.city)) ||
-      (geocodeFailed && (data.address || data.city))
+      (!person.lat && (data.address || data.address_number || data.city)) ||
+      (geocodeFailed && (data.address || data.address_number || data.city))
     );
 
       let coords: { lat: number; lon: number } | null = null;
-      if (needsGeocode && (data.address || data.city)) {
+      const fullStreet = [data.address, data.address_number].filter(Boolean).join(', ');
+      if (needsGeocode && (fullStreet || data.city)) {
         // Reutiliza coords de outro membro com mesmo endereço (familia/casa compartilhada)
         const churchId = (person as any).church_id;
         if (churchId) {
           const { data: existing } = await findCoordsForAddress(
-            churchId, data.address ?? '', data.city ?? '', person.id
+            churchId, fullStreet, data.city ?? '', person.id
           );
           if (existing?.lat) coords = { lat: existing.lat, lon: existing.lon };
         }
         if (!coords) {
-          coords = await geocodeForSave(data.address ?? '', data.city ?? '');
+          coords = await geocodeForSave(fullStreet, data.city ?? '');
         }
       }
 
@@ -274,6 +277,7 @@ export default function PersonDetail() {
         email: data.email || null,
         date_of_birth: data.date_of_birth || null,
         address: data.address || null,
+        address_number: data.address_number || null,
         city: data.city || null,
         notes: data.notes || null,
         oficial: data.oficial || 'NAO',

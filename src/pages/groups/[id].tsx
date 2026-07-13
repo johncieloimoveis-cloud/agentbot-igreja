@@ -79,6 +79,7 @@ export default function GroupDetail() {
     meeting_day: '',
     meeting_time: '',
     meeting_address: '',
+    meeting_address_number: '',
     meeting_city: '',
     parent_group_id: '',
     leader_id: '',
@@ -122,6 +123,7 @@ export default function GroupDetail() {
         meeting_day: groupData?.meeting_day || '',
         meeting_time: groupData?.meeting_time || '',
         meeting_address: groupData?.meeting_address || '',
+        meeting_address_number: (groupData as any)?.meeting_address_number || '',
         meeting_city: groupData?.meeting_city || '',
         parent_group_id: groupData?.parent_group_id || '',
         leader_id: groupData?.leader_id || '',
@@ -401,7 +403,9 @@ export default function GroupDetail() {
       let geocodingAttempted = false;
 
       // Se não há endereço mas há anfitrião, usar coords/endereço do anfitrião
-      let effectiveAddress = formData.meeting_address;
+      // Combina logradouro + número para geocodificação
+      const meetingFullStreet = [formData.meeting_address, formData.meeting_address_number].filter(Boolean).join(', ');
+      let effectiveAddress = meetingFullStreet;
       let effectiveCity = formData.meeting_city;
       if (!effectiveAddress && !effectiveCity && formData.host_id) {
         // Busca dados do anfitrião diretamente do banco (mais confiável que estado do cliente)
@@ -412,9 +416,10 @@ export default function GroupDetail() {
           lon = hostData.lon as number;
           geocode_status = 'ok';
           geocodingAttempted = true;
-        } else if (hostData?.address || hostData?.city) {
-          effectiveAddress = hostData.address || '';
-          effectiveCity = hostData.city || '';
+        } else {
+          const hostStreet = [hostData?.address, (hostData as any)?.address_number].filter(Boolean).join(', ');
+          effectiveAddress = hostStreet;
+          effectiveCity = hostData?.city || '';
         }
       }
 
@@ -438,6 +443,7 @@ export default function GroupDetail() {
         meeting_day: formData.meeting_day || null,
         meeting_time: formData.meeting_time || null,
         meeting_address: formData.meeting_address || null,
+        meeting_address_number: formData.meeting_address_number || null,
         meeting_city: formData.meeting_city || null,
         ...(geocodingAttempted ? { lat, lon, geocode_status } : {}),
         parent_group_id: formData.parent_group_id || null,
@@ -626,6 +632,7 @@ export default function GroupDetail() {
                       host_id: hostId,
                       // Auto-preenche endereço se não houver endereço manual
                       meeting_address: prev.meeting_address || (hostPerson?.address ?? ''),
+                      meeting_address_number: prev.meeting_address_number || ((hostPerson as any)?.address_number ?? ''),
                       meeting_city: prev.meeting_city || (hostPerson?.city ?? ''),
                     }));
                   }}
@@ -741,10 +748,19 @@ export default function GroupDetail() {
                     </select>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Endereco</label>
-                  <input type="text" value={formData.meeting_address} onChange={(e) => setFormData({ ...formData, meeting_address: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logradouro</label>
+                    <input type="text" value={formData.meeting_address} onChange={(e) => setFormData({ ...formData, meeting_address: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Rua das Flores" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Número</label>
+                    <input type="text" value={formData.meeting_address_number} onChange={(e) => setFormData({ ...formData, meeting_address_number: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="123" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cidade</label>
@@ -781,7 +797,7 @@ export default function GroupDetail() {
                       ))}
                     </div>
                   )}
-                  {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">📍 {group.meeting_address}{group?.meeting_city ? `, ${group.meeting_city}` : ''}</p>}
+                  {group?.meeting_address && <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">📍 {group.meeting_address}{(group as any)?.meeting_address_number ? `, ${(group as any).meeting_address_number}` : ''}{group?.meeting_city ? `, ${group.meeting_city}` : ''}</p>}
                 </div>
                 <div className="flex gap-2">
                   {canWrite && (

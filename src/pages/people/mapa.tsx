@@ -78,7 +78,11 @@ export default function PeopleMapa() {
         getGroupsForMap(church_id!),
       ]);
       if (err) throw err;
-      setPeople((data ?? []) as PersonLocation[]);
+      // Filtra coordenadas fora do Brasil (evita que outliers quebrem o fitBounds)
+      const BR = { latMin: -33.8, latMax: 5.3, lonMin: -73.9, lonMax: -34.7 };
+      const inBrazil = (lat: number, lon: number) =>
+        lat >= BR.latMin && lat <= BR.latMax && lon >= BR.lonMin && lon <= BR.lonMax;
+      setPeople(((data ?? []) as PersonLocation[]).filter((p) => p.lat != null && p.lon != null && inBrazil(p.lat, p.lon)));
       // Use host lat/lon as fallback when group has no explicit coordinates
       // Supabase may return host as array or object depending on relation cardinality
       type RawGroup = { id: string; name: string; meeting_city: string | null; lat: number | null; lon: number | null; host: { lat: number | null; lon: number | null } | { lat: number | null; lon: number | null }[] | null };
@@ -88,7 +92,7 @@ export default function PeopleMapa() {
         const lat = g.lat ?? hostObj?.lat ?? null;
         const lon = g.lon ?? hostObj?.lon ?? null;
         return { id: g.id, name: g.name, meeting_city: g.meeting_city, lat: lat!, lon: lon! };
-      }).filter((g) => g.lat != null && g.lon != null);
+      }).filter((g) => g.lat != null && g.lon != null && inBrazil(g.lat, g.lon));
       setGroups(resolvedGroups);
       await loadLeaflet();
       setMapReady(true);

@@ -75,6 +75,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (coords) return res.status(200).json(coords);
     }
 
+    // Modo cidade apenas (city_only=1): aceita APPROXIMATE para sede de grupos
+    if (city && req.query.city_only === '1') {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', Brasil')}&key=${key}&language=pt-BR&region=br`;
+      const r = await fetch(url);
+      const data = await r.json();
+      if (data.status === 'OK' && data.results?.length) {
+        const { lat, lng } = data.results[0].geometry.location;
+        return res.status(200).json({ lat, lon: lng });
+      }
+    }
+
     return res.status(404).json({ error: 'Endereco nao encontrado com precisao suficiente' });
   } catch (err) {
     console.error('Geocode error:', err);

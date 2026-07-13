@@ -5,6 +5,7 @@ import { HelpTooltip } from '@/components/HelpTooltip';
 
 const personSchema = z.object({
   full_name: z.string().min(3, 'Nome obrigatório'),
+  sex: z.string().optional(),
   status: z.string().min(1, 'Status obrigatório'),
   oficial: z.string().optional(),
   phone: z.any().optional(),
@@ -49,6 +50,28 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Digite o nome completo" />
         {fullNameError && <p className="text-red-500 text-sm mt-1">{fullNameError}</p>}
+      </div>
+
+      {/* Sexo */}
+      <div>
+        <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Sexo
+          <HelpTooltip text="Usado para tratamento nas mensagens e para facilitar a vinculação familiar." />
+        </label>
+        <div className="flex gap-2">
+          {([
+            { value: 'M', label: 'Masculino' },
+            { value: 'F', label: 'Feminino' },
+            { value: '', label: 'Não informado' },
+          ] as { value: string; label: string }[]).map(({ value, label }) => (
+            <label key={value} className="relative cursor-pointer">
+              <input {...register('sex')} type="radio" value={value} className="sr-only peer" />
+              <span className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 peer-checked:bg-primary-600 peer-checked:border-primary-600 peer-checked:text-white transition-colors select-none">
+                {label}
+              </span>
+            </label>
+          ))}
+        </div>
       </div>
 
       {/* Email */}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { getPeopleForMap } from '@/services/people';
+import { getGroupsForMap } from '@/services/groups';
 import { MapPin, Users, Loader2, AlertCircle, RefreshCw, Info } from 'lucide-react';
 
 interface PersonLocation {
@@ -12,6 +13,14 @@ interface PersonLocation {
   status: string;
   lat: number | null;
   lon: number | null;
+}
+
+interface GroupLocation {
+  id: string;
+  name: string;
+  meeting_city: string | null;
+  lat: number;
+  lon: number;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -42,6 +51,7 @@ export default function PeopleMapa() {
   const clusterRef = useRef<any>(null);
 
   const [people, setPeople] = useState<PersonLocation[]>([]);
+  const [groups, setGroups] = useState<GroupLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mapReady, setMapReady] = useState(false);
@@ -56,16 +66,20 @@ export default function PeopleMapa() {
   }, [mapReady]);
 
   useEffect(() => {
-    if (mapRef.current && people.length > 0) plotMarkers();
-  }, [people, mapReady]);
+    if (mapRef.current && (people.length > 0 || groups.length > 0)) plotMarkers();
+  }, [people, groups, mapReady]);
 
   const load = async () => {
     setLoading(true);
     setError('');
     try {
-      const { data, error: err } = await getPeopleForMap(church_id!);
+      const [{ data, error: err }, { data: grpData }] = await Promise.all([
+        getPeopleForMap(church_id!),
+        getGroupsForMap(church_id!),
+      ]);
       if (err) throw err;
       setPeople((data ?? []) as PersonLocation[]);
+      setGroups((grpData ?? []) as GroupLocation[]);
       await loadLeaflet();
       setMapReady(true);
     } catch {
@@ -120,14 +134,14 @@ export default function PeopleMapa() {
     clusterRef.current = cluster;
 
     // Agrupa pessoas com mesmas coordenadas (mesmo endereco / familia)
-    const groups = new Map<string, typeof located>();
+    const coordGroups = new Map<string, typeof located>();
     located.forEach((p) => {
       const key = `${p.lat},${p.lon}`;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(p);
+      if (!coordGroups.has(key)) coordGroups.set(key, []);
+      coordGroups.get(key)!.push(p);
     });
 
-    groups.forEach((group) => {
+    coordGroups.forEach((group) => {
       const first = group[0];
       const color = STATUS_COLORS[first.status] ?? DEFAULT_COLOR;
       const icon = L.divIcon({
@@ -153,9 +167,36 @@ export default function PeopleMapa() {
       ).addTo(cluster);
     });
 
+    // Cluster de pessoas fica abaixo dos marcadores de grupo
     mapRef.current.addLayer(cluster);
 
-    const bounds = (L as any).latLngBounds(located.map((p) => [p.lat!, p.lon!]));
+    // Sedes dos grupos — quadrados roxos POR CIMA, com zIndex elevado
+    groups.forEach((g) => {
+      const groupIcon = L.divIcon({
+        className: '',
+        html: `<div style="width:22px;height:22px;background:#7c3aed;border:3px solid white;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" stroke="white" stroke-width="2" fill="none"/></svg>
+        </div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+      });
+      L.marker([g.lat, g.lon], { icon: groupIcon, zIndexOffset: 1000 })
+        .bindTooltip(g.name, { permanent: false, direction: 'top', offset: [0, -13] })
+        .bindPopup(
+          `<div style="min-width:180px;font-family:sans-serif">
+            <div style="font-weight:700;font-size:13px;color:#5b21b6;margin-bottom:4px">🏠 ${g.name}</div>
+            ${g.meeting_city ? `<div style="font-size:11px;color:#6b7280;margin-bottom:6px">${g.meeting_city}</div>` : ''}
+            <a href="/groups/${g.id}" style="font-size:11px;color:#2563eb;text-decoration:underline">Ver grupo →</a>
+          </div>`
+        ).addTo(mapRef.current);
+    });
+
+    const allPoints = [
+      ...located.map((p) => [p.lat!, p.lon!] as [number, number]),
+      ...groups.map((g) => [g.lat, g.lon] as [number, number]),
+    ];
+    if (allPoints.length === 0) return;
+    const bounds = (L as any).latLngBounds(allPoints);
     mapRef.current.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
   };
 
@@ -207,6 +248,12 @@ export default function PeopleMapa() {
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">
               <strong>{located.length}</strong> no mapa
             </span>
+            {groups.length > 0 && (
+              <span className="flex items-center gap-1.5 text-violet-600 dark:text-violet-400 font-medium">
+                <span className="w-3 h-3 rounded-sm inline-block bg-violet-600" />
+                <strong>{groups.length}</strong> grupo{groups.length !== 1 ? 's' : ''}
+              </span>
+            )}
             {withoutCoords.length > 0 && (
               <span className="flex items-center gap-1.5 text-amber-500">
                 <Info className="w-4 h-4" />

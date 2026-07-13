@@ -107,3 +107,13 @@ export const updateGroupMeeting = async (meetingId: string, data: any) => {
     .select()
     .single();
 };
+
+export const getGroupsForMap = async (churchId: string) => {
+  return supabase
+    .from('groups')
+    .select('id, name, meeting_city, lat, lon')
+    .eq('church_id', churchId)
+    .eq('status', 'active')
+    .not('lat', 'is', null)
+    .not('lon', 'is', null);
+};

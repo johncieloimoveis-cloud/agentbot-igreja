@@ -9,6 +9,7 @@ import { fetchWithAuth } from '@/lib/fetchWithAuth';
 interface Person {
   id: string;
   full_name: string;
+  sex?: string;
   phone?: string;
   whatsapp?: string;
   email?: string;
@@ -266,6 +267,7 @@ export default function PersonDetail() {
 
       const cleanData: any = {
         full_name: data.full_name,
+        sex: data.sex || null,
         status: data.status,
         phone: data.phone || null,
         whatsapp: data.whatsapp || null,

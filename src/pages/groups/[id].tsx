@@ -385,14 +385,19 @@ export default function GroupDetail() {
     if (!formData.name.trim()) { setError('Nome do grupo e obrigatorio'); return; }
     setSaving(true);
     try {
-      // Geocodificar endereço se preenchido
+      // Geocodificar endereço se preenchido (endereço OU cidade)
       let lat: number | null = null;
       let lon: number | null = null;
       let geocode_status: string | null = null;
-      if (formData.meeting_address) {
+      let geocodingAttempted = false;
+      if (formData.meeting_address || formData.meeting_city) {
+        geocodingAttempted = true;
         try {
-          const params = new URLSearchParams({ address: formData.meeting_address });
-          if (formData.meeting_city) params.append('city', formData.meeting_city);
+          const params = new URLSearchParams();
+          if (formData.meeting_address) params.set('address', formData.meeting_address);
+          if (formData.meeting_city) params.set('city', formData.meeting_city);
+          // Para grupos, aceita resultado aproximado (nivel de cidade e ok)
+          if (!formData.meeting_address && formData.meeting_city) params.set('city_only', '1');
           const geoRes = await fetch('/api/geocode?' + params.toString());
           if (geoRes.ok) {
             const coords = await geoRes.json();
@@ -406,9 +411,7 @@ export default function GroupDetail() {
         meeting_time: formData.meeting_time || null,
         meeting_address: formData.meeting_address || null,
         meeting_city: formData.meeting_city || null,
-        lat: lat ?? undefined,
-        lon: lon ?? undefined,
-        geocode_status: geocode_status ?? undefined,
+        ...(geocodingAttempted ? { lat, lon, geocode_status } : {}),
         parent_group_id: formData.parent_group_id || null,
         leader_id: formData.leader_id || null,
       });

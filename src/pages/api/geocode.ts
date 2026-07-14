@@ -19,6 +19,18 @@ function isHighwayAddress(address: string): boolean {
 const norm = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
+// Corrige erro de sinal na longitude: Google às vezes retorna lon positivo para endereços BR.
+// Se o ponto cair fora do Brasil mas com -lon ficaria dentro, inverte o sinal.
+function fixBrazilSign(lat: number, lon: number): { lat: number; lon: number } {
+  const inBrazil = (la: number, lo: number) =>
+    la >= -33.8 && la <= 5.3 && lo >= -73.9 && lo <= -34.7;
+  if (inBrazil(lat, lon)) return { lat, lon };
+  if (inBrazil(lat, -lon)) return { lat, lon: -lon };   // erro de sinal na longitude
+  if (inBrazil(-lat, lon)) return { lat: -lat, lon };   // erro de sinal na latitude
+  if (inBrazil(-lat, -lon)) return { lat: -lat, lon: -lon };
+  return { lat, lon }; // fora do Brasil mesmo — devolve como está
+}
+
 async function geocode(q: string, key: string, expectedCity?: string) {
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${key}&language=pt-BR&region=br`;
   const r = await fetch(url);
@@ -49,7 +61,7 @@ async function geocode(q: string, key: string, expectedCity?: string) {
   }
 
   const { lat, lng } = result.geometry.location;
-  return { lat, lon: lng };
+  return fixBrazilSign(lat, lng);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -82,7 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const data = await r.json();
       if (data.status === 'OK' && data.results?.length) {
         const { lat, lng } = data.results[0].geometry.location;
-        return res.status(200).json({ lat, lon: lng });
+        return res.status(200).json(fixBrazilSign(lat, lng));
       }
     }
 

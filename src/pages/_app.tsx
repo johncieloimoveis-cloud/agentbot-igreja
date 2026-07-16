@@ -34,17 +34,12 @@ export default function App({ Component, pageProps }: AppProps) {
 
   if (!mounted) return null;
 
-  const shouldShowLayout = !NO_LAYOUT.includes(router.pathname);
+  // Rotas públicas /i/[slug]/* não usam o Layout interno
+  const isPublicPortal = router.pathname.startsWith('/i/');
+  const shouldShowLayout = !NO_LAYOUT.includes(router.pathname) && !isPublicPortal;
 
   return (
     <AuthProvider>
       {shouldShowLayout ? (
         <Layout>
-          <Component {...pageProps} />
-        </Layout>
-      ) : (
-        <Component {...pageProps} />
-      )}
-    </AuthProvider>
-  );
-}
+         

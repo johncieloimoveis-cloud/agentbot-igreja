@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { BookOpen, Flame, UserPlus, MapPin, Heart } from 'lucide-react';
+import { BookOpen, Flame, UserPlus, MapPin, Heart, Music, Sparkles } from 'lucide-react';
 import { PublicLayout } from '@/components/PublicLayout';
 
 // Versículos rotativos por dia do ano (sem custo de IA)
@@ -92,6 +92,32 @@ export default function PortalPublico() {
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">Devocionais</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Reflexões da sua igreja</p>
+              </div>
+            </Link>
+
+            <Link
+              href={base + '/analise-letra'}
+              className="flex items-center gap-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/40 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-violet-200 dark:group-hover:bg-violet-900/60 transition-colors">
+                <Music className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Análise de Letra</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">IA avalia teocentricidade</p>
+              </div>
+            </Link>
+
+            <Link
+              href={base + '/quiz-biblico'}
+              className="flex items-center gap-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/60 transition-colors">
+                <Sparkles className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Quiz Bíblico</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">10 perguntas geradas por IA</p>
               </div>
             </Link>
           </div>

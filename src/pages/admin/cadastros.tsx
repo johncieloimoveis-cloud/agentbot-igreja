@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ClipboardCheck, Clock, UserCheck, UserX, Phone, Mail, RefreshCw, Copy, MessageSquare, X, Send } from 'lucide-react';
+import { ClipboardCheck, Clock, UserCheck, UserX, Phone, Mail, RefreshCw, Copy, MessageSquare, X, Send, Check } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Pessoa {
@@ -23,6 +23,7 @@ export default function AdminCadastros() {
   const [atualizados, setAtualizados] = useState<Pessoa[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [msgCopiada, setMsgCopiada] = useState(false);
+  const [marcando, setMarcando] = useState<string | null>(null);
 
   const carregar = async (a: Aba) => {
     setLoading(true);
@@ -77,6 +78,22 @@ Acessem o link:
 👉 ${link}
 
 Que Deus abençoe a todos! 🙏`;
+  };
+
+  const marcarAtualizado = async (p: Pessoa) => {
+    if (!confirm('Marcar "' + p.full_name + '" como cadastro atualizado?')) return;
+    setMarcando(p.id);
+    try {
+      const res = await fetchWithAuth('/api/admin/cadastros', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: p.id }),
+      });
+      if (res.ok) {
+        setLista(l => l.filter(x => x.id !== p.id));
+      }
+    } finally {
+      setMarcando(null);
+    }
   };
 
   const gerarMsgIndividual = (p: Pessoa) => {
@@ -231,18 +248,29 @@ Que Deus abençoe a todos! 🙏`;
                 </div>
               )}
               {aba === 'pendentes' && (
-                <button
-                  onClick={() => abrirWhatsapp(p)}
-                  title={(p.whatsapp || p.phone) ? 'Enviar mensagem no WhatsApp' : 'Copiar mensagem (sem telefone cadastrado)'}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    (p.whatsapp || p.phone)
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                      : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-600'
-                  }`}
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  {(p.whatsapp || p.phone) ? 'WhatsApp' : 'Copiar msg'}
-                </button>
+                <div className="flex-shrink-0 flex items-center gap-2">
+                  <button
+                    onClick={() => abrirWhatsapp(p)}
+                    title={(p.whatsapp || p.phone) ? 'Enviar mensagem no WhatsApp' : 'Copiar mensagem (sem telefone cadastrado)'}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      (p.whatsapp || p.phone)
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                        : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-600'
+                    }`}
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    {(p.whatsapp || p.phone) ? 'WhatsApp' : 'Copiar msg'}
+                  </button>
+                  <button
+                    onClick={() => marcarAtualizado(p)}
+                    disabled={marcando === p.id}
+                    title="Marcar manualmente como atualizado"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 hover:bg-teal-100 dark:hover:bg-teal-900/30 hover:text-teal-700 dark:hover:text-teal-400 transition-colors disabled:opacity-50"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    {marcando === p.id ? '...' : 'OK'}
+                  </button>
+                </div>
               )}
             </div>
           ))}

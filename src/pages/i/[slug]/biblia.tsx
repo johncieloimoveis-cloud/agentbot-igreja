@@ -87,7 +87,7 @@ let _loading: Promise<BibliaBook[]> | null = null;
 function getBiblia(): Promise<BibliaBook[]> {
   if (_cache) return Promise.resolve(_cache);
   if (_loading) return _loading;
-  _loading = fetch('https://cdn.jsdelivr.net/gh/thiagobodruk/biblia@master/json/arc.json')
+  _loading = fetch('https://cdn.jsdelivr.net/gh/thiagobodruk/biblia@master/json/acf.json')
     .then(r => { if (!r.ok) throw new Error('CDN ' + r.status); return r.json(); })
     .then(data => { _cache = data; return data as BibliaBook[]; });
   return _loading;

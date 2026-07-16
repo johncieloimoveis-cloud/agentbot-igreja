@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ClipboardCheck, Clock, UserCheck, UserX, Phone, Mail, RefreshCw, Copy, MessageSquare, X } from 'lucide-react';
+import { ClipboardCheck, Clock, UserCheck, UserX, Phone, Mail, RefreshCw, Copy, MessageSquare, X, Send } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Pessoa {
@@ -77,6 +77,22 @@ Acessem o link:
 👉 ${link}
 
 Que Deus abençoe a todos! 🙏`;
+  };
+
+  const gerarMsgIndividual = (p: Pessoa) => {
+    const nome = p.full_name.split(' ')[0]; // primeiro nome
+    return `Irmão(a) ${nome}, a paz do SENHOR. Ajude-me a atualizar o cadastro de irmãos da igreja. Informe os seguintes dados:\n\nNome completo;\nData de Nascimento;\nEndereço.\n\nQue Deus abençoe sua vida`;
+  };
+
+  const abrirWhatsapp = (p: Pessoa) => {
+    const fone = (p.whatsapp || p.phone || '').replace(/\D/g, '');
+    const msg = encodeURIComponent(gerarMsgIndividual(p));
+    if (fone) {
+      const numero = fone.startsWith('55') ? fone : '55' + fone;
+      window.open('https://wa.me/' + numero + '?text=' + msg, '_blank');
+    } else {
+      navigator.clipboard.writeText(gerarMsgIndividual(p));
+    }
   };
 
   const copiarMensagem = () => {
@@ -213,6 +229,20 @@ Que Deus abençoe a todos! 🙏`;
                   <Clock className="w-3.5 h-3.5" />
                   {formatarData(p.cadastro_atualizado_em)}
                 </div>
+              )}
+              {aba === 'pendentes' && (
+                <button
+                  onClick={() => abrirWhatsapp(p)}
+                  title={(p.whatsapp || p.phone) ? 'Enviar mensagem no WhatsApp' : 'Copiar mensagem (sem telefone cadastrado)'}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    (p.whatsapp || p.phone)
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                      : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {(p.whatsapp || p.phone) ? 'WhatsApp' : 'Copiar msg'}
+                </button>
               )}
             </div>
           ))}

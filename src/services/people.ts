@@ -218,4 +218,8 @@ export const getPeopleWithAddress = async (churchId: string) => {
     .select('id, full_name, address, city, status, lat, lon')
     .eq('church_id', churchId)
     .eq('is_active', true)
-    .not('ad
+    .not('address', 'is', null)
+    .not('lat', 'is', null);
+};
+
+export const getPeopleForMap = getPeopleWithAddress;

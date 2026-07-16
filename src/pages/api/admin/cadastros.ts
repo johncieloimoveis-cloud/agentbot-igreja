@@ -18,7 +18,7 @@ export default withAuth(
 
       const base = supabaseAdmin
         .from('people')
-        .select('id, full_name, phone, whatsapp, email, cadastro_atualizado_em')
+        .select('id, full_name, phone, whatsapp, email, cadastro_atualizado_em, date_of_birth, address, address_number, city')
         .eq('church_id', user.church_id)
         .order('full_name');
 

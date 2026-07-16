@@ -9,6 +9,10 @@ interface Pessoa {
   whatsapp: string | null;
   email: string | null;
   cadastro_atualizado_em: string | null;
+  date_of_birth: string | null;
+  address: string | null;
+  address_number: string | null;
+  city: string | null;
 }
 
 type Aba = 'atualizados' | 'pendentes';
@@ -240,6 +244,24 @@ Que Deus abençoe a todos! 🙏`;
                     </span>
                   )}
                 </div>
+                {aba === 'pendentes' && (
+                  <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5">
+                    {(p.address || p.city) ? (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        📍 {[p.address, p.address_number, p.city].filter(Boolean).join(', ')}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-red-400 dark:text-red-500 italic">sem endereço</span>
+                    )}
+                    {p.date_of_birth ? (
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                        🎂 {new Date(p.date_of_birth + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-red-400 dark:text-red-500 italic">sem nascimento</span>
+                    )}
+                  </div>
+                )}
               </div>
               {aba === 'atualizados' && p.cadastro_atualizado_em && (
                 <div className="flex-shrink-0 flex items-center gap-1.5 text-xs text-teal-600 dark:text-teal-400">

@@ -67,7 +67,7 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           {/* Logo + nome da igreja */}
           <Link href={base} className="flex items-center gap-2 min-w-0">
-            <span className="text-primary-600 font-black text-lg tracking-tight flex-shrink-0">SheepCare</span>
+            <span className="text-primary-600 font-black text-lg tracking-tight flex-shrink-0">AgentBot Igreja</span>
             {church && (
               <>
                 <span className="text-gray-300 dark:text-slate-600 flex-shrink-0">|</span>
@@ -132,7 +132,7 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
 
       {/* Footer */}
       <footer className="text-center text-xs text-gray-400 dark:text-gray-600 py-6 border-t border-gray-100 dark:border-slate-800">
-        Desenvolvido com SheepCare &middot; Gestão para igrejas
+        Desenvolvido com AgentBot Igreja &middot; Gestão para igrejas
       </footer>
     </div>
   );

@@ -324,7 +324,7 @@ export function Layout({ children }: LayoutProps) {
         <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm sticky top-0 z-10">
           <div className="flex items-center justify-between px-6 py-4">
             <h2 className="text-2xl font-bold text-gray-950 dark:text-white">
-              {visibleMenuItems.find((item) => isActive(item.href))?.label || 'SheepCare'}
+              {visibleMenuItems.find((item) => isActive(item.href))?.label || 'AgentBot Igreja'}
             </h2>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">{user?.email}</span>

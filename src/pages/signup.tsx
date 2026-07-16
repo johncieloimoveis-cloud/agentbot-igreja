@@ -108,7 +108,7 @@ export default function Signup() {
             <img src="/lobot-logo.svg" alt="Logo" className="w-16 h-16 rounded-lg mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-white">Crie sua conta</h1>
             <p className="text-gray-400 text-sm mt-2">
-              Configure o SheepCare para sua igreja em minutos.
+              Configure o AgentBot Igreja para sua igreja em minutos.
             </p>
           </div>
 

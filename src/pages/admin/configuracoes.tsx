@@ -208,7 +208,7 @@ export default function Configuracoes() {
           className="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white rounded-xl font-semibold text-sm transition-colors"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {saving ? 'Salvando...' : 'Salvar altera&#231;&#245;es'}
+          {saving ? 'Salvando...' : 'Salvar alterações'}
         </button>
         {saved && (
           <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">

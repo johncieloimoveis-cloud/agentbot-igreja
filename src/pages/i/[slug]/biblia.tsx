@@ -88,6 +88,7 @@ export default function PublicBiblia() {
   const [referencia, setReferencia] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lang, setLang] = useState<'pt'|'en'>('pt');
 
   const livro = TODOS.find(l => l.id === livroId)!;
 
@@ -100,6 +101,7 @@ export default function PublicBiblia() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setVerses(data.verses || []);
+      setLang(data.lang || 'pt');
       const nome = TODOS.find(l => l.id === bookId)?.nome || '';
       setReferencia(nome + ' ' + cap);
     } catch (e: any) {
@@ -171,7 +173,12 @@ export default function PublicBiblia() {
             </div>
           ) : (
             <>
-              <h2 className="text-lg font-bold text-primary-600 dark:text-primary-400 mb-6 border-b border-gray-100 dark:border-slate-700 pb-3">{referencia}</h2>
+              <h2 className="text-lg font-bold text-primary-600 dark:text-primary-400 mb-4 border-b border-gray-100 dark:border-slate-700 pb-3">{referencia}</h2>
+              {lang === 'en' && (
+                <div className="mb-4 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg text-xs text-amber-700 dark:text-amber-400">
+                  ⚠️ Este livro não está disponível na tradução Almeida — exibindo King James Version (inglês).
+                </div>
+              )}
               <div className="space-y-4 text-gray-800 dark:text-gray-200 leading-relaxed text-[15px]">
                 {verses.map(v => (
                   <p key={v.verse} className="flex gap-2">

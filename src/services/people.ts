@@ -173,6 +173,25 @@ export const removePersonRelationship = async (
   ]);
 };
 
+export const updatePersonRelationship = async (
+  relId: string,
+  personId: string,
+  relatedPersonId: string,
+  oldType: string,
+  newType: string
+) => {
+  const inverseOld = RELATIONSHIP_INVERSE[oldType] ?? 'outro';
+  const inverseNew = RELATIONSHIP_INVERSE[newType] ?? 'outro';
+  const [a, b] = await Promise.all([
+    supabase.from('person_relationships').update({ relationship_type: newType }).eq('id', relId),
+    supabase.from('person_relationships').update({ relationship_type: inverseNew })
+      .eq('person_id', relatedPersonId)
+      .eq('related_person_id', personId)
+      .eq('relationship_type', inverseOld),
+  ]);
+  return a.error ? a : b;
+};
+
 // Listar todas as pessoas com endereço (para mapa da congregação)
 export const getPeopleWithAddress = async (churchId: string) => {
   return supabase
@@ -194,26 +213,4 @@ export const getPeopleForMap = async (churchId: string) => {
     .eq('is_active', true)
     .not('lat', 'is', null)
     .not('lon', 'is', null)
-    .order('full_name');
-};
-
-// Busca coordenadas já geocodificadas de outro membro com o mesmo endereço
-export const findCoordsForAddress = async (
-  churchId: string,
-  address: string,
-  city: string,
-  excludeId?: string
-) => {
-  let query = supabase
-    .from('people')
-    .select('lat, lon')
-    .eq('church_id', churchId)
-    .eq('is_active', true)
-    .eq('geocode_status', 'ok')
-    .not('lat', 'is', null)
-    .not('lon', 'is', null);
-  if (address) query = (query as any).eq('address', address);
-  if (city)    query = (query as any).eq('city', city);
-  if (excludeId) query = (query as any).neq('id', excludeId);
-  return (query as any).limit(1).maybeSingle();
-};
+    .order('full_

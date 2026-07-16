@@ -194,7 +194,8 @@ export function Layout({ children }: LayoutProps) {
       submenu: [
         { label: 'Anúncios', href: '/admin/anuncios', allowedRoles: ['Arcanjo'] },
         { label: 'Planos',   href: '/admin/planos',   allowedRoles: ['Arcanjo'] },
-        { label: 'Cadastros',href: '/admin/cadastros',allowedRoles: GESTAO },
+        { label: 'Cadastros',     href: '/admin/cadastros',     allowedRoles: GESTAO },
+        { label: 'Configurações', href: '/admin/configuracoes', allowedRoles: ['Arcanjo'] },
       ],
     },
   ];

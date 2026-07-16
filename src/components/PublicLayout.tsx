@@ -7,6 +7,7 @@ interface Church {
   id: string;
   name: string;
   slug: string;
+  logo_url?: string | null;
   city?: string | null;
   pastor?: string | null;
   instagram?: string | null;
@@ -132,10 +133,18 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
       <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
           <Link href={base} className="flex items-center gap-2 min-w-0">
-            <span className="text-primary-600 font-black text-lg tracking-tight flex-shrink-0">AgentBot Igreja</span>
+            {church?.logo_url ? (
+              <img
+                src={church.logo_url}
+                alt={church.name}
+                className="w-8 h-8 rounded-lg object-contain flex-shrink-0 bg-white"
+              />
+            ) : (
+              <span className="text-primary-600 font-black text-lg tracking-tight flex-shrink-0">AgentBot Igreja</span>
+            )}
             {church && (
               <>
-                <span className="text-gray-300 dark:text-slate-600 flex-shrink-0">|</span>
+                {church.logo_url && <span className="text-gray-300 dark:text-slate-600 flex-shrink-0">|</span>}
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">{church.name}</span>
               </>
             )}

@@ -53,6 +53,14 @@ export default function PersonDetail() {
   const [relError, setRelError] = useState('');
   const [allPeople, setAllPeople] = useState<any[]>([]);
 
+  // Sincronizacao de endereco ao vincular familiar
+  const [addrSyncModal, setAddrSyncModal] = useState<{
+    personA: { id: string; name: string; address: string };
+    personB: { id: string; name: string; address: string };
+    mode: 'only_a' | 'only_b' | 'differ';
+  } | null>(null);
+  const [syncingAddr, setSyncingAddr] = useState(false);
+
   // Mapa do endereco
   const [showMap, setShowMap] = useState(false);
   const [mapCoords, setMapCoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -139,6 +147,9 @@ export default function PersonDetail() {
     setAllPeople(data ?? []);
   };
 
+  const addrStr = (p: any) =>
+    [p?.address, p?.address_number, p?.city].filter(Boolean).join(', ');
+
   const handleAddRelationship = async () => {
     if (!relSelectedPerson || !person) return;
     setSavingRel(true);
@@ -156,10 +167,56 @@ export default function PersonDetail() {
       setRelSelectedPerson(null);
       setRelSearch('');
       setRelType('conjuge');
+
+      // Compara enderecos após vincular
+      const aAddr = addrStr(person);
+      const bAddr = addrStr(relSelectedPerson);
+      const aHas = !!aAddr;
+      const bHas = !!bAddr;
+      if (aHas && !bHas) {
+        setAddrSyncModal({ mode: 'only_a',
+          personA: { id: person.id, name: person.full_name, address: aAddr },
+          personB: { id: relSelectedPerson.id, name: relSelectedPerson.full_name, address: '' },
+        });
+      } else if (!aHas && bHas) {
+        setAddrSyncModal({ mode: 'only_b',
+          personA: { id: person.id, name: person.full_name, address: '' },
+          personB: { id: relSelectedPerson.id, name: relSelectedPerson.full_name, address: bAddr },
+        });
+      } else if (aHas && bHas && aAddr.toLowerCase() !== bAddr.toLowerCase()) {
+        setAddrSyncModal({ mode: 'differ',
+          personA: { id: person.id, name: person.full_name, address: aAddr },
+          personB: { id: relSelectedPerson.id, name: relSelectedPerson.full_name, address: bAddr },
+        });
+      }
     } catch (err: any) {
       setRelError(err.message || 'Erro ao salvar vinculo');
     } finally {
       setSavingRel(false);
+    }
+  };
+
+  const copiarEndereco = async (fromId: string, toId: string) => {
+    setSyncingAddr(true);
+    try {
+      // Busca dados completos do 'from'
+      const { data: src } = await getPerson(fromId);
+      if (!src) return;
+      const payload: any = {
+        address: (src as any).address || null,
+        address_number: (src as any).address_number || null,
+        city: (src as any).city || null,
+        lat: (src as any).lat || null,
+        lon: (src as any).lon || null,
+      };
+      const { error } = await updatePerson(toId, payload);
+      if (!error) {
+        // Recarrega a pessoa atual se ela foi atualizada
+        if (toId === person?.id) await loadPerson();
+      }
+    } finally {
+      setSyncingAddr(false);
+      setAddrSyncModal(null);
     }
   };
 
@@ -573,6 +630,94 @@ export default function PersonDetail() {
             </div>
           )}
         </div>
+
+        {/* Modal de sincronizacao de endereco */}
+        {addrSyncModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                <h3 className="font-bold text-gray-900 dark:text-white">Sincronizar Endereço</h3>
+              </div>
+
+              {addrSyncModal.mode === 'only_a' && (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <strong>{addrSyncModal.personA.name}</strong> tem endereço cadastrado, mas <strong>{addrSyncModal.personB.name}</strong> não. Deseja copiar?
+                  </p>
+                  <div className="bg-gray-50 dark:bg-slate-700 rounded-lg px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                    📍 {addrSyncModal.personA.address}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => copiarEndereco(addrSyncModal.personA.id, addrSyncModal.personB.id)}
+                      disabled={syncingAddr}
+                      className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
+                      {syncingAddr ? 'Copiando...' : `Copiar para ${addrSyncModal.personB.name.split(' ')[0]}`}
+                    </button>
+                    <button onClick={() => setAddrSyncModal(null)}
+                      className="px-4 py-2 border border-gray-300 dark:border-slate-600 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700">
+                      Não
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {addrSyncModal.mode === 'only_b' && (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <strong>{addrSyncModal.personB.name}</strong> tem endereço cadastrado, mas <strong>{addrSyncModal.personA.name}</strong> não. Deseja copiar?
+                  </p>
+                  <div className="bg-gray-50 dark:bg-slate-700 rounded-lg px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                    📍 {addrSyncModal.personB.address}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => copiarEndereco(addrSyncModal.personB.id, addrSyncModal.personA.id)}
+                      disabled={syncingAddr}
+                      className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
+                      {syncingAddr ? 'Copiando...' : `Copiar para ${addrSyncModal.personA.name.split(' ')[0]}`}
+                    </button>
+                    <button onClick={() => setAddrSyncModal(null)}
+                      className="px-4 py-2 border border-gray-300 dark:border-slate-600 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700">
+                      Não
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {addrSyncModal.mode === 'differ' && (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Os endereços são diferentes. Qual deseja manter para ambos?</p>
+                  <div className="space-y-2">
+                    <div className="bg-gray-50 dark:bg-slate-700 rounded-lg px-4 py-2">
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-0.5">{addrSyncModal.personA.name}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">📍 {addrSyncModal.personA.address}</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-slate-700 rounded-lg px-4 py-2">
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-0.5">{addrSyncModal.personB.name}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">📍 {addrSyncModal.personB.address}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button onClick={() => copiarEndereco(addrSyncModal.personA.id, addrSyncModal.personB.id)}
+                      disabled={syncingAddr}
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
+                      {syncingAddr ? 'Copiando...' : `Usar endereço de ${addrSyncModal.personA.name.split(' ')[0]} para ambos`}
+                    </button>
+                    <button onClick={() => copiarEndereco(addrSyncModal.personB.id, addrSyncModal.personA.id)}
+                      disabled={syncingAddr}
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
+                      {syncingAddr ? 'Copiando...' : `Usar endereço de ${addrSyncModal.personB.name.split(' ')[0]} para ambos`}
+                    </button>
+                    <button onClick={() => setAddrSyncModal(null)}
+                      className="w-full py-2 border border-gray-300 dark:border-slate-600 text-sm rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                      Manter os dois endereços diferentes
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Mapa do endereco */}
         {((person.address || (person as any).city) || (person.lat && person.lon)) && (

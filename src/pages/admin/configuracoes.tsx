@@ -70,12 +70,16 @@ export default function Configuracoes() {
     const ext = file.name.split('.').pop() || 'png';
     const path = `${church_id}/logo.${ext}`;
 
+    // Garante que o bucket existe (cria se necessário)
+    await supabase.storage.createBucket('church-logos', { public: true });
+
     const { error: upErr } = await supabase.storage
       .from('church-logos')
       .upload(path, file, { upsert: true, contentType: file.type });
 
     if (upErr) {
-      setErro('Erro no upload: ' + upErr.message);
+      setErro('Erro no upload da logo: ' + upErr.message + ' — Verifique se o bucket church-logos existe no Supabase Storage.');
+      setPreview('');
       setUploading(false);
       return;
     }

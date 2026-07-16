@@ -23,7 +23,7 @@ export default function App({ Component, pageProps }: AppProps) {
   // Redireciona para /change-password se for primeiro acesso
   useEffect(() => {
     const checkFirstAccess = async () => {
-      if (PUBLIC_PAGES.includes(router.pathname)) return;
+      if (PUBLIC_PAGES.includes(router.pathname) || router.pathname.startsWith('/cadastro')) return;
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.user_metadata?.must_change_password === true) {
         router.replace('/change-password');
@@ -34,9 +34,10 @@ export default function App({ Component, pageProps }: AppProps) {
 
   if (!mounted) return null;
 
-  // Rotas publicas /i/[slug]/* nao usam o Layout interno
+  // Rotas publicas /i/[slug]/* e /cadastro/* nao usam o Layout interno
   const isPublicPortal = router.pathname.startsWith('/i/');
-  const shouldShowLayout = !NO_LAYOUT.includes(router.pathname) && !isPublicPortal;
+  const isCadastro = router.pathname.startsWith('/cadastro');
+  const shouldShowLayout = !NO_LAYOUT.includes(router.pathname) && !isPublicPortal && !isCadastro;
 
   return (
     <AuthProvider>

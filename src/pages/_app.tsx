@@ -6,9 +6,9 @@ import { Layout } from '@/components/Layout';
 import { supabase } from '@/services/supabase';
 import '@/styles/globals.css';
 
-// Páginas que não usam Layout
+// Paginas que nao usam Layout
 const NO_LAYOUT = ['/login', '/change-password', '/cadastro', '/anuncio'];
-// Páginas que não precisam de autenticação
+// Paginas que nao precisam de autenticacao
 const PUBLIC_PAGES = ['/login', '/change-password', '/cadastro', '/anuncio'];
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -34,7 +34,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   if (!mounted) return null;
 
-  // Rotas públicas /i/[slug]/* não usam o Layout interno
+  // Rotas publicas /i/[slug]/* nao usam o Layout interno
   const isPublicPortal = router.pathname.startsWith('/i/');
   const shouldShowLayout = !NO_LAYOUT.includes(router.pathname) && !isPublicPortal;
 
@@ -42,4 +42,11 @@ export default function App({ Component, pageProps }: AppProps) {
     <AuthProvider>
       {shouldShowLayout ? (
         <Layout>
-         
+          <Component {...pageProps} />
+        </Layout>
+      ) : (
+        <Component {...pageProps} />
+      )}
+    </AuthProvider>
+  );
+}

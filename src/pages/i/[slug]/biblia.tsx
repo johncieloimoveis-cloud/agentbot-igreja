@@ -95,14 +95,15 @@ export default function PublicBiblia() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('https://bible-api.com/' + bookId + '+' + cap + '?translation=almeida');
-      if (!res.ok) throw new Error('Erro ao carregar');
+      const res = await fetch('/api/public/bible?book=' + bookId + '&chapter=' + cap);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
+      if (data.error) throw new Error(data.error);
       setVerses(data.verses || []);
       const nome = TODOS.find(l => l.id === bookId)?.nome || '';
       setReferencia(nome + ' ' + cap);
-    } catch {
-      setError('Nao foi possivel carregar. Verifique sua conexao.');
+    } catch (e: any) {
+      setError('Nao foi possivel carregar. ' + (e?.message || 'Verifique sua conexao.'));
     } finally {
       setLoading(false);
     }

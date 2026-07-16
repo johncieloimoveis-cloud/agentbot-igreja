@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
-import { getPerson, updatePerson, deletePerson, getPersonRelationships, addPersonRelationship, removePersonRelationship, updatePersonRelationship, getPeople, findCoordsForAddress, RELATIONSHIP_LABELS } from '@/services/people';
+import { getPerson, updatePerson, deletePerson, getPersonRelationships, addPersonRelationship, removePersonRelationship, updatePersonRelationship, getPeople, RELATIONSHIP_LABELS } from '@/services/people';
 import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Copy, Check, KeyRound, UserPlus, Users, MapPin, ExternalLink, Plus } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
@@ -561,22 +561,25 @@ export default function PersonDetail() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-gray-900 dark:text-slate-100 text-sm">{rel.related?.full_name}</span>
                     {editingRelId === rel.id ? (
-                      <select
-                        autoFocus
-                        defaultValue={rel.relationship_type}
-                        onBlur={() => setEditingRelId(null)}
-                        onChange={async (e) => {
-                          const newType = e.target.value;
-                          setEditingRelId(null);
-                          await updatePersonRelationship(rel.id, person!.id, rel.related_person_id, rel.relationship_type, newType);
-                          await loadRelationships();
-                        }}
-                        className="text-xs border border-blue-400 rounded-full px-2 py-0.5 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 cursor-pointer"
-                      >
-                        {Object.entries(RELATIONSHIP_LABELS).map(([val, label]) => (
-                          <option key={val} value={val}>{label}</option>
-                        ))}
-                      </select>
+                      <span className="flex items-center gap-1">
+                        <select
+                          autoFocus
+                          value={rel.relationship_type}
+                          onChange={async (e) => {
+                            const newType = e.target.value;
+                            if (newType === rel.relationship_type) { setEditingRelId(null); return; }
+                            await updatePersonRelationship(rel.id, person!.id, rel.related_person_id, rel.relationship_type, newType);
+                            await loadRelationships();
+                            setEditingRelId(null);
+                          }}
+                          className="text-xs border border-blue-400 rounded px-2 py-1 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300"
+                        >
+                          {Object.entries(RELATIONSHIP_LABELS).map(([val, label]) => (
+                            <option key={val} value={val}>{label}</option>
+                          ))}
+                        </select>
+                        <button onClick={() => setEditingRelId(null)} className="text-xs text-gray-400 hover:text-gray-600 px-1">✕</button>
+                      </span>
                     ) : (
                       <span
                         onClick={() => setEditingRelId(rel.id)}

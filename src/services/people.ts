@@ -192,6 +192,25 @@ export const updatePersonRelationship = async (
   return a.error ? a : b;
 };
 
+// Reutiliza coords de outro membro com mesmo endereço (evita geocoding redundante)
+export const findCoordsForAddress = async (
+  churchId: string,
+  address: string,
+  city: string,
+  excludePersonId: string
+) => {
+  return supabase
+    .from('people')
+    .select('lat, lon')
+    .eq('church_id', churchId)
+    .eq('address', address)
+    .eq('city', city)
+    .neq('id', excludePersonId)
+    .not('lat', 'is', null)
+    .limit(1)
+    .single();
+};
+
 // Listar todas as pessoas com endereço (para mapa da congregação)
 export const getPeopleWithAddress = async (churchId: string) => {
   return supabase
@@ -199,18 +218,4 @@ export const getPeopleWithAddress = async (churchId: string) => {
     .select('id, full_name, address, city, status, lat, lon')
     .eq('church_id', churchId)
     .eq('is_active', true)
-    .not('address', 'is', null)
-    .neq('address', '')
-    .order('full_name');
-};
-
-// Para o mapa: retorna todas as pessoas com coordenadas (independente de ter endereco)
-export const getPeopleForMap = async (churchId: string) => {
-  return supabase
-    .from('people')
-    .select('id, full_name, address, city, status, lat, lon')
-    .eq('church_id', churchId)
-    .eq('is_active', true)
-    .not('lat', 'is', null)
-    .not('lon', 'is', null)
-    .order('full_
+    .not('ad

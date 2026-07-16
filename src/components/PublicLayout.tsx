@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { BookOpen, Flame, Home, UserPlus, Megaphone, X, Instagram, Facebook, Youtube, Globe, Phone } from 'lucide-react';
+import { BookOpen, Flame, Home, UserPlus, Megaphone, Instagram, Facebook, Youtube, Globe, Phone } from 'lucide-react';
 
 interface Church {
   id: string;
@@ -81,7 +81,6 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
   const router = useRouter();
   const [church, setChurch] = useState<Church | null>(null);
   const [ad, setAd] = useState<Ad | null>(null);
-  const [adDismissed, setAdDismissed] = useState(false);
   const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
 
   useEffect(() => {
@@ -106,18 +105,7 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
       })
       .catch(() => {});
 
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('agentbot_pub_banner_' + slug)) {
-      setAdDismissed(true);
-    }
   }, [slug]);
-
-  const dismissAd = () => {
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('agentbot_pub_banner_' + slug, '1');
-    }
-    setAdDismissed(false);
-    setAd(null);
-  };
 
   const base = '/i/' + slug;
   const active = (path: string) =>
@@ -176,7 +164,7 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
       </header>
 
       {/* Banner de anuncio */}
-      {ad && !adDismissed && (
+      {ad && (
         <div className="max-w-3xl mx-auto w-full px-4 pt-4">
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800/60 rounded-xl px-4 py-3 flex items-start gap-3 shadow-sm">
             <div className="flex-shrink-0 mt-0.5 w-7 h-7 bg-amber-100 dark:bg-amber-900/50 rounded-lg flex items-center justify-center">
@@ -190,9 +178,6 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
               <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5 leading-snug">{ad.mensagem}</p>
               {ad.contato && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ad.contato}</p>}
             </div>
-            <button onClick={dismissAd} className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-              <X className="w-4 h-4" />
-            </button>
           </div>
         </div>
       )}

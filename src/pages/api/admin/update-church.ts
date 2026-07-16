@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { withAuth } from '@/lib/withAuth';
+import { withAuth, AuthUser } from '@/lib/withAuth';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,10 +8,9 @@ const supabaseAdmin = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse, user: AuthUser) {
   if (req.method !== 'PATCH') return res.status(405).end();
 
-  const user = (req as any).user;
   const church_id = user?.church_id;
   if (!church_id) return res.status(403).json({ error: 'Sem igreja associada' });
 
@@ -39,4 +38,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   return res.status(200).json({ ok: true });
 }
 
-export default withAuth(handler, ['Arcanjo']);
+export default withAuth(['Arcanjo'], handler);

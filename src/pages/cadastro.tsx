@@ -5,4 +5,11 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   return {
     redirect: {
       destination: slug ? `/cadastro/${slug}` : '/cadastro/imw-ibaiti',
-      permanent: 
+      permanent: false,
+    },
+  };
+};
+
+export default function CadastroRedirect() {
+  return null;
+}

@@ -14,7 +14,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse, user: AuthUser
   const church_id = user?.church_id;
   if (!church_id) return res.status(403).json({ error: 'Sem igreja associada' });
 
-  const allowed = ['logo_url', 'instagram', 'facebook', 'youtube', 'website', 'whatsapp', 'city', 'pastor'];
+  const allowed = ['logo_url', 'instagram', 'facebook', 'youtube', 'website', 'whatsapp', 'city', 'pastor', 'address'];
   const body = req.body as Record<string, string>;
   const updates: Record<string, string | null> = {};
 

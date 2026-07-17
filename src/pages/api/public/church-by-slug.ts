@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data, error } = await supabaseAdmin
     .from('churches')
-    .select('id, name, slug, logo_url, city, pastor, instagram, facebook, youtube, website, whatsapp')
+    .select('id, name, slug, logo_url, city, pastor, address, instagram, facebook, youtube, website, whatsapp')
     .eq('slug', slug.toLowerCase().trim())
     .single();
 

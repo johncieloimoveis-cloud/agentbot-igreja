@@ -14,6 +14,7 @@ interface ChurchConfig {
   website: string;
   whatsapp: string;
   city: string;
+  address: string;
   pastor: string;
 }
 
@@ -22,7 +23,7 @@ export default function Configuracoes() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [config, setConfig] = useState<ChurchConfig>({
     name: '', logo_url: '', instagram: '', facebook: '',
-    youtube: '', website: '', whatsapp: '', city: '', pastor: '',
+    youtube: '', website: '', whatsapp: '', city: '', address: '', pastor: '',
   });
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -35,7 +36,7 @@ export default function Configuracoes() {
     if (!church_id) return;
     supabase
       .from('churches')
-      .select('name, logo_url, instagram, facebook, youtube, website, whatsapp, city, pastor')
+      .select('name, logo_url, instagram, facebook, youtube, website, whatsapp, city, address, pastor')
       .eq('id', church_id)
       .single()
       .then(({ data }) => {
@@ -49,6 +50,7 @@ export default function Configuracoes() {
             website: data.website || '',
             whatsapp: data.whatsapp || '',
             city: data.city || '',
+            address: data.address || '',
             pastor: data.pastor || '',
           });
           if (data.logo_url) setPreview(data.logo_url);
@@ -108,6 +110,7 @@ export default function Configuracoes() {
         website: config.website,
         whatsapp: config.whatsapp,
         city: config.city,
+        address: config.address,
         pastor: config.pastor,
       }),
     }).then(r => r.json()).catch(() => ({ error: 'Erro de rede' }));
@@ -199,6 +202,7 @@ export default function Configuracoes() {
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 space-y-4">
         <h2 className="font-semibold text-gray-900 dark:text-white">Informa&#231;&#245;es Gerais</h2>
         {field('Cidade', 'city', 'Ibaiti - PR', MapPin)}
+        {field('Endereço da igreja', 'address', 'Rua Exemplo, 123 — Bairro', MapPin)}
         {field('Pastor responsável', 'pastor', 'Pr. Nome Sobrenome', User)}
       </div>
 

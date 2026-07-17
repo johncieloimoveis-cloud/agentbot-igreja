@@ -10,6 +10,7 @@ interface Church {
   logo_url?: string | null;
   city?: string | null;
   pastor?: string | null;
+  address?: string | null;
   instagram?: string | null;
   facebook?: string | null;
   youtube?: string | null;
@@ -114,6 +115,7 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
       : 'text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400';
 
   const hasSocial = church && (church.instagram || church.facebook || church.youtube || church.website || church.whatsapp);
+  const hasInfo = church && (church.pastor || church.address || church.city);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
@@ -194,6 +196,26 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6 pb-12">
         {children}
       </main>
+
+      {/* Informacoes da igreja */}
+      {hasInfo && (
+        <div className="max-w-3xl mx-auto w-full px-4 pb-3">
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl px-5 py-4 flex flex-wrap gap-4">
+            {church?.pastor && (
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-lg">&#9997;&#65039;</span>
+                <span>{church.pastor}</span>
+              </div>
+            )}
+            {(church?.address || church?.city) && (
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-lg">&#128205;</span>
+                <span>{[church.address, church.city].filter(Boolean).join(' — ')}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Links sociais da igreja */}
       {hasSocial && (

@@ -31,6 +31,7 @@ const STATUS_COLORS: Record<string, string> = {
   in_discipleship:  '#8b5cf6',
   absent:           '#ef4444',
   transferred:      '#ec4899',
+  portal:           '#6366f1',
 };
 const STATUS_LABELS: Record<string, string> = {
   active_member:    'Membro Ativo',
@@ -40,6 +41,7 @@ const STATUS_LABELS: Record<string, string> = {
   in_discipleship:  'Em Discipulado',
   absent:           'Afastado',
   transferred:      'Transferido',
+  portal:           'Cadastro Portal',
 };
 const DEFAULT_COLOR = '#6b7280';
 

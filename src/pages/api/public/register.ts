@@ -33,19 +33,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'PATCH') {
     if (!id) return res.status(400).json({ error: 'ID e obrigatorio para atualizacao' });
+
+    // Verifica status da pessoa para decidir se atualiza diretamente ou coloca como pendente
+    const { data: existing } = await supabaseAdmin
+      .from('people')
+      .select('status')
+      .eq('id', id)
+      .eq('church_id', church_id)
+      .single();
+
+    if (!existing) return res.status(404).json({ error: 'Pessoa nao encontrada' });
+
+    // Quem se cadastrou via portal pode atualizar livremente
+    if (existing.status === 'portal') {
+      const { error } = await supabaseAdmin
+        .from('people')
+        .update(payload)
+        .eq('id', id)
+        .eq('church_id', church_id);
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ success: true, updated: true });
+    }
+
+    // Qualquer outro status (membro ativo, visitante, etc.) vai para validacao da lideranca
     const { error } = await supabaseAdmin
       .from('people')
-      .update(payload)
+      .update({ portal_pendente: { ...payload, submetido_em: new Date().toISOString() } })
       .eq('id', id)
-      .eq('church_id', church_id); // garante que o id pertence a esta igreja
+      .eq('church_id', church_id);
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ success: true, updated: true });
+    return res.status(200).json({ success: true, pendente: true });
   }
 
   // POST — cria novo registro
   const { error } = await supabaseAdmin.from('people').insert({
     ...payload,
-    status: 'active_member',
+    status: 'portal',
     church_id,
   });
   if (error) return res.status(500).json({ error: error.message });

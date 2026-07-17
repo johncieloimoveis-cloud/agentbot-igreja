@@ -16,6 +16,17 @@ export default withAuth(
     if (req.method === 'GET') {
       const { aba } = req.query;
 
+      if (aba === 'pendente_portal') {
+        const { data, error } = await supabaseAdmin
+          .from('people')
+          .select('id, full_name, phone, whatsapp, email, status, portal_pendente')
+          .eq('church_id', user.church_id)
+          .not('portal_pendente', 'is', null)
+          .order('full_name');
+        if (error) return res.status(500).json({ error: error.message });
+        return res.status(200).json(data);
+      }
+
       const base = supabaseAdmin
         .from('people')
         .select('id, full_name, phone, whatsapp, email, cadastro_atualizado_em, date_of_birth, address, address_number, city')

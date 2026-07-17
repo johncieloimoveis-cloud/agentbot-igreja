@@ -121,6 +121,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
           <option value="visitor">Visitante</option>
           <option value="eventual">Eventual</option>
           <option value="active_member">Membro Ativo</option>
+            <option value="portal">Cadastro Portal</option>
           <option value="new_convert">Novo Convertido</option>
           <option value="in_discipleship">Em Discipulado</option>
           <option value="absent">Afastado</option>

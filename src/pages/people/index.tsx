@@ -48,6 +48,7 @@ export default function PeopleList() {
       in_discipleship: 'bg-purple-100 text-purple-800',
       absent: 'bg-slate-400 dark:bg-slate-600 text-slate-900 dark:text-white',
       transferred: 'bg-red-100 text-red-800',
+      portal: 'bg-indigo-100 text-indigo-800',
     };
     return colors[status] || 'bg-gray-100 dark:bg-slate-800 text-gray-800';
   };
@@ -60,6 +61,7 @@ export default function PeopleList() {
       in_discipleship: 'Em Discipulado',
       absent: 'Afastado',
       transferred: 'Transferido',
+      portal: 'Cadastro Portal',
     };
     return labels[status] || status;
   };
@@ -121,6 +123,7 @@ export default function PeopleList() {
           <option value="new_convert">Novo Convertido</option>
           <option value="in_discipleship">Em Discipulado</option>
           <option value="absent">Afastado</option>
+          <option value="portal">Cadastro Portal</option>
         </select>
       </div>
       {/* Tabela */}

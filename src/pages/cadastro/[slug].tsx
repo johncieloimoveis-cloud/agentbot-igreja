@@ -51,6 +51,7 @@ export default function CadastroSlug() {
 
   const [foundId, setFoundId] = useState<string | null>(null);
   const [foundByName, setFoundByName] = useState(false);
+  const [isPendente, setIsPendente] = useState(false);
 
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
@@ -182,6 +183,7 @@ export default function CadastroSlug() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao enviar');
+      if (data.pendente) setIsPendente(true);
       setStep('done');
     } catch (err: any) {
       setFormError(err.message || 'Erro ao enviar. Tente novamente.');
@@ -213,6 +215,22 @@ export default function CadastroSlug() {
 
   // Done
   if (step === 'done') {
+    if (isPendente) {
+      return (
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+          <div className="bg-slate-800 rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+            <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-9 h-9 text-amber-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Aguardando validacao</h2>
+            <p className="text-gray-400 leading-relaxed">
+              Seus dados foram recebidos. Como ja existe um cadastro com esse numero,
+              a lideranca da igreja ira validar e aplicar as alteracoes em breve.
+            </p>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="bg-slate-800 rounded-2xl shadow-xl p-8 w-full max-w-md text-center">

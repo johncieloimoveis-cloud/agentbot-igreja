@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { BookOpen, Flame, Home, UserPlus, Megaphone, Instagram, Facebook, Youtube, Globe, Phone } from 'lucide-react';
+import { BookOpen, Flame, Home, UserPlus, Megaphone, Instagram, Facebook, Youtube, Globe, Phone, Music, Sparkles } from 'lucide-react';
 
 interface Church {
   id: string;
@@ -159,6 +159,14 @@ export function PublicLayout({ slug, children }: PublicLayoutProps) {
           <Link href={base + '/devocionais'} className={'flex items-center gap-1.5 py-2.5 ' + active(base + '/devocionais')}>
             <Flame className="w-3.5 h-3.5" />
             Devocionais
+          </Link>
+          <Link href={base + '/analise-letra'} className={'flex items-center gap-1.5 py-2.5 ' + active(base + '/analise-letra')}>
+            <Music className="w-3.5 h-3.5" />
+            Análise de Letra
+          </Link>
+          <Link href={base + '/quiz-biblico'} className={'flex items-center gap-1.5 py-2.5 ' + active(base + '/quiz-biblico')}>
+            <Sparkles className="w-3.5 h-3.5" />
+            Quiz Bíblico
           </Link>
         </nav>
       </header>

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,10 +30,16 @@ interface PersonFormProps {
 }
 
 export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) {
-  const { register, handleSubmit, formState: { errors }, control } = useForm<PersonFormData>({
+  const { register, handleSubmit, formState: { errors }, control, reset } = useForm<PersonFormData>({
     resolver: zodResolver(personSchema),
     defaultValues: initialData,
   });
+
+  useEffect(() => {
+    if (initialData) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
 
   const fullNameError = typeof errors.full_name?.message === 'string' ? errors.full_name.message : undefined;
   const emailError = typeof errors.email?.message === 'string' ? errors.email.message : undefined;

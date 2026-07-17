@@ -61,6 +61,7 @@ export default function PersonDetail() {
   } | null>(null);
   const [syncingAddr, setSyncingAddr] = useState(false);
   const [editingRelId, setEditingRelId] = useState<string | null>(null);
+  const [editingRelType, setEditingRelType] = useState<string>('');
 
   // Mapa do endereco
   const [showMap, setShowMap] = useState(false);
@@ -564,9 +565,10 @@ export default function PersonDetail() {
                       <span className="flex items-center gap-1">
                         <select
                           autoFocus
-                          value={rel.relationship_type}
+                          value={editingRelType}
                           onChange={async (e) => {
                             const newType = e.target.value;
+                            setEditingRelType(newType);
                             if (newType === rel.relationship_type) { setEditingRelId(null); return; }
                             await updatePersonRelationship(rel.id, person!.id, rel.related_person_id, rel.relationship_type, newType);
                             await loadRelationships();
@@ -582,7 +584,7 @@ export default function PersonDetail() {
                       </span>
                     ) : (
                       <span
-                        onClick={() => setEditingRelId(rel.id)}
+                        onClick={() => { setEditingRelId(rel.id); setEditingRelType(rel.relationship_type); }}
                         title="Clique para editar"
                         className="ml-1 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors"
                       >

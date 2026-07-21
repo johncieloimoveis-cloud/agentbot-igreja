@@ -53,7 +53,7 @@ export const createPerson = async (
     return {
       data: null,
       error: {
-        message: `Limite de ${limit} pessoas atingido. Atualize para o plano pagante ou ajuste o limite no painel admin.`,
+        message: `🚀 Sua igreja cresceu! O plano gratuito suporta até ${limit} pessoas e você já chegou lá. Migre para o plano Pro e gerencie sua congregação sem limites — com recursos avançados de IA, relatórios e muito mais. Fale com a gente pelo WhatsApp!`,
         code: 'LIMIT_REACHED',
       },
     };

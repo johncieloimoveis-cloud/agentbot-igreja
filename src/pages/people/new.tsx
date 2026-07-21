@@ -34,9 +34,9 @@ export default function NewPerson() {
     const { error: err } = await createPerson(churchId, cleanData);
     if (err) throw err;
     router.push('/people');
-  } catch (err) {
+  } catch (err: any) {
     console.error('Erro:', err);
-    setError('Erro ao criar pessoa. Tente novamente.');
+    setError(err?.message || 'Erro ao criar pessoa. Tente novamente.');
   } finally {
     setLoading(false);
   }

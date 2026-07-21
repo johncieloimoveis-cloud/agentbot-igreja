@@ -11,34 +11,59 @@ interface Person {
   status: string;
   oficial?: string;
 }
+function normalize(str: string) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 export default function PeopleList() {
   const router = useRouter();
   const { user, church_id } = useAuth();
-  const [people, setPeople] = useState<Person[]>([]);
+  const [allPeople, setAllPeople] = useState<Person[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  // Inicializar filtros a partir da URL
   useEffect(() => {
-    if (!user) return;
+    if (!router.isReady) return;
+    setSearch((router.query.search as string) || '');
+    setStatus((router.query.status as string) || '');
+    setReady(true);
+  }, [router.isReady]);
+
+  // Recarregar quando status mudar (busca e feita client-side)
+  useEffect(() => {
+    if (!user || !ready) return;
     loadPeople();
-  }, [user, search, status]);
+  }, [user, ready, status]);
+
+  // Sincronizar filtros na URL
+  useEffect(() => {
+    if (!ready) return;
+    const query: Record<string, string> = {};
+    if (search) query.search = search;
+    if (status) query.status = status;
+    router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
+  }, [search, status, ready]);
+
   const loadPeople = async () => {
     setLoading(true);
     try {
-      const churchId = church_id || '';
-      const { data, error } = await getPeople(
-        churchId,
-        status || undefined,
-        search || undefined
-      );
+      const { data, error } = await getPeople(church_id || '', status || undefined);
       if (error) throw error;
-      setPeople(data || []);
+      setAllPeople(data || []);
     } catch (error) {
       console.error('Erro ao carregar pessoas:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Filtro client-side com normalizacao de acentos
+  const people = search
+    ? allPeople.filter(p => normalize(p.full_name).includes(normalize(search)))
+    : allPeople;
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
       visitor: 'bg-blue-100 text-blue-800',

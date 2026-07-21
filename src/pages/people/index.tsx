@@ -126,6 +126,15 @@ export default function PeopleList() {
           <option value="portal">Cadastro Portal</option>
         </select>
       </div>
+      {/* Contador */}
+      {!loading && (
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+          {people.length === 0
+            ? 'Nenhuma pessoa encontrada'
+            : `${people.length} pessoa${people.length !== 1 ? 's' : ''}${search || status ? ' encontrada' + (people.length !== 1 ? 's' : '') : ' no total'}`}
+        </p>
+      )}
+
       {/* Tabela */}
       {loading ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">

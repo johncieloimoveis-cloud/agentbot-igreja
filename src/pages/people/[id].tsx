@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { PersonForm, PersonFormData } from '@/components/features/people/PersonForm';
 import { getPerson, updatePerson, deletePerson, getPersonRelationships, addPersonRelationship, removePersonRelationship, updatePersonRelationship, getPeople, findCoordsForAddress, RELATIONSHIP_LABELS } from '@/services/people';
-import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Copy, Check, KeyRound, UserPlus, Users, MapPin, ExternalLink, Plus } from 'lucide-react';
+import { AlertCircle, Trash2, Sparkles, MessageCircle, X, Copy, Check, KeyRound, UserPlus, Users, MapPin, ExternalLink, Plus, RotateCcw } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface Person {
@@ -75,6 +75,13 @@ export default function PersonDetail() {
   const [loginError, setLoginError] = useState('');
   const [copiedLogin, setCopiedLogin] = useState(false);
 
+  // Reset password state
+  const [hasLogin, setHasLogin] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [resetCredentials, setResetCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [resetError, setResetError] = useState('');
+  const [copiedReset, setCopiedReset] = useState(false);
+
   const handleCreateLogin = async () => {
     if (!person) return;
     setCreatingLogin(true);
@@ -104,6 +111,41 @@ export default function PersonDetail() {
     if (!loginCredentials || !person) return '';
     const phone = (person.whatsapp || person.phone || '').replace(/\D/g, '');
     const msg = `Olá ${person.full_name.split(' ')[0]}! Seu acesso ao sistema foi criado:\n\n🔑 Login: ${loginCredentials.email}\n🔒 Senha: ${loginCredentials.password}\n\nAcesse em: agentbot-igreja.vercel.app\n\nNo primeiro acesso você será solicitado a criar uma senha pessoal.`;
+    const encoded = encodeURIComponent(msg);
+    return phone ? `https://wa.me/55${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+  };
+
+  const handleResetPassword = async () => {
+    if (!person) return;
+    setResettingPassword(true);
+    setResetError('');
+    setResetCredentials(null);
+    try {
+      const res = await fetchWithAuth('/api/admin/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ personId: person.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setResetCredentials({ email: data.email, password: data.password });
+    } catch (err: any) {
+      setResetError(err.message || 'Erro ao resetar senha');
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
+  const buildResetWhatsApp = () => {
+    if (!resetCredentials || !person) return '';
+    const phone = (person.whatsapp || person.phone || '').replace(/\D/g, '');
+    const msg = `Ola ${person.full_name.split(' ')[0]}! Sua senha foi redefinida:
+
+Login: ${resetCredentials.email}
+Senha provisoria: ${resetCredentials.password}
+
+Acesse em: agentbot-igreja.vercel.app
+
+No proximo login voce sera solicitado a criar uma senha pessoal.`;
     const encoded = encodeURIComponent(msg);
     return phone ? `https://wa.me/55${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
   };
@@ -243,6 +285,13 @@ export default function PersonDetail() {
       const { data, error: err } = await getPerson(id as string);
       if (err) throw err;
       setPerson(data);
+      // Check if person already has a login
+      if (data?.id) {
+        fetchWithAuth('/api/admin/check-person-login?personId=' + data.id)
+          .then(r => r.json())
+          .then(d => setHasLogin(!!d.hasLogin))
+          .catch(() => {});
+      }
     } catch (err) {
       console.error('Erro:', err);
       setError('Erro ao carregar pessoa');
@@ -452,14 +501,25 @@ export default function PersonDetail() {
             <p className="text-gray-600 dark:text-gray-400 mt-2">Editar informacoes da pessoa</p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={handleCreateLogin}
-              disabled={creatingLogin}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors shadow-sm"
-            >
-              <KeyRound className="w-4 h-4" />
-              {creatingLogin ? 'Criando...' : 'Criar Login'}
-            </button>
+            {hasLogin ? (
+              <button
+                onClick={handleResetPassword}
+                disabled={resettingPassword}
+                className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors shadow-sm"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {resettingPassword ? 'Resetando...' : 'Resetar Senha'}
+              </button>
+            ) : (
+              <button
+                onClick={handleCreateLogin}
+                disabled={creatingLogin}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors shadow-sm"
+              >
+                <KeyRound className="w-4 h-4" />
+                {creatingLogin ? 'Criando...' : 'Criar Login'}
+              </button>
+            )}
             <button
               onClick={() => { setShowAiModal(true); setAiMessage(''); setAiError(''); }}
               className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
@@ -487,6 +547,59 @@ export default function PersonDetail() {
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-red-700 dark:text-red-400 text-sm">{loginError}</p>
+          </div>
+        )}
+        {resetError && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 dark:text-red-400 text-sm">{resetError}</p>
+          </div>
+        )}
+        {resetCredentials && (
+          <div className="mb-6 p-5 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <RotateCcw className="w-5 h-5 text-amber-600" />
+                <span className="font-semibold text-amber-800 dark:text-amber-300">Senha resetada com sucesso!</span>
+              </div>
+              <button onClick={() => setResetCredentials(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">O usuario devera alterar a senha no proximo login.</p>
+            <div className="space-y-2 text-sm mb-4">
+              <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg px-3 py-2">
+                <span className="text-gray-500 dark:text-gray-400">Login:</span>
+                <span className="font-mono font-medium text-gray-900 dark:text-white">{resetCredentials.email}</span>
+              </div>
+              <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg px-3 py-2">
+                <span className="text-gray-500 dark:text-gray-400">Senha provisoria:</span>
+                <span className="font-mono font-medium text-gray-900 dark:text-white">{resetCredentials.password}</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`Login: ${resetCredentials.email}
+Senha: ${resetCredentials.password}`);
+                  setCopiedReset(true);
+                  setTimeout(() => setCopiedReset(false), 2000);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg transition-colors text-sm"
+              >
+                {copiedReset ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                {copiedReset ? 'Copiado!' : 'Copiar'}
+              </button>
+              <a
+                href={buildResetWhatsApp()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors text-sm"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Enviar WhatsApp
+              </a>
+            </div>
           </div>
         )}
         {loginCredentials && (
@@ -566,20 +679,26 @@ export default function PersonDetail() {
                         <select
                           autoFocus
                           value={editingRelType}
-                          onChange={async (e) => {
-                            const newType = e.target.value;
-                            setEditingRelType(newType);
-                            if (newType === rel.relationship_type) { setEditingRelId(null); return; }
-                            await updatePersonRelationship(rel.id, person!.id, rel.related_person_id, rel.relationship_type, newType);
-                            await loadRelationships();
-                            setEditingRelId(null);
-                          }}
+                          onChange={(e) => setEditingRelType(e.target.value)}
                           className="text-xs border border-blue-400 rounded px-2 py-1 bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300"
                         >
                           {Object.entries(RELATIONSHIP_LABELS).map(([val, label]) => (
                             <option key={val} value={val}>{label}</option>
                           ))}
                         </select>
+                        <button
+                          disabled={savingRel}
+                          onClick={async () => {
+                            if (editingRelType === rel.relationship_type) { setEditingRelId(null); return; }
+                            setSavingRel(true);
+                            await updatePersonRelationship(rel.id, person!.id, rel.related_person_id, rel.relationship_type, editingRelType);
+                            await loadRelationships();
+                            setSavingRel(false);
+                            setEditingRelId(null);
+                          }}
+                          className="text-xs bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded px-2 py-1 font-bold"
+                          title="Salvar"
+                        >{savingRel ? '...' : '✓'}</button>
                         <button onClick={() => setEditingRelId(null)} className="text-xs text-gray-400 hover:text-gray-600 px-1">✕</button>
                       </span>
                     ) : (

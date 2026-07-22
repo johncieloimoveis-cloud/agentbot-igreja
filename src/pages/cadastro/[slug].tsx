@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { CheckCircle, ChevronDown, Search, UserCheck, UserPlus, AlertTriangle } from 'lucide-react';
+import { CheckCircle, ChevronDown, Search, UserCheck, UserPlus, AlertTriangle, HelpCircle } from 'lucide-react';
 
 const POSICOES = [
   'NAO',
@@ -12,7 +12,7 @@ const POSICOES = [
   'Secretario(a)',
 ];
 
-type Step = 'loading' | 'error' | 'phone' | 'name' | 'form' | 'done';
+type Step = 'loading' | 'error' | 'phone' | 'name' | 'confirm' | 'form' | 'done';
 
 interface FormData {
   full_name: string;
@@ -51,6 +51,7 @@ export default function CadastroSlug() {
 
   const [foundId, setFoundId] = useState<string | null>(null);
   const [foundByName, setFoundByName] = useState(false);
+  const [foundName, setFoundName] = useState('');
   const [isPendente, setIsPendente] = useState(false);
 
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
@@ -127,6 +128,7 @@ export default function CadastroSlug() {
       if (data.person) {
         setFoundId(data.person.id);
         setFoundByName(true);
+        setFoundName(data.person.full_name || nameInput.trim());
         setForm({
           full_name: data.person.full_name || nameInput.trim(),
           email: data.person.email || '',
@@ -137,17 +139,29 @@ export default function CadastroSlug() {
           phone: phoneInput.trim(),
           whatsapp: data.person.whatsapp || '',
         });
+        setStep('confirm');
       } else {
         setFoundId(null);
         setFoundByName(false);
         setForm({ ...EMPTY_FORM, phone: phoneInput.trim(), full_name: nameInput.trim() });
+        setStep('form');
       }
-      setStep('form');
     } catch (err: any) {
       setSearchError(err.message || 'Erro ao buscar. Tente novamente.');
     } finally {
       setSearching(false);
     }
+  };
+
+  const confirmYes = () => {
+    setStep('form');
+  };
+
+  const confirmNo = () => {
+    setFoundId(null);
+    setFoundByName(false);
+    setForm({ ...EMPTY_FORM, phone: phoneInput.trim(), full_name: nameInput.trim() });
+    setStep('form');
   };
 
   const skipNameSearch = () => {
@@ -350,6 +364,41 @@ export default function CadastroSlug() {
                 className="w-full border border-slate-600 text-gray-300 hover:bg-slate-700 font-semibold py-2.5 rounded-lg transition-colors text-sm"
               >
                 Voltar
+              </button>
+            </div>
+          )}
+
+          {step === 'confirm' && (
+            <div className="space-y-5">
+              <div className="flex flex-col items-center gap-3 py-4">
+                <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center">
+                  <HelpCircle className="w-8 h-8 text-amber-400" />
+                </div>
+                <h2 className="text-lg font-bold text-white text-center">Encontramos um cadastro!</h2>
+                <p className="text-gray-400 text-sm text-center">Este cadastro é seu?</p>
+                <div className="w-full bg-slate-700 rounded-xl px-5 py-4 text-center">
+                  <p className="text-white font-semibold text-lg">{foundName}</p>
+                </div>
+              </div>
+              <button
+                onClick={confirmYes}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <UserCheck className="w-5 h-5" />
+                Sim, sou eu — atualizar meus dados
+              </button>
+              <button
+                onClick={confirmNo}
+                className="w-full border border-slate-600 text-gray-300 hover:bg-slate-700 font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <UserPlus className="w-5 h-5" />
+                Nao, sou outra pessoa — novo cadastro
+              </button>
+              <button
+                onClick={() => { setStep('name'); setSearchError(''); }}
+                className="w-full text-xs text-gray-500 hover:text-gray-300 py-2 transition-colors"
+              >
+                ← Voltar
               </button>
             </div>
           )}

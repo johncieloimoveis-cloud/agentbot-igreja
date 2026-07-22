@@ -24,7 +24,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (name && typeof name === 'string' && name.trim().length >= 3) {
     const nameTrimmed = name.trim();
     const words = nameTrimmed.split(/\s+/).filter(w => w.length >= 3);
-    const orFilter = words.map(w => `full_name.ilike.%${w}%`).join(',');
+    const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const allVariants = [...new Set([...words, ...words.map(norm)])];
+    const orFilter = allVariants.map(w => `full_name.ilike.%${w}%`).join(',');
 
     const { data, error } = await supabaseAdmin
       .from('people')
@@ -36,9 +38,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error) return res.status(500).json({ error: error.message });
     if (!data || data.length === 0) return res.status(200).json({ person: null });
 
+    const normLower = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const wordsNorm = words.map(normLower);
     const scored = data.map(p => {
-      const nameLower = p.full_name.toLowerCase();
-      const score = words.filter(w => nameLower.includes(w.toLowerCase())).length;
+      const nameNorm = normLower(p.full_name);
+      const score = wordsNorm.filter(w => nameNorm.includes(w)).length;
       return { ...p, _score: score };
     }).sort((a, b) => b._score - a._score);
 

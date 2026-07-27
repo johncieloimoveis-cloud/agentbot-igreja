@@ -25,22 +25,35 @@ export default withAuth(
 
     const prompt = buildPrompt(tipo, nome || '', tema || '');
 
-    const keyHint = process.env.OPENAI_API_KEY?.slice(-6) ?? 'N/A';
     try {
-      const response = await openai.images.generate({
-        prompt,
-        n: 1,
-        size: '1024x1024',
-      } as any);
+      // SDK v6: model obrigatorio. Tenta dall-e-3, fallback para dall-e-2
+      let response;
+      try {
+        response = await openai.images.generate({
+          model: 'dall-e-3',
+          prompt,
+          n: 1,
+          size: '1024x1024',
+          quality: 'standard',
+        });
+      } catch (e3: any) {
+        // dall-e-3 falhou, tenta dall-e-2
+        response = await openai.images.generate({
+          model: 'dall-e-2',
+          prompt,
+          n: 1,
+          size: '1024x1024',
+        });
+      }
 
       const url = response.data[0]?.url;
       if (!url) throw new Error('Imagem nao gerada');
 
       return res.status(200).json({ url, prompt });
     } catch (err: any) {
-      console.error('DALL-E error (key ends …' + keyHint + '):', err);
+      console.error('DALL-E error:', err);
       const msg = err?.message || 'Erro desconhecido';
-      return res.status(500).json({ error: `${msg} [chave: …${keyHint}]` });
+      return res.status(500).json({ error: msg });
     }
   }
 );

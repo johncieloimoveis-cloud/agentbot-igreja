@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
 import {
   Calendar, Users, Sparkles, Download, MessageCircle,
   RefreshCw, Star,
@@ -130,7 +131,7 @@ function GeradorImagens() {
   const datasProximas = getProximosDias(14);
 
   useEffect(() => {
-    fetch('/api/admin/aniversariantes-mes')
+    fetchWithAuth('/api/admin/aniversariantes-mes')
       .then(r => r.json())
       .then(d => {
         if (d.people) {
@@ -191,7 +192,7 @@ function GeradorImagens() {
       const body = evento.tipo === 'aniversario'
         ? { tipo: 'aniversario', nome: evento.nome, tema: estilo }
         : { tipo: 'efemeride', descricao: `${evento.nome} — ${evento.descricao}`, tema: estilo };
-      const res = await fetch('/api/admin/generate-image', {
+      const res = await fetchWithAuth('/api/admin/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

@@ -83,7 +83,19 @@ interface MenuItem {
 export function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const { user, role, logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setSidebarOpen(!mobile);
+    };
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   // Guarda de rota: redireciona se o role não tem acesso
@@ -200,6 +212,11 @@ export function Layout({ children }: LayoutProps) {
     },
   ];
 
+  // Fechar sidebar ao navegar no mobile
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [router.pathname]);
+
   const isActive = (href: string) =>
     router.pathname === href || router.pathname.startsWith(href + '/');
 
@@ -208,12 +225,22 @@ export function Layout({ children }: LayoutProps) {
   );
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-slate-900">
+    <div className="flex h-screen bg-gray-50 dark:bg-slate-900 overflow-hidden">
+      {/* Overlay mobile */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 shadow-sm transition-all duration-300 overflow-y-auto`}
+          isMobile
+            ? `fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+            : `relative transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'}`
+        } bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 shadow-sm overflow-y-auto flex-shrink-0`}
       >
         {/* Logo */}
         <div className="p-4 border-b border-gray-200 dark:border-slate-700">
@@ -323,18 +350,28 @@ export function Layout({ children }: LayoutProps) {
       {/* Conteúdo principal */}
       <main className="flex-1 overflow-auto">
         <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm sticky top-0 z-10">
-          <div className="flex items-center justify-between px-6 py-4">
-            <h2 className="text-2xl font-bold text-gray-950 dark:text-white">
-              {visibleMenuItems.find((item) => isActive(item.href))?.label || 'AgentBot Igreja'}
-            </h2>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{user?.email}</span>
+          <div className="flex items-center justify-between px-4 py-3 gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-1 flex-shrink-0"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+              )}
+              <h2 className="text-lg md:text-2xl font-bold text-gray-950 dark:text-white truncate">
+                {visibleMenuItems.find((item) => isActive(item.href))?.label || 'AgentBot Igreja'}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="hidden md:block text-sm text-gray-600 dark:text-gray-400 truncate max-w-[200px]">{user?.email}</span>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-2 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
               >
                 <LogOut className="w-5 h-5" />
-                <span className="text-sm">Sair</span>
+                <span className="hidden md:block text-sm">Sair</span>
               </button>
             </div>
           </div>

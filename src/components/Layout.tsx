@@ -48,6 +48,7 @@ const ROUTE_ROLES: Record<string, UserRole[]> = {
   '/admin/anuncios':       ['Arcanjo'],
   '/admin/planos':         ['Arcanjo'],
   '/admin/cadastros':      GESTAO,
+  '/admin/gerador-imagens': GESTAO,
 };
 
 function getAllowedRoles(pathname: string): UserRole[] {
@@ -207,6 +208,7 @@ export function Layout({ children }: LayoutProps) {
         { label: 'Anúncios', href: '/admin/anuncios', allowedRoles: ['Arcanjo'] },
         { label: 'Planos',   href: '/admin/planos',   allowedRoles: ['Arcanjo'] },
         { label: 'Cadastros',     href: '/admin/cadastros',     allowedRoles: GESTAO },
+        { label: '🎨 Gerador de Imagens', href: '/admin/gerador-imagens', allowedRoles: GESTAO },
         { label: 'Configurações', href: '/admin/configuracoes', allowedRoles: ['Arcanjo'] },
       ],
     },

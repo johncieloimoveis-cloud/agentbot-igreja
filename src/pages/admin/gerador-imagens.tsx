@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import Layout from '@/components/Layout';
+import { useState, useEffect } from 'react';
 import { withAuth } from '@/lib/withAuth';
 import {
   Calendar, Users, Sparkles, Download, MessageCircle,
-  RefreshCw, Star, Briefcase, Church, HeartHandshake,
+  RefreshCw, Star,
 } from 'lucide-react';
 
 // ─── Helpers de calendário ───────────────────────────────────────────────────
@@ -385,11 +384,7 @@ function GeradorImagens() {
 }
 
 export default function GeradorImagensPage() {
-  return (
-    <Layout>
-      <GeradorImagens />
-    </Layout>
-  );
+  return <GeradorImagens />;
 }
 
 export const getServerSideProps = withAuth(['Arcanjo', 'Querubim']);

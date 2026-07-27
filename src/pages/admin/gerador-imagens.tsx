@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { withAuth } from '@/lib/withAuth';
 import {
   Calendar, Users, Sparkles, Download, MessageCircle,
   RefreshCw, Star,
@@ -387,4 +386,3 @@ export default function GeradorImagensPage() {
   return <GeradorImagens />;
 }
 
-export const getServerSideProps = withAuth(['Arcanjo', 'Querubim']);

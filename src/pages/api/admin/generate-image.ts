@@ -25,27 +25,22 @@ export default withAuth(
 
     const prompt = buildPrompt(tipo, nome || '', tema || '');
 
+    const keyHint = process.env.OPENAI_API_KEY?.slice(-6) ?? 'N/A';
     try {
       const response = await openai.images.generate({
-        model: 'dall-e-2',
         prompt,
         n: 1,
         size: '1024x1024',
-      });
+      } as any);
 
       const url = response.data[0]?.url;
       if (!url) throw new Error('Imagem nao gerada');
 
       return res.status(200).json({ url, prompt });
     } catch (err: any) {
-      console.error('DALL-E error:', err);
-      const msg = err?.message || '';
-      if (msg.includes('does not exist') || msg.includes('model')) {
-        return res.status(400).json({
-          error: 'Modelos de imagem não habilitados nesta chave OpenAI. Acesse platform.openai.com → seu projeto → Model permissions e habilite DALL-E.'
-        });
-      }
-      return res.status(500).json({ error: msg || 'Erro ao gerar imagem' });
+      console.error('DALL-E error (key ends …' + keyHint + '):', err);
+      const msg = err?.message || 'Erro desconhecido';
+      return res.status(500).json({ error: `${msg} [chave: …${keyHint}]` });
     }
   }
 );

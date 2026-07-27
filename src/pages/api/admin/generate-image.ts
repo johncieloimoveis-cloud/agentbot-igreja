@@ -25,35 +25,31 @@ export default withAuth(
 
     const prompt = buildPrompt(tipo, nome || '', tema || '');
 
-    try {
-      // SDK v6: model obrigatorio. Tenta dall-e-3, fallback para dall-e-2
-      let response;
+    const models = ['gpt-image-1', 'dall-e-3', 'dall-e-2'];
+    let lastErr = '';
+
+    for (const model of models) {
       try {
-        response = await openai.images.generate({
-          model: 'dall-e-3',
+        const response = await openai.images.generate({
+          model,
           prompt,
           n: 1,
           size: '1024x1024',
-          quality: 'standard',
-        });
-      } catch (e3: any) {
-        // dall-e-3 falhou, tenta dall-e-2
-        response = await openai.images.generate({
-          model: 'dall-e-2',
-          prompt,
-          n: 1,
-          size: '1024x1024',
-        });
+        } as any);
+
+        const item = response.data[0] as any;
+        // gpt-image-1 retorna base64; dall-e-* retorna url
+        const url = item?.url || (item?.b64_json ? `data:image/png;base64,${item.b64_json}` : null);
+        if (!url) throw new Error('Imagem nao gerada');
+
+        console.log(`Imagem gerada com modelo: ${model}`);
+        return res.status(200).json({ url, prompt, model });
+      } catch (e: any) {
+        lastErr = e?.message || String(e);
+        console.warn(`Modelo ${model} falhou:`, lastErr);
       }
-
-      const url = response.data[0]?.url;
-      if (!url) throw new Error('Imagem nao gerada');
-
-      return res.status(200).json({ url, prompt });
-    } catch (err: any) {
-      console.error('DALL-E error:', err);
-      const msg = err?.message || 'Erro desconhecido';
-      return res.status(500).json({ error: msg });
     }
+
+    return res.status(500).json({ error: `Nenhum modelo disponível. Último erro: ${lastErr}` });
   }
 );

@@ -6,11 +6,11 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 function buildPrompt(tipo: string, nome: string, tema: string): string {
   if (tipo === 'aniversario') {
-    return `A vibrant, joyful Christian church birthday celebration square image for a person named ${nome}. Colorful balloons, tropical flowers, a subtle cross or dove symbol. Warm festive atmosphere with golden light. Watercolor and digital art style. No text, no words, no letters in the image. Brazilian evangelical church aesthetic. 1:1 square format.`;
+    return `A vibrant, joyful biblical birthday celebration square image, style: ${tema}. Inspired by Psalm 139 — wonderfully made by God. Elements: open Bible, golden cross, dove of peace, olive branches, rays of divine light, colorful flowers. Deep warm colors — gold, blue, green. Soft watercolor or digital painting style. No text, no words, no letters anywhere in the image. Square 1:1 format.`;
   }
   // efemeride
   const descricao = nome ? `${nome}${tema ? ` — ${tema}` : ''}` : tema;
-  return `A meaningful, inspiring Christian commemorative square image for: ${descricao}. Church, faith, hope, community symbols. Warm peaceful atmosphere. Beautiful digital art style. No text, no words, no letters in the image. Brazilian evangelical aesthetic. 1:1 square format.`;
+  return `A deeply meaningful biblical commemorative square image for the occasion: ${descricao}. Style: ${tema}. Elements: open Bible, cross of Christ, rays of light breaking through clouds, olive branch, dove, praying hands, or relevant biblical scene. Rich warm colors — gold, deep blue, white light. Painterly digital art style. No text, no words, no letters anywhere in the image. Square 1:1 format.`;
 }
 
 export default withAuth(

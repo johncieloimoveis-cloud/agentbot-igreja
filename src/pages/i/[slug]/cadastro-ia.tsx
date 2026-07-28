@@ -35,6 +35,7 @@ export default function CadastroIa() {
   const [erro, setErro] = useState('');
 
   const recognitionRef = useRef<any>(null);
+  const transcriptRef = useRef('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
@@ -116,7 +117,6 @@ export default function CadastroIa() {
     setProcessing(true);
     setErro('');
     try {
-      // Mensagem inicial vazia para o AI abrir a conversa
       const r = await fetch('/api/public/cadastro-ia-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -145,49 +145,80 @@ export default function CadastroIa() {
     }
   };
 
+  // Inicia reconhecimento contínuo (toggle ON)
   const startListening = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
-    window.speechSynthesis.cancel(); // para de falar para ouvir
+    window.speechSynthesis.cancel();
+    transcriptRef.current = '';
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;      // mantém ativo mesmo com pausas
+    recognition.interimResults = false; // só resultados finais
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setListening(false);
-      sendMessage(transcript);
+      // Acumula todos os segmentos finais
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          const seg = event.results[i][0].transcript.trim();
+          if (seg) {
+            transcriptRef.current = transcriptRef.current
+              ? transcriptRef.current + ' ' + seg
+              : seg;
+          }
+        }
+      }
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (e: any) => {
+      // 'no-speech' é normal durante pausas — ignora
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
       setListening(false);
       setErro('Não foi possível capturar o áudio. Tente digitar.');
     };
 
-    recognition.onend = () => setListening(false);
+    // onend só dispara quando stop() for chamado explicitamente
+    recognition.onend = () => {
+      setListening(false);
+      const texto = transcriptRef.current.trim();
+      if (texto) {
+        sendMessage(texto);
+      }
+    };
 
     recognitionRef.current = recognition;
     recognition.start();
     setListening(true);
   };
 
+  // Para o reconhecimento (toggle OFF) — onend cuida de enviar
   const stopListening = () => {
     recognitionRef.current?.stop();
-    setListening(false);
+    // setListening é chamado pelo onend
+  };
+
+  const toggleListening = () => {
+    if (listening) {
+      stopListening();
+    } else {
+      startListening();
+    }
   };
 
   const restart = () => {
     window.speechSynthesis.cancel();
+    recognitionRef.current?.stop();
     setMessages([]);
     setCollected({});
     setDone(false);
     setSaved(false);
     setStarted(false);
     setErro('');
+    setListening(false);
+    transcriptRef.current = '';
   };
 
   if (!slug) return null;
@@ -367,19 +398,17 @@ export default function CadastroIa() {
                 <Send className="w-4 h-4" />
               </button>
 
-              {/* Botão de voz */}
+              {/* Botão de voz — clique para ativar, clique para enviar */}
               {speechSupported && (
                 <button
-                  onPointerDown={startListening}
-                  onPointerUp={stopListening}
-                  onPointerLeave={stopListening}
+                  onClick={toggleListening}
                   disabled={processing}
                   className={`p-3 rounded-xl transition-all ${
                     listening
-                      ? 'bg-red-500 text-white scale-110 shadow-lg shadow-red-200'
+                      ? 'bg-red-500 text-white scale-110 shadow-lg shadow-red-200 animate-pulse'
                       : 'bg-gray-100 dark:bg-slate-700 hover:bg-primary-100 dark:hover:bg-primary-900/40 text-gray-600 dark:text-gray-300 disabled:opacity-40'
                   }`}
-                  title={listening ? 'Solte para enviar' : 'Segure para falar'}
+                  title={listening ? 'Clique para enviar' : 'Clique para falar'}
                 >
                   {listening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                 </button>
@@ -387,7 +416,9 @@ export default function CadastroIa() {
             </div>
             {speechSupported && (
               <p className="text-center text-xs text-gray-400 mt-2">
-                {listening ? '🔴 Ouvindo... solte o botão quando terminar' : 'Segure 🎤 para falar ou use o teclado'}
+                {listening
+                  ? '🔴 Ouvindo... clique novamente quando terminar'
+                  : 'Clique 🎤 para falar ou use o teclado'}
               </p>
             )}
           </div>

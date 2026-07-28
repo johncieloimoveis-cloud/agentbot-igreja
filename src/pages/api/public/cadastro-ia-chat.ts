@@ -34,15 +34,34 @@ const ALL_FIELDS: Record<string, { label: string; hint: string }> = {
   city:            { label: 'Cidade',                 hint: 'ex: Campinas - SP' },
 };
 
+// Campos que dependem de outro campo ter um valor específico
+// Se a condição não for atendida, o campo é pulado automaticamente
+const SKIP_IF: Record<string, (collected: Record<string, string>) => boolean> = {
+  conjuge_nome:    (c) => !['Casado(a)', 'casado', 'casada', 'união estável', 'uniao estavel'].some(v => c.estado_civil?.toLowerCase().includes(v.toLowerCase())),
+  data_casamento:  (c) => !['Casado(a)', 'casado', 'casada', 'união estável', 'uniao estavel'].some(v => c.estado_civil?.toLowerCase().includes(v.toLowerCase())),
+};
+
+function resolveActiveKeys(keys: string[], collected: Record<string, string>): string[] {
+  return keys.filter(k => {
+    const skipFn = SKIP_IF[k];
+    // Só pula se o campo de controle já foi respondido E a condição não se aplica
+    if (skipFn && collected.estado_civil) return !skipFn(collected);
+    return true;
+  });
+}
+
 function buildSystemPrompt(activeKeys: string[], churchName: string, collected: Record<string, string>): string {
-  const fieldsList = activeKeys
+  // Aplica regras condicionais (ex: pular cônjuge se solteiro)
+  const effectiveKeys = resolveActiveKeys(activeKeys, collected);
+
+  const fieldsList = effectiveKeys
     .map((k, i) => {
       const done = collected[k] ? ` ✓ (${collected[k]})` : '';
       return `${i + 1}. ${ALL_FIELDS[k]?.label ?? k}${done}`;
     })
     .join('\n');
 
-  const pending = activeKeys.filter(k => !collected[k]);
+  const pending = effectiveKeys.filter(k => !collected[k]);
   const nextField = pending[0] ? ALL_FIELDS[pending[0]]?.label ?? pending[0] : null;
   const allDone = pending.length === 0;
 
@@ -53,25 +72,27 @@ ${fieldsList}
 
 ${allDone
   ? 'TODOS os campos foram coletados. Faça um resumo numerado e pergunte se pode salvar.'
-  : `PRÓXIMO CAMPO A PERGUNTAR: "${nextField}"`
+  : `PRÓXIMO CAMPO A PERGUNTAR AGORA: "${nextField}" — não peça nenhum outro campo antes deste.`
 }
 
-REGRA CRÍTICA DE RESPOSTA:
-Em CADA mensagem sua, você DEVE fazer exatamente uma das duas coisas:
-A) Se recebeu uma resposta válida: confirme em 1 frase curta E já faça a pergunta do próximo campo — TUDO na mesma mensagem. Nunca confirme sem perguntar o próximo.
-B) Se todos os campos estão preenchidos: faça o resumo numerado e pergunte se pode salvar.
+REGRA CRÍTICA — formato de resposta em cada turno:
+A) Quando receber resposta válida: confirme em 1 frase curta E imediatamente pergunte o campo indicado em "PRÓXIMO CAMPO". Tudo na mesma mensagem.
+B) Quando todos os campos estiverem ✓: faça um resumo numerado e pergunte se pode salvar.
+C) Quando o usuário confirmar o resumo ("sim", "pode", "tá certo"): retorne done:true e confirmed:true.
 
-Outras regras:
-- Linguagem simples — o público pode ter pouca escolaridade
-- Aceite respostas informais (ex: "tenho 35 anos" → calcule o ano; "casado" → estado civil)
-- Se o usuário confirmar o resumo ("sim", "pode", "tá certo"), retorne done:true e confirmed:true
-- Se pedir correção, pergunte o campo específico novamente
+Regras adicionais:
+- Linguagem simples (público de baixa escolaridade)
+- Aceite respostas informais ("tenho 35 anos" → calcule o ano; "casado" → Casado(a))
+- CAMPOS CONDICIONAIS: se o usuário disser que é solteiro, divorciado ou viúvo, NÃO pergunte cônjuge nem data de casamento — pule direto para o próximo campo da lista acima
+- EMAIL falado por voz: "arroba" → "@", "ponto" → ".", "underline" → "_" (reconstrua o endereço corretamente)
+- Se pedir correção, volte ao campo específico
 
-Retorne SOMENTE JSON com esta estrutura (sem markdown):
+Retorne SOMENTE JSON (sem markdown):
 {"message":"texto","collected":{"campo":"valor"},"done":false,"confirmed":false}
 
-"collected" deve acumular TODOS os campos coletados até agora.
-Datas: converta para YYYY-MM-DD (se só mês/ano, use dia 01).`;
+"collected" acumula TODOS os campos já coletados.
+Datas: YYYY-MM-DD (se só mês/ano, use dia 01).
+Email: formato correto com @ e .`
 }
 
 

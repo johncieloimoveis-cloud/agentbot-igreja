@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { BookOpen, Flame, UserPlus, MapPin, Heart, Music, Sparkles } from 'lucide-react';
+import { BookOpen, Flame, UserPlus, MapPin, Heart, Music, Sparkles, Mic } from 'lucide-react';
 import { PublicLayout } from '@/components/PublicLayout';
 
 // Versículos rotativos por dia do ano (sem custo de IA)
@@ -118,6 +118,19 @@ export default function PortalPublico() {
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">Quiz Bíblico</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">10 perguntas geradas por IA</p>
+              </div>
+            </Link>
+
+            <Link
+              href={base + '/cadastro-ia'}
+              className="flex items-center gap-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 dark:group-hover:bg-green-900/60 transition-colors">
+                <Mic className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Atualizar Cadastro</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Converse com a IA por voz</p>
               </div>
             </Link>
           </div>

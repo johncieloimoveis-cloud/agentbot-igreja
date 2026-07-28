@@ -2,6 +2,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
+// Aumenta limite de execução para 30s (plano Vercel hobby permite até 60s em alguns casos)
+export const config = { maxDuration: 30 };
+
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -130,9 +133,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let aiJson: { message: string; collected: Record<string, string>; done: boolean; confirmed: boolean } | null = null;
 
     try {
+      // response_format garante JSON válido sempre; requer menção a "json" no system prompt
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         temperature: 0.3,
+        response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
           // Injeta estado atual dos campos coletados
@@ -140,16 +145,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             role: 'system',
             content: `Estado atual dos campos coletados: ${JSON.stringify(collected ?? {})}`,
           },
-          ...messages,
+          // Limita histórico para evitar context bloat (últimas 20 mensagens)
+          ...messages.slice(-20),
         ],
       });
 
       const raw = completion.choices[0]?.message?.content ?? '';
-      // Extrai JSON da resposta (remove possível markdown)
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        aiJson = JSON.parse(jsonMatch[0]);
-      }
+      aiJson = JSON.parse(raw);
     } catch (e: any) {
       console.error('GPT erro:', e?.message);
       return res.status(500).json({ error: 'Erro ao processar resposta da IA' });

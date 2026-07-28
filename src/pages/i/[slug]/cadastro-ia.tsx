@@ -89,6 +89,10 @@ export default function CadastroIa() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug, messages: newMessages, collected }),
       });
+      if (!r.ok) {
+        const errData = await r.json().catch(() => ({}));
+        throw new Error(errData.error || `Erro ${r.status}`);
+      }
       const data: AIResponse = await r.json();
 
       const aiMsg: Message = { role: 'assistant', content: data.message };
@@ -121,6 +125,10 @@ export default function CadastroIa() {
           collected: {},
         }),
       });
+      if (!r.ok) {
+        const errData = await r.json().catch(() => ({}));
+        throw new Error(errData.error || `Erro ${r.status}`);
+      }
       const data: AIResponse = await r.json();
       setMessages([
         { role: 'user', content: 'Olá, quero fazer meu cadastro.' },

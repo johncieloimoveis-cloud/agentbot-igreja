@@ -84,7 +84,7 @@ REGRAS DE LINGUAGEM:
 - Linguagem simples (público de baixa escolaridade)
 - Aceite respostas informais ("tenho 35 anos" → calcule o ano; "casado" → Casado(a))
 - CAMPOS CONDICIONAIS: se o usuário disser que é solteiro, divorciado ou viúvo, NÃO pergunte cônjuge nem data de casamento — pule direto para o próximo campo da lista acima
-- EMAIL falado por voz: "arroba" → "@", "ponto" → ".", "underline" → "_" (reconstrua o endereço corretamente)
+- EMAIL falado por voz: "arroba" → "@", "ponto" → ".", "underline" → "_" (reconstrua o endereço corretamente). IMPORTANTE: remova todos os espaços da parte local (antes do @). Ex: "john lobo arroba gmail ponto com" → "johnlobo@gmail.com". Email sempre em minúsculo.
 - Se pedir correção, volte ao campo específico
 
 REGRAS DE DATAS NAS MENSAGENS (muito importante):
@@ -101,7 +101,12 @@ REGRA DO CPF (muito importante):
 - Se o usuário disser que não sabe o CPF ou não tem, aceite e siga para o próximo campo
 
 Retorne SOMENTE JSON (sem markdown):
-{"message":"texto","collected":{"campo":"valor"},"done":false,"confirmed":false}
+{"message":"texto","spoken":"frase curta para áudio","collected":{"campo":"valor"},"done":false,"confirmed":false}
+
+REGRA DO CAMPO "spoken" (o que será lido em voz alta):
+- Em turnos normais (confirmando um campo e perguntando o próximo): "spoken" = igual ao "message"
+- Quando apresentar o RESUMO FINAL: "spoken" = APENAS "Por favor, leia o resumo acima e me diga se está tudo certo." — NÃO leia todos os campos em voz alta
+- Quando o usuário confirmar e o cadastro for salvo: "spoken" = "Perfeito! Seu cadastro foi salvo com sucesso."
 
 REGRAS DE ARMAZENAMENTO em "collected" (interno — nunca exibir ao usuário):
 - Datas: YYYY-MM-DD (se só ano → use YYYY-01-01; se só mês/ano → use YYYY-MM-01)
@@ -188,7 +193,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const systemPrompt = buildSystemPrompt(keys, church.name, currentCollected);
 
     // Chama GPT-4 para processar a conversa
-    let aiJson: { message: string; collected: Record<string, string>; done: boolean; confirmed: boolean } | null = null;
+    let aiJson: { message: string; spoken?: string; collected: Record<string, string>; done: boolean; confirmed: boolean } | null = null;
 
     try {
       // response_format garante JSON válido sempre

@@ -9,6 +9,7 @@ interface Message {
 }
 
 interface AIResponse {
+  spoken?: string;
   message: string;
   collected: Record<string, string>;
   done: boolean;
@@ -104,7 +105,7 @@ export default function CadastroIa() {
       if (data.done) setDone(true);
       if (data.saved) setSaved(true);
 
-      speak(data.message);
+      speak(data.spoken ?? data.message);
     } catch {
       setErro('Erro de conexão. Tente novamente.');
     } finally {
@@ -136,7 +137,7 @@ export default function CadastroIa() {
         { role: 'assistant', content: data.message },
       ]);
       setCollected(data.collected ?? {});
-      speak(data.message);
+      speak(data.spoken ?? data.message);
     } catch {
       setErro('Erro ao iniciar conversa. Tente novamente.');
       setStarted(false);

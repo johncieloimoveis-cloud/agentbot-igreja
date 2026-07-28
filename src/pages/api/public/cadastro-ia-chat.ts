@@ -34,33 +34,46 @@ const ALL_FIELDS: Record<string, { label: string; hint: string }> = {
   city:            { label: 'Cidade',                 hint: 'ex: Campinas - SP' },
 };
 
-function buildSystemPrompt(activeKeys: string[], churchName: string): string {
+function buildSystemPrompt(activeKeys: string[], churchName: string, collected: Record<string, string>): string {
   const fieldsList = activeKeys
-    .map((k, i) => `${i + 1}. ${ALL_FIELDS[k]?.label ?? k} (${ALL_FIELDS[k]?.hint ?? ''})`)
+    .map((k, i) => {
+      const done = collected[k] ? ` ✓ (${collected[k]})` : '';
+      return `${i + 1}. ${ALL_FIELDS[k]?.label ?? k}${done}`;
+    })
     .join('\n');
 
-  return `Você é um assistente de cadastro da ${churchName}. Seu objetivo é coletar informações pessoais dos membros de forma amigável, em português simples e acolhedor.
+  const pending = activeKeys.filter(k => !collected[k]);
+  const nextField = pending[0] ? ALL_FIELDS[pending[0]]?.label ?? pending[0] : null;
+  const allDone = pending.length === 0;
 
-Campos a coletar (nesta ordem):
+  return `Você é um assistente de cadastro da ${churchName}. Colete as informações abaixo em português muito simples.
+
+CAMPOS (✓ = já coletado):
 ${fieldsList}
 
-Regras OBRIGATÓRIAS:
-- Pergunte apenas UM campo por vez
-- Use linguagem muito simples — o público pode ter pouca escolaridade
-- Seja acolhedor, breve e paciente
-- Interprete respostas informais (ex: "tenho 35 anos" → calcule o ano de nascimento aproximado)
-- Confirme o que entendeu e passe para o próximo campo ainda pendente
-- Quando TODOS os campos estiverem preenchidos, faça um resumo numerado e pergunte: "Está tudo correto? Posso salvar?"
-- Se o usuário confirmar (ex: "sim", "pode", "tá certo", "correto"), retorne confirmed: true e done: true
-- Se pedir correção, volte ao campo específico e colete novamente
-
-FORMATO DE RESPOSTA — responda SEMPRE em JSON válido, sem markdown, sem explicação extra:
-{"message":"texto a ser falado","collected":{"campo":"valor"},"done":false,"confirmed":false}
-
-O objeto "collected" deve conter TODOS os campos já coletados (acumule, não esqueça os anteriores).
-Datas devem ser convertidas para o formato YYYY-MM-DD quando possível; se só souber o mês/ano, use o dia 01.
-Campos de texto livre: capitalize adequadamente.`;
+${allDone
+  ? 'TODOS os campos foram coletados. Faça um resumo numerado e pergunte se pode salvar.'
+  : `PRÓXIMO CAMPO A PERGUNTAR: "${nextField}"`
 }
+
+REGRA CRÍTICA DE RESPOSTA:
+Em CADA mensagem sua, você DEVE fazer exatamente uma das duas coisas:
+A) Se recebeu uma resposta válida: confirme em 1 frase curta E já faça a pergunta do próximo campo — TUDO na mesma mensagem. Nunca confirme sem perguntar o próximo.
+B) Se todos os campos estão preenchidos: faça o resumo numerado e pergunte se pode salvar.
+
+Outras regras:
+- Linguagem simples — o público pode ter pouca escolaridade
+- Aceite respostas informais (ex: "tenho 35 anos" → calcule o ano; "casado" → estado civil)
+- Se o usuário confirmar o resumo ("sim", "pode", "tá certo"), retorne done:true e confirmed:true
+- Se pedir correção, pergunte o campo específico novamente
+
+Retorne SOMENTE JSON com esta estrutura (sem markdown):
+{"message":"texto","collected":{"campo":"valor"},"done":false,"confirmed":false}
+
+"collected" deve acumular TODOS os campos coletados até agora.
+Datas: converta para YYYY-MM-DD (se só mês/ano, use dia 01).`;
+}
+
 
 function mapCollectedToDb(collected: Record<string, string>): Record<string, unknown> {
   const db: Record<string, unknown> = {};
@@ -127,26 +140,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const defaults = ['full_name', 'date_of_birth', 'sex', 'phone'];
     const keys = activeKeys.length > 0 ? activeKeys : defaults;
 
-    const systemPrompt = buildSystemPrompt(keys, church.name);
+    const currentCollected: Record<string, string> = collected ?? {};
+    // Prompt já inclui estado de collected e próximo campo a perguntar
+    const systemPrompt = buildSystemPrompt(keys, church.name, currentCollected);
 
     // Chama GPT-4 para processar a conversa
     let aiJson: { message: string; collected: Record<string, string>; done: boolean; confirmed: boolean } | null = null;
 
     try {
-      // response_format garante JSON válido sempre; requer menção a "json" no system prompt
+      // response_format garante JSON válido sempre
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
-        temperature: 0.3,
+        temperature: 0.2,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
-          // Injeta estado atual dos campos coletados
-          {
-            role: 'system',
-            content: `Estado atual dos campos coletados: ${JSON.stringify(collected ?? {})}`,
-          },
-          // Limita histórico para evitar context bloat (últimas 20 mensagens)
-          ...messages.slice(-20),
+          // Limita histórico para evitar context bloat (últimas 16 mensagens)
+          ...messages.slice(-16),
         ],
       });
 

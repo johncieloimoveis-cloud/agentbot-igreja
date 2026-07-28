@@ -97,7 +97,8 @@ export default function CadastroIa() {
 
       const aiMsg: Message = { role: 'assistant', content: data.message };
       setMessages(prev => [...prev, aiMsg]);
-      setCollected(data.collected ?? collected);
+      // Merge: nunca perde campos anteriores caso a IA retorne collected incompleto
+      setCollected(prev => ({ ...prev, ...(data.collected ?? {}) }));
 
       if (data.done) setDone(true);
       if (data.saved) setSaved(true);

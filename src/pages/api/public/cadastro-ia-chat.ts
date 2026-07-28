@@ -90,9 +90,18 @@ Regras adicionais:
 Retorne SOMENTE JSON (sem markdown):
 {"message":"texto","collected":{"campo":"valor"},"done":false,"confirmed":false}
 
-"collected" acumula TODOS os campos já coletados.
-Datas: YYYY-MM-DD (se só mês/ano, use dia 01).
-Email: formato correto com @ e .`
+REGRAS DE ARMAZENAMENTO em "collected":
+- Datas: YYYY-MM-DD (se só ano → use YYYY-01-01; se só mês/ano → use YYYY-MM-01)
+- Email: formato correto com @ e . (ex: joao@gmail.com)
+- CPF: apenas dígitos ou formato XXX.XXX.XXX-XX
+- Telefone: apenas dígitos com DDD (ex: 43996446224)
+- "collected" DEVE conter ABSOLUTAMENTE TODOS os campos já coletados anteriormente — NUNCA omita campos anteriores
+
+REGRAS DO RESUMO FINAL (quando todos os campos estiverem prontos):
+- Exiba datas em formato humano (ex: "19 de julho de 1964", "abril de 1993"), NUNCA como YYYY-MM-DD
+- Formate CPF como XXX.XXX.XXX-XX
+- Formate telefone como (XX) XXXXX-XXXX
+- Omita do resumo qualquer campo que estiver vazio ou não se aplicar`
 }
 
 
@@ -183,6 +192,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const raw = completion.choices[0]?.message?.content ?? '';
       aiJson = JSON.parse(raw);
+
+      // Merge server-side: garante que campos anteriores nunca sejam perdidos
+      // A IA pode retornar collected incompleto — completamos com o que já sabíamos
+      const aiCollected: Record<string, string> = aiJson.collected ?? {};
+      const mergedCollected: Record<string, string> = { ...currentCollected };
+      for (const [k, v] of Object.entries(aiCollected)) {
+        if (v && v.trim()) mergedCollected[k] = v.trim(); // IA retornou valor → usa
+      }
+      aiJson.collected = mergedCollected;
     } catch (e: any) {
       console.error('GPT erro:', e?.message);
       return res.status(500).json({ error: 'Erro ao processar resposta da IA' });

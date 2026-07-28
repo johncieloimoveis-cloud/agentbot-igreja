@@ -215,27 +215,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const dbFields = mapCollectedToDb(aiJson.collected);
 
       if (!dbFields.full_name) {
-        return res.status(200).json({ ...aiJson, saved: false });
+        console.error('Cadastro IA: full_name ausente no collected', aiJson.collected);
+        return res.status(200).json({ ...aiJson, saved: false, message: 'Nome não foi coletado. Por favor, tente novamente.' });
       }
 
-      const { error: dbErr } = await supabaseAdmin.from('people').insert({
-        church_id: church.id,
-        status: 'member',
-        is_active: true,
-        cadastro_atualizado_em: new Date().toISOString(),
-        ...dbFields,
-      });
+      try {
+        const { error: dbErr } = await supabaseAdmin.from('people').insert({
+          church_id: church.id,
+          status: 'active_member',
+          is_active: true,
+          cadastro_atualizado_em: new Date().toISOString(),
+          ...dbFields,
+        });
 
-      if (dbErr) {
-        console.error('DB erro:', dbErr.message);
+        if (dbErr) {
+          console.error('DB erro ao salvar cadastro IA:', dbErr.message, dbErr.details, dbErr.hint);
+          return res.status(200).json({
+            ...aiJson,
+            saved: false,
+            message: `Erro ao salvar: ${dbErr.message}`,
+          });
+        }
+
+        console.log('Cadastro IA salvo com sucesso para church_id:', church.id, 'nome:', dbFields.full_name);
+        return res.status(200).json({ ...aiJson, saved: true });
+      } catch (insertErr: any) {
+        console.error('Exceção ao salvar cadastro IA:', insertErr?.message);
         return res.status(200).json({
           ...aiJson,
           saved: false,
-          message: 'Houve um erro ao salvar. Por favor, tente novamente.',
+          message: 'Erro inesperado ao salvar. Por favor, tente novamente.',
         });
       }
-
-      return res.status(200).json({ ...aiJson, saved: true });
     }
 
     return res.status(200).json({ ...aiJson, saved: false });

@@ -197,6 +197,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       aiJson!.collected = mergedCollected;
 
+      // Garante que campos condicionais não apareçam em collected se não aplicável
+      const MARRIED_STATES = ['casado', 'casada', 'união estável', 'uniao estavel'];
+      const estadoCivil = mergedCollected.estado_civil?.toLowerCase() ?? '';
+      const isMarried = estadoCivil && MARRIED_STATES.some(v => estadoCivil.includes(v));
+      const isNotMarried = estadoCivil && !isMarried;
+      if (isNotMarried) {
+        delete mergedCollected['conjuge_nome'];
+        delete mergedCollected['data_casamento'];
+      }
+      aiJson!.collected = mergedCollected;
+
+      // Se a IA perguntou cônjuge/casamento mas o usuário não é casado, redireciona
+      if (isNotMarried && /cônjuge|casamento|casar|esposo|esposa/i.test(aiJson!.message)) {
+        const nextKeys = resolveActiveKeys(keys, mergedCollected);
+        const nextPending = nextKeys.filter(k => !mergedCollected[k]);
+        const nextField = nextPending[0];
+        if (nextField) {
+          const label = ALL_FIELDS[nextField]?.label?.toLowerCase() ?? nextField;
+          aiJson!.message = `Certo! Qual é o seu ${label}?`;
+        } else {
+          aiJson!.message = 'Certo! Verifique os dados e confirme se está tudo certo.';
+        }
+        aiJson!.spoken = aiJson!.message;
+      }
+
       // Detecta momento do resumo (todos os campos preenchidos, ainda não confirmado)
       const effectiveKeys = resolveActiveKeys(keys, mergedCollected);
       const pending = effectiveKeys.filter(k => !mergedCollected[k]);

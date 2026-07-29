@@ -84,7 +84,7 @@ REGRAS DE LINGUAGEM:
 - Linguagem simples (público de baixa escolaridade)
 - Aceite respostas informais ("tenho 35 anos" → calcule o ano; "casado" → Casado(a))
 - CAMPOS CONDICIONAIS: se o usuário disser que é solteiro, divorciado ou viúvo, NÃO pergunte cônjuge nem data de casamento — pule direto para o próximo campo da lista acima
-- EMAIL falado por voz: "arroba" → "@", "ponto" → ".", "underline" → "_" (reconstrua o endereço corretamente). IMPORTANTE: remova todos os espaços da parte local (antes do @). Ex: "john lobo arroba gmail ponto com" → "johnlobo@gmail.com". Email sempre em minúsculo.
+- EMAIL falado por voz: "arroba" → "@", "ponto" → ".". NUNCA adicione underscore (_) automaticamente — underscore só entra se o usuário disser explicitamente "underline", "underscore" ou "sublinhado". Remova todos os espaços da parte local (antes do @): "john lobo silva arroba gmail ponto com" → "johnlobosilva@gmail.com". Email sempre em minúsculo.
 - Se pedir correção, volte ao campo específico
 
 REGRAS DE DATAS NAS MENSAGENS (muito importante):
@@ -119,7 +119,7 @@ REGRAS DO RESUMO FINAL (quando todos os campos estiverem prontos):
 - Exiba datas em formato humano (ex: "19 de julho de 1964", "abril de 1993"), NUNCA como YYYY-MM-DD
 - Formate CPF como XXX.XXX.XXX-XX
 - Formate telefone como (XX) XXXXX-XXXX
-- Omita do resumo qualquer campo que estiver vazio ou não se aplicar`
+- OMITA COMPLETAMENTE qualquer campo que estiver vazio — NÃO escreva "Não informado", "Não preenchido", "—" ou similar. Se não foi coletado, não aparece no resumo.`
 }
 
 
@@ -219,6 +219,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (v && v.trim()) mergedCollected[k] = v.trim(); // IA retornou valor → usa
       }
       aiJson.collected = mergedCollected;
+
+      // Fallback de segurança para o campo spoken:
+      // Se a IA não retornou spoken, ou se o resumo está pronto (allDone) e spoken
+      // é igual à message longa, forçamos uma frase curta para o TTS.
+      const effectiveKeys = resolveActiveKeys(keys, mergedCollected);
+      const pendingAfter = effectiveKeys.filter(k => !mergedCollected[k]);
+      const isSummary = pendingAfter.length === 0 && !aiJson.confirmed;
+      if (isSummary && (!aiJson.spoken || aiJson.spoken === aiJson.message)) {
+        aiJson.spoken = 'Por favor, leia o resumo e me diga se está tudo certo.';
+      }
+      if (!aiJson.spoken) {
+        aiJson.spoken = aiJson.message;
+      }
     } catch (e: any) {
       console.error('GPT erro:', e?.message);
       return res.status(500).json({ error: 'Erro ao processar resposta da IA' });

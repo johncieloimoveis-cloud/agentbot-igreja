@@ -2,7 +2,6 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
-// Aumenta limite de execução para 30s (plano Vercel hobby permite até 60s em alguns casos)
 export const config = { maxDuration: 30 };
 
 const supabaseAdmin = createClient(
@@ -13,7 +12,6 @@ const supabaseAdmin = createClient(
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Todos os campos suportados (master list)
 const ALL_FIELDS: Record<string, { label: string; hint: string }> = {
   full_name:       { label: 'Nome completo',          hint: 'ex: João da Silva' },
   date_of_birth:   { label: 'Data de nascimento',     hint: 'ex: 15 de março de 1990' },
@@ -34,26 +32,56 @@ const ALL_FIELDS: Record<string, { label: string; hint: string }> = {
   city:            { label: 'Cidade',                 hint: 'ex: Campinas - SP' },
 };
 
-// Campos que dependem de outro campo ter um valor específico
-// Se a condição não for atendida, o campo é pulado automaticamente
 const SKIP_IF: Record<string, (collected: Record<string, string>) => boolean> = {
-  conjuge_nome:    (c) => !['Casado(a)', 'casado', 'casada', 'união estável', 'uniao estavel'].some(v => c.estado_civil?.toLowerCase().includes(v.toLowerCase())),
-  data_casamento:  (c) => !['Casado(a)', 'casado', 'casada', 'união estável', 'uniao estavel'].some(v => c.estado_civil?.toLowerCase().includes(v.toLowerCase())),
+  conjuge_nome:    (c) => !['casado', 'casada', 'união estável', 'uniao estavel'].some(v => c.estado_civil?.toLowerCase().includes(v)),
+  data_casamento:  (c) => !['casado', 'casada', 'união estável', 'uniao estavel'].some(v => c.estado_civil?.toLowerCase().includes(v)),
 };
 
 function resolveActiveKeys(keys: string[], collected: Record<string, string>): string[] {
   return keys.filter(k => {
     const skipFn = SKIP_IF[k];
-    // Só pula se o campo de controle já foi respondido E a condição não se aplica
     if (skipFn && collected.estado_civil) return !skipFn(collected);
     return true;
   });
 }
 
-function buildSystemPrompt(activeKeys: string[], churchName: string, collected: Record<string, string>): string {
-  // Aplica regras condicionais (ex: pular cônjuge se solteiro)
-  const effectiveKeys = resolveActiveKeys(activeKeys, collected);
+// Formata data YYYY-MM-DD para texto humano
+function formatDateHuman(val: string): string {
+  const MONTHS = ['janeiro','fevereiro','março','abril','maio','junho',
+                  'julho','agosto','setembro','outubro','novembro','dezembro'];
+  const m = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return val;
+  const year = parseInt(m[1]), month = parseInt(m[2]) - 1, day = parseInt(m[3]);
+  if (day === 1 && month === 0) return `ano de ${year}`;
+  if (day === 1) return `${MONTHS[month]} de ${year}`;
+  return `${day} de ${MONTHS[month]} de ${year}`;
+}
 
+// Gera o resumo no servidor a partir de collected — garante que nunca apareça "[não informado]"
+function buildSummaryText(keys: string[], collected: Record<string, string>): string {
+  const effectiveKeys = resolveActiveKeys(keys, collected);
+  const filled = effectiveKeys.filter(k => collected[k]?.trim());
+  const lines = filled.map((k, i) => {
+    let val = collected[k].trim();
+    const DATE_FIELDS = ['date_of_birth','data_casamento','data_conversao','data_batismo'];
+    if (DATE_FIELDS.includes(k)) val = formatDateHuman(val);
+    if (k === 'cpf') {
+      const d = val.replace(/\D/g, '');
+      if (d.length === 11) val = `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+    }
+    if (k === 'phone') {
+      const d = val.replace(/\D/g, '');
+      if (d.length >= 10) val = d.length === 11
+        ? `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
+        : `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+    }
+    return `${i + 1}. ${ALL_FIELDS[k]?.label ?? k}: ${val}`;
+  });
+  return lines.join('\n');
+}
+
+function buildSystemPrompt(activeKeys: string[], churchName: string, collected: Record<string, string>): string {
+  const effectiveKeys = resolveActiveKeys(activeKeys, collected);
   const fieldsList = effectiveKeys
     .map((k, i) => {
       const done = collected[k] ? ` ✓ (${collected[k]})` : '';
@@ -65,72 +93,46 @@ function buildSystemPrompt(activeKeys: string[], churchName: string, collected: 
   const nextField = pending[0] ? ALL_FIELDS[pending[0]]?.label ?? pending[0] : null;
   const allDone = pending.length === 0;
 
-  return `Você é um assistente de cadastro da ${churchName}. Colete as informações abaixo em português muito simples.
+  return `Você é um assistente de cadastro da ${churchName}. Colete as informações em português muito simples.
 
 CAMPOS (✓ = já coletado):
 ${fieldsList}
 
 ${allDone
-  ? 'TODOS os campos foram coletados. Faça um resumo numerado e pergunte se pode salvar.'
+  ? 'TODOS os campos foram coletados. Aguarde confirmação do usuário.'
   : `PRÓXIMO CAMPO A PERGUNTAR AGORA: "${nextField}" — não peça nenhum outro campo antes deste.`
 }
 
 REGRA CRÍTICA — formato de resposta em cada turno:
-A) Quando receber resposta válida: confirme em 1 frase curta E imediatamente pergunte o campo indicado em "PRÓXIMO CAMPO". Tudo na mesma mensagem.
-B) Quando todos os campos estiverem ✓: faça um resumo numerado e pergunte se pode salvar.
-C) Quando o usuário confirmar o resumo ("sim", "pode", "tá certo"): retorne done:true e confirmed:true.
+A) Quando receber resposta válida: confirme em 1 frase curta E pergunte o próximo campo. Tudo na mesma mensagem.
+B) Quando todos os campos estiverem ✓: diga apenas "Verifique os dados acima e confirme se está tudo certo."
+C) Quando o usuário confirmar ("sim", "pode", "tá certo", "está tudo certo"): retorne done:true e confirmed:true.
 
 REGRAS DE LINGUAGEM:
 - Linguagem simples (público de baixa escolaridade)
 - Aceite respostas informais ("tenho 35 anos" → calcule o ano; "casado" → Casado(a))
-- CAMPOS CONDICIONAIS: se o usuário disser que é solteiro, divorciado ou viúvo, NÃO pergunte cônjuge nem data de casamento — pule direto para o próximo campo da lista acima
-- EMAIL falado por voz: "arroba" → "@", "ponto" → ".". NUNCA adicione underscore (_) automaticamente — underscore só entra se o usuário disser explicitamente "underline", "underscore" ou "sublinhado". Remova todos os espaços da parte local (antes do @): "john lobo silva arroba gmail ponto com" → "johnlobosilva@gmail.com". Email sempre em minúsculo.
-- Se pedir correção, volte ao campo específico
+- CAMPOS CONDICIONAIS: se solteiro/divorciado/viúvo, NÃO pergunte cônjuge nem data de casamento
+- EMAIL: "arroba"→"@", "ponto"→".". NUNCA adicione underscore automaticamente — só se o usuário disser "underline"/"sublinhado". Remova espaços da parte local: "john lobo arroba gmail ponto com"→"johnlobo@gmail.com". Email em minúsculo.
+- CPF: aceite qualquer sequência de 11 dígitos sem validação matemática
+- DATAS nas mensagens: SEMPRE por extenso ("19 de julho de 1964"), NUNCA YYYY-MM-DD
 
-REGRAS DE DATAS NAS MENSAGENS (muito importante):
-- NUNCA escreva datas no formato YYYY-MM-DD nas suas mensagens para o usuário
-- SEMPRE escreva datas por extenso: "19 de julho de 1964", "abril de 1993", "junho de 2015"
-- Quando o usuário disser "19 07 1964" ou "1964-07-19", confirme como "19 de julho de 1964"
-- Datas com só o ano: "2015" → confirme como "ano de 2015"
-- Datas com mês e ano: "04/1993" → confirme como "abril de 1993"
+Retorne SOMENTE JSON:
+{"message":"texto curto","spoken":"igual ao message","collected":{"campo":"valor"},"done":false,"confirmed":false}
 
-REGRA DO CPF (muito importante):
-- Aceite QUALQUER sequência de 11 dígitos como CPF válido — NÃO faça validação matemática
-- NÃO rejeite CPF, NÃO diga que o CPF é inválido, NÃO peça para repetir por causa dos dígitos
-- O usuário pode falar os dígitos em grupos: "556 717 729 15" → armazene como "55671772915"
-- Se o usuário disser que não sabe o CPF ou não tem, aceite e siga para o próximo campo
-
-Retorne SOMENTE JSON (sem markdown):
-{"message":"texto","spoken":"frase curta para áudio","collected":{"campo":"valor"},"done":false,"confirmed":false}
-
-REGRA DO CAMPO "spoken" (o que será lido em voz alta):
-- Em turnos normais (confirmando um campo e perguntando o próximo): "spoken" = igual ao "message"
-- Quando apresentar o RESUMO FINAL: "spoken" = APENAS "Por favor, leia o resumo acima e me diga se está tudo certo." — NÃO leia todos os campos em voz alta
-- Quando o usuário confirmar e o cadastro for salvo: "spoken" = "Perfeito! Seu cadastro foi salvo com sucesso."
-
-REGRAS DE ARMAZENAMENTO em "collected" (interno — nunca exibir ao usuário):
-- Datas: YYYY-MM-DD (se só ano → use YYYY-01-01; se só mês/ano → use YYYY-MM-01)
-- Email: formato correto com @ e . (ex: joao@gmail.com)
-- CPF: apenas os dígitos sem pontuação (ex: 55671772915)
-- Telefone: apenas dígitos com DDD (ex: 43996446224)
-- "collected" DEVE conter ABSOLUTAMENTE TODOS os campos já coletados anteriormente — NUNCA omita campos anteriores
-
-REGRAS DO RESUMO FINAL (quando todos os campos estiverem prontos):
-- Exiba datas em formato humano (ex: "19 de julho de 1964", "abril de 1993"), NUNCA como YYYY-MM-DD
-- Formate CPF como XXX.XXX.XXX-XX
-- Formate telefone como (XX) XXXXX-XXXX
-- OMITA COMPLETAMENTE qualquer campo que estiver vazio — NÃO escreva "Não informado", "Não preenchido", "—" ou similar. Se não foi coletado, não aparece no resumo.`
+ARMAZENAMENTO em "collected":
+- Datas: YYYY-MM-DD (só ano → YYYY-01-01; mês/ano → YYYY-MM-01)
+- Email: correto com @ e ponto
+- CPF: só dígitos (ex: 55671772915)
+- Telefone: só dígitos com DDD (ex: 43996446224)
+- "collected" DEVE ter TODOS os campos anteriores — NUNCA omita campos já coletados`
 }
-
 
 function mapCollectedToDb(collected: Record<string, string>): Record<string, unknown> {
   const db: Record<string, unknown> = {};
-  const dateFields = ['date_of_birth', 'data_casamento', 'data_conversao', 'data_batismo'];
-
+  const DATE_FIELDS = ['date_of_birth','data_casamento','data_conversao','data_batismo'];
   for (const [key, val] of Object.entries(collected)) {
-    if (!val || val === '') continue;
-    if (dateFields.includes(key)) {
-      // Aceita YYYY-MM-DD ou tenta parse
+    if (!val?.trim()) continue;
+    if (DATE_FIELDS.includes(key)) {
       const m = val.match(/(\d{4})-(\d{2})-(\d{2})/);
       db[key] = m ? val : null;
     } else {
@@ -141,113 +143,98 @@ function mapCollectedToDb(collected: Record<string, string>): Record<string, unk
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // GET: retorna os campos configurados para a igreja
   if (req.method === 'GET') {
     const { slug } = req.query;
     if (!slug) return res.status(400).json({ error: 'slug obrigatorio' });
-
     const { data: church } = await supabaseAdmin
-      .from('churches')
-      .select('id, name, cadastro_ia_campos')
-      .eq('slug', slug as string)
-      .single();
-
+      .from('churches').select('id, name, cadastro_ia_campos').eq('slug', slug as string).single();
     if (!church) return res.status(404).json({ error: 'Igreja não encontrada' });
-
     const campos: { key: string; active: boolean }[] = church.cadastro_ia_campos ?? [];
     const activeKeys = campos.filter(c => c.active).map(c => c.key);
-
-    // Se admin não configurou nada, usa set padrão mínimo
-    const defaults = ['full_name', 'date_of_birth', 'sex', 'phone'];
-    const keys = activeKeys.length > 0 ? activeKeys : defaults;
-
+    const keys = activeKeys.length > 0 ? activeKeys : ['full_name','date_of_birth','sex','phone'];
     return res.status(200).json({
       churchName: church.name,
       fields: keys.map(k => ({ key: k, label: ALL_FIELDS[k]?.label ?? k })),
     });
   }
 
-  // POST: processa uma mensagem do chat
   if (req.method === 'POST') {
     const { slug, messages, collected } = req.body;
-
     if (!slug) return res.status(400).json({ error: 'slug obrigatorio' });
     if (!Array.isArray(messages)) return res.status(400).json({ error: 'messages invalido' });
 
-    // Resolve slug → church
     const { data: church } = await supabaseAdmin
-      .from('churches')
-      .select('id, name, cadastro_ia_campos')
-      .eq('slug', slug as string)
-      .single();
-
+      .from('churches').select('id, name, cadastro_ia_campos').eq('slug', slug as string).single();
     if (!church) return res.status(404).json({ error: 'Igreja não encontrada' });
 
     const campos: { key: string; active: boolean }[] = church.cadastro_ia_campos ?? [];
     const activeKeys = campos.filter(c => c.active).map(c => c.key);
-    const defaults = ['full_name', 'date_of_birth', 'sex', 'phone'];
-    const keys = activeKeys.length > 0 ? activeKeys : defaults;
+    const keys = activeKeys.length > 0 ? activeKeys : ['full_name','date_of_birth','sex','phone'];
 
     const currentCollected: Record<string, string> = collected ?? {};
-    // Prompt já inclui estado de collected e próximo campo a perguntar
     const systemPrompt = buildSystemPrompt(keys, church.name, currentCollected);
 
-    // Chama GPT-4 para processar a conversa
     let aiJson: { message: string; spoken?: string; collected: Record<string, string>; done: boolean; confirmed: boolean } | null = null;
 
     try {
-      // response_format garante JSON válido sempre
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         temperature: 0.2,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: systemPrompt },
-          // Limita histórico para evitar context bloat (últimas 16 mensagens)
           ...messages.slice(-16),
         ],
       });
-
       const raw = completion.choices[0]?.message?.content ?? '';
       aiJson = JSON.parse(raw);
 
-      // Merge server-side: garante que campos anteriores nunca sejam perdidos
-      // A IA pode retornar collected incompleto — completamos com o que já sabíamos
-      const aiCollected: Record<string, string> = aiJson.collected ?? {};
+      // Merge: campos anteriores nunca se perdem
+      const aiCollected: Record<string, string> = aiJson!.collected ?? {};
       const mergedCollected: Record<string, string> = { ...currentCollected };
       for (const [k, v] of Object.entries(aiCollected)) {
-        if (v && v.trim()) mergedCollected[k] = v.trim(); // IA retornou valor → usa
+        if (v?.trim()) mergedCollected[k] = v.trim();
       }
-      aiJson.collected = mergedCollected;
+      aiJson!.collected = mergedCollected;
 
-      // Fallback de segurança para o campo spoken:
-      // Se a IA não retornou spoken, ou se o resumo está pronto (allDone) e spoken
-      // é igual à message longa, forçamos uma frase curta para o TTS.
+      // Detecta momento do resumo (todos os campos preenchidos, ainda não confirmado)
       const effectiveKeys = resolveActiveKeys(keys, mergedCollected);
-      const pendingAfter = effectiveKeys.filter(k => !mergedCollected[k]);
-      const isSummary = pendingAfter.length === 0 && !aiJson.confirmed;
-      if (isSummary && (!aiJson.spoken || aiJson.spoken === aiJson.message)) {
-        aiJson.spoken = 'Por favor, leia o resumo e me diga se está tudo certo.';
+      const pending = effectiveKeys.filter(k => !mergedCollected[k]);
+      const isSummary = pending.length === 0 && !aiJson!.confirmed;
+
+      // RESUMO GERADO NO SERVIDOR — elimina "[não informado]" definitivamente
+      if (isSummary) {
+        const summaryText = buildSummaryText(keys, mergedCollected);
+        aiJson!.message = `Aqui estão os dados coletados:\n\n${summaryText}\n\nEstá tudo certo?`;
+        aiJson!.spoken = 'Por favor, leia os dados acima e me diga se está tudo certo.';
+        aiJson!.done = false;
+        aiJson!.confirmed = false;
+      } else if (!aiJson!.spoken) {
+        aiJson!.spoken = aiJson!.message;
       }
-      if (!aiJson.spoken) {
-        aiJson.spoken = aiJson.message;
-      }
+
     } catch (e: any) {
       console.error('GPT erro:', e?.message);
       return res.status(500).json({ error: 'Erro ao processar resposta da IA' });
     }
 
-    if (!aiJson) {
-      return res.status(500).json({ error: 'Resposta da IA inválida' });
-    }
+    if (!aiJson) return res.status(500).json({ error: 'Resposta da IA inválida' });
 
-    // Se confirmado, salva no banco
+    // Salva quando confirmado
     if (aiJson.confirmed && aiJson.done) {
       const dbFields = mapCollectedToDb(aiJson.collected);
 
+      // Nome ausente: volta a pedir em vez de mostrar erro
       if (!dbFields.full_name) {
-        console.error('Cadastro IA: full_name ausente no collected', aiJson.collected);
-        return res.status(200).json({ ...aiJson, saved: false, message: 'Nome não foi coletado. Por favor, tente novamente.' });
+        console.error('Cadastro IA: full_name ausente', aiJson.collected);
+        return res.status(200).json({
+          ...aiJson,
+          saved: false,
+          done: false,
+          confirmed: false,
+          message: 'Precisamos do seu nome completo. Qual é o seu nome completo?',
+          spoken: 'Precisamos do seu nome completo. Qual é o seu nome?',
+        });
       }
 
       try {
@@ -258,25 +245,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           cadastro_atualizado_em: new Date().toISOString(),
           ...dbFields,
         });
-
         if (dbErr) {
-          console.error('DB erro ao salvar cadastro IA:', dbErr.message, dbErr.details, dbErr.hint);
-          return res.status(200).json({
-            ...aiJson,
-            saved: false,
-            message: `Erro ao salvar: ${dbErr.message}`,
-          });
+          console.error('DB erro:', dbErr.message, dbErr.details, dbErr.hint);
+          return res.status(200).json({ ...aiJson, saved: false, message: `Erro ao salvar: ${dbErr.message}` });
         }
-
-        console.log('Cadastro IA salvo com sucesso para church_id:', church.id, 'nome:', dbFields.full_name);
+        console.log('Cadastro IA salvo:', church.id, dbFields.full_name);
         return res.status(200).json({ ...aiJson, saved: true });
       } catch (insertErr: any) {
-        console.error('Exceção ao salvar cadastro IA:', insertErr?.message);
-        return res.status(200).json({
-          ...aiJson,
-          saved: false,
-          message: 'Erro inesperado ao salvar. Por favor, tente novamente.',
-        });
+        console.error('Exceção ao salvar:', insertErr?.message);
+        return res.status(200).json({ ...aiJson, saved: false, message: 'Erro inesperado ao salvar. Tente novamente.' });
       }
     }
 

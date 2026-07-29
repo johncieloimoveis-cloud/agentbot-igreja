@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { BookOpen, Flame, UserPlus, MapPin, Heart, Music, Sparkles, Mic } from 'lucide-react';
+import { BookOpen, Flame, UserPlus, Music, Sparkles, Mic } from 'lucide-react';
 import { PublicLayout } from '@/components/PublicLayout';
 
 // Versículos rotativos por dia do ano (sem custo de IA)
@@ -65,6 +65,31 @@ export default function PortalPublico() {
           <p className="text-primary-200 text-sm font-semibold">{versiculo.ref}</p>
         </div>
 
+        {/* Cadastro — destaque principal */}
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800/40 rounded-2xl p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/60 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Mic className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="font-bold text-gray-900 dark:text-white">Fazer meu Cadastro</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Converse com a IA por voz — rápido e simples</p>
+            </div>
+          </div>
+          <Link
+            href={base + '/cadastro-ia'}
+            className="block w-full text-center px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-sm transition-colors"
+          >
+            Começar agora
+          </Link>
+          <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
+            Prefere digitar?{' '}
+            <Link href={'/cadastro?slug=' + slug} className="underline hover:text-gray-600 dark:hover:text-gray-300">
+              Use o formulário
+            </Link>
+          </p>
+        </div>
+
         {/* Estudos */}
         <div>
           <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Estudos</h2>
@@ -120,38 +145,7 @@ export default function PortalPublico() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">10 perguntas geradas por IA</p>
               </div>
             </Link>
-
-            <Link
-              href={base + '/cadastro-ia'}
-              className="flex items-center gap-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md transition-all group"
-            >
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 dark:group-hover:bg-green-900/60 transition-colors">
-                <Mic className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white">Atualizar Cadastro</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Converse com a IA por voz</p>
-              </div>
-            </Link>
           </div>
-        </div>
-
-        {/* CTA cadastro */}
-        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-4">
-          <div className="flex-1 text-center sm:text-left">
-            <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
-              <Heart className="w-4 h-4 text-red-500" />
-              <p className="font-semibold text-gray-900 dark:text-white">Faça parte dessa comunidade</p>
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Cadastre-se e acompanhe os grupos e atividades da igreja.</p>
-          </div>
-          <Link
-            href={'/cadastro?slug=' + slug}
-            className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold text-sm transition-colors"
-          >
-            <UserPlus className="w-4 h-4" />
-            Quero me cadastrar
-          </Link>
         </div>
 
       </div>

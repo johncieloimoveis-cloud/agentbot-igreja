@@ -208,8 +208,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       aiJson!.collected = mergedCollected;
 
-      // Se a IA perguntou cônjuge/casamento mas o usuário não é casado, redireciona
-      if (isNotMarried && /cônjuge|casamento|casar|esposo|esposa/i.test(aiJson!.message)) {
+      // Redireciona se a IA pedir campo condicional indevido.
+      // Dispara em dois casos:
+      //   1. estado_civil foi coletado NESSE turno como não-casado (sempre override, sem regex)
+      //   2. a mensagem menciona cônjuge/casamento mesmo em turno posterior
+      const justSetEstadoCivil = ('estado_civil' in aiCollected) && !currentCollected['estado_civil'];
+      const mentionsSpouse = /c[oô]njuge|casamento|casar|esposo|esposa|marido|parceiro|companheiro/i.test(aiJson!.message);
+      if (isNotMarried && (justSetEstadoCivil || mentionsSpouse) && !aiJson!.confirmed) {
         const nextKeys = resolveActiveKeys(keys, mergedCollected);
         const nextPending = nextKeys.filter(k => !mergedCollected[k]);
         const nextField = nextPending[0];

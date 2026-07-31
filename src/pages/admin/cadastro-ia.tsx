@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, ChevronUp, ChevronDown, ToggleLeft, ToggleRight, Loader2, CheckCircle, Mic } from 'lucide-react';
+import { Save, ChevronUp, ChevronDown, ToggleLeft, ToggleRight, Loader2, CheckCircle, Mic, ExternalLink } from 'lucide-react';
 import { fetchWithAuth } from '@/lib/fetchWithAuth';
 
 interface FieldDef {
@@ -35,6 +35,7 @@ const MASTER_FIELDS: FieldDef[] = [
 
 export default function CadastroIaAdmin() {
   const [fields, setFields] = useState<FieldConfig[]>([]);
+  const [slug, setSlug] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -44,6 +45,7 @@ export default function CadastroIaAdmin() {
     fetchWithAuth('/api/admin/cadastro-ia-config')
       .then(r => r.json())
       .then(data => {
+        setSlug(data.slug ?? '');
         const saved: { key: string; active: boolean }[] = data.campos ?? [];
         // Mescla master list com config salva
         const merged: FieldConfig[] = MASTER_FIELDS.map(f => {
@@ -123,6 +125,27 @@ export default function CadastroIaAdmin() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Configure quais campos a IA vai perguntar ao membro</p>
         </div>
       </div>
+
+      {/* Acesso rápido ao chat */}
+      {slug && (
+        <a
+          href={`/i/${slug}/cadastro-ia`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Mic className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="font-semibold text-green-800 dark:text-green-300 text-sm">Abrir chat de cadastro por voz</p>
+              <p className="text-xs text-green-600 dark:text-green-500">Use ao lado do novo membro para fazer o cadastro juntos</p>
+            </div>
+          </div>
+          <ExternalLink className="w-4 h-4 text-green-500 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+        </a>
+      )}
 
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-800 dark:text-blue-300">
         O membro acessa o link do portal da sua igreja, toca no botão de voz e conversa com a IA.

@@ -17,12 +17,12 @@ export default withAuth(
     if (req.method === 'GET') {
       const { data, error } = await supabaseAdmin
         .from('churches')
-        .select('cadastro_ia_campos')
+        .select('slug, cadastro_ia_campos')
         .eq('id', user.church_id)
         .single();
 
       if (error) return res.status(500).json({ error: error.message });
-      return res.status(200).json({ campos: data?.cadastro_ia_campos ?? [] });
+      return res.status(200).json({ slug: data?.slug ?? '', campos: data?.cadastro_ia_campos ?? [] });
     }
 
     // POST: salva a configuração

@@ -36,9 +36,14 @@ export default function CadastroIa() {
   const [erro, setErro] = useState('');
 
   const recognitionRef = useRef<any>(null);
-  const transcriptRef = useRef('');
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const transcriptRef  = useRef('');
+  const bottomRef      = useRef<HTMLDivElement>(null);
+  const synthRef       = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // Ref espelha o estado de collected — evita stale closure em sendMessage
+  const collectedRef   = useRef<Record<string, string>>({});
+  // Ref espelha o estado de messages — evita stale closure no voice onend
+  const messagesRef    = useRef<Message[]>([]);
 
   // Detecta suporte a SpeechRecognition
   useEffect(() => {
@@ -75,12 +80,32 @@ export default function CadastroIa() {
     window.speechSynthesis.speak(utterance);
   }, [muted]);
 
+  // Atualiza collected state + ref juntos
+  const updateCollected = useCallback((incoming: Record<string, string>) => {
+    setCollected(prev => {
+      const next = { ...prev, ...incoming };
+      collectedRef.current = next;
+      return next;
+    });
+  }, []);
+
+  // Atualiza messages state + ref juntos
+  const appendMessage = useCallback((msg: Message) => {
+    setMessages(prev => {
+      const next = [...prev, msg];
+      messagesRef.current = next;
+      return next;
+    });
+  }, []);
+
   const sendMessage = useCallback(async (userText: string) => {
     if (!userText.trim() || processing) return;
 
     const userMsg: Message = { role: 'user', content: userText.trim() };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    // Usa refs para ter sempre o estado mais recente (evita stale closure)
+    const currentMessages = [...messagesRef.current, userMsg];
+    messagesRef.current = currentMessages;
+    setMessages(currentMessages);
     setInput('');
     setProcessing(true);
     setErro('');
@@ -89,7 +114,11 @@ export default function CadastroIa() {
       const r = await fetch('/api/public/cadastro-ia-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, messages: newMessages, collected }),
+        body: JSON.stringify({
+          slug,
+          messages: currentMessages,
+          collected: collectedRef.current,   // sempre o valor mais recente
+        }),
       });
       if (!r.ok) {
         const errData = await r.json().catch(() => ({}));
@@ -97,10 +126,8 @@ export default function CadastroIa() {
       }
       const data: AIResponse = await r.json();
 
-      const aiMsg: Message = { role: 'assistant', content: data.message };
-      setMessages(prev => [...prev, aiMsg]);
-      // Merge: nunca perde campos anteriores caso a IA retorne collected incompleto
-      setCollected(prev => ({ ...prev, ...(data.collected ?? {}) }));
+      appendMessage({ role: 'assistant', content: data.message });
+      updateCollected(data.collected ?? {});
 
       if (data.done) setDone(true);
       if (data.saved) setSaved(true);
@@ -111,19 +138,20 @@ export default function CadastroIa() {
     } finally {
       setProcessing(false);
     }
-  }, [messages, collected, slug, processing, speak]);
+  }, [slug, processing, speak, appendMessage, updateCollected]);
 
   const startConversation = async () => {
     setStarted(true);
     setProcessing(true);
     setErro('');
     try {
+      const firstMsg: Message = { role: 'user', content: 'Olá, quero fazer meu cadastro.' };
       const r = await fetch('/api/public/cadastro-ia-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slug,
-          messages: [{ role: 'user', content: 'Olá, quero fazer meu cadastro.' }],
+          messages: [firstMsg],
           collected: {},
         }),
       });
@@ -132,11 +160,13 @@ export default function CadastroIa() {
         throw new Error(errData.error || `Erro ${r.status}`);
       }
       const data: AIResponse = await r.json();
-      setMessages([
-        { role: 'user', content: 'Olá, quero fazer meu cadastro.' },
-        { role: 'assistant', content: data.message },
-      ]);
-      setCollected(data.collected ?? {});
+      const aiMsg: Message = { role: 'assistant', content: data.message };
+      const initial = [firstMsg, aiMsg];
+      setMessages(initial);
+      messagesRef.current = initial;
+      const c = data.collected ?? {};
+      setCollected(c);
+      collectedRef.current = c;
       speak(data.spoken ?? data.message);
     } catch {
       setErro('Erro ao iniciar conversa. Tente novamente.');
@@ -157,11 +187,10 @@ export default function CadastroIa() {
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
-    recognition.continuous = true;      // mantém ativo mesmo com pausas
-    recognition.interimResults = false; // só resultados finais
+    recognition.continuous = true;
+    recognition.interimResults = false;
 
     recognition.onresult = (event: any) => {
-      // Acumula todos os segmentos finais
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
           const seg = event.results[i][0].transcript.trim();
@@ -175,13 +204,11 @@ export default function CadastroIa() {
     };
 
     recognition.onerror = (e: any) => {
-      // 'no-speech' é normal durante pausas — ignora
       if (e.error === 'no-speech' || e.error === 'aborted') return;
       setListening(false);
       setErro('Não foi possível capturar o áudio. Tente digitar.');
     };
 
-    // onend só dispara quando stop() for chamado explicitamente
     recognition.onend = () => {
       setListening(false);
       const texto = transcriptRef.current.trim();
@@ -195,10 +222,8 @@ export default function CadastroIa() {
     setListening(true);
   };
 
-  // Para o reconhecimento (toggle OFF) — onend cuida de enviar
   const stopListening = () => {
     recognitionRef.current?.stop();
-    // setListening é chamado pelo onend
   };
 
   const toggleListening = () => {
@@ -213,7 +238,9 @@ export default function CadastroIa() {
     window.speechSynthesis.cancel();
     recognitionRef.current?.stop();
     setMessages([]);
+    messagesRef.current = [];
     setCollected({});
+    collectedRef.current = {};
     setDone(false);
     setSaved(false);
     setStarted(false);
@@ -248,7 +275,7 @@ export default function CadastroIa() {
     </PublicLayout>
   );
 
-  // Tela inicial (antes de começar)
+  // Tela inicial
   if (!started) return (
     <PublicLayout slug={slug}>
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 px-4">
@@ -310,7 +337,7 @@ export default function CadastroIa() {
   return (
     <PublicLayout slug={slug}>
       <div className="flex flex-col h-[calc(100vh-8rem)]">
-        {/* Header do chat */}
+        {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center">
@@ -345,7 +372,7 @@ export default function CadastroIa() {
         <div className="flex-1 overflow-y-auto py-4 space-y-3">
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[82%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+              <div className={`max-w-[82%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                 msg.role === 'user'
                   ? 'bg-primary-600 text-white rounded-br-md'
                   : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-900 dark:text-white rounded-bl-md shadow-sm'
@@ -389,8 +416,6 @@ export default function CadastroIa() {
                 disabled={processing || listening}
                 className="flex-1 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
               />
-
-              {/* Botão enviar texto */}
               <button
                 onClick={() => sendMessage(input)}
                 disabled={!input.trim() || processing || listening}
@@ -398,8 +423,6 @@ export default function CadastroIa() {
               >
                 <Send className="w-4 h-4" />
               </button>
-
-              {/* Botão de voz — clique para ativar, clique para enviar */}
               {speechSupported && (
                 <button
                   onClick={toggleListening}

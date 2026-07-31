@@ -140,40 +140,14 @@ export default function CadastroIa() {
     }
   }, [slug, processing, speak, appendMessage, updateCollected]);
 
-  const startConversation = async () => {
+  const startConversation = () => {
+    // Saudação hardcoded — sem chamada à API no primeiro turno
+    const greeting = 'Olá! Pode me contar tudo de uma vez: nome completo, data de nascimento, estado civil, CPF, telefone, endereço... Vou anotando tudo e só peço o que faltar!';
+    const aiMsg: Message = { role: 'assistant', content: greeting };
+    setMessages([aiMsg]);
+    messagesRef.current = [aiMsg];
     setStarted(true);
-    setProcessing(true);
-    setErro('');
-    try {
-      const firstMsg: Message = { role: 'user', content: 'Olá, quero fazer meu cadastro.' };
-      const r = await fetch('/api/public/cadastro-ia-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          slug,
-          messages: [firstMsg],
-          collected: {},
-        }),
-      });
-      if (!r.ok) {
-        const errData = await r.json().catch(() => ({}));
-        throw new Error(errData.error || `Erro ${r.status}`);
-      }
-      const data: AIResponse = await r.json();
-      const aiMsg: Message = { role: 'assistant', content: data.message };
-      const initial = [firstMsg, aiMsg];
-      setMessages(initial);
-      messagesRef.current = initial;
-      const c = data.collected ?? {};
-      setCollected(c);
-      collectedRef.current = c;
-      speak(data.spoken ?? data.message);
-    } catch {
-      setErro('Erro ao iniciar conversa. Tente novamente.');
-      setStarted(false);
-    } finally {
-      setProcessing(false);
-    }
+    speak(greeting);
   };
 
   // Inicia reconhecimento contínuo (toggle ON)

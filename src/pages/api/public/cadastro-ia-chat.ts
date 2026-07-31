@@ -104,11 +104,15 @@ ${allDone
   : `AINDA FALTAM: ${missingList}`}
 
 COMO OPERAR:
-1. O usuário pode falar TODOS os dados de uma vez ou em partes — extraia tudo que conseguir de cada mensagem.
-2. Após extrair, agrupe os campos ainda faltantes e pergunte todos juntos de forma natural.
-   Ex: "Ótimo! Faltam só: CPF, telefone e endereço. Pode me passar esses?"
-3. Quando todos os campos tiverem ✓, mostre que está tudo anotado e diga "Confirma os dados acima?"
-4. Quando o usuário confirmar ("sim", "pode", "está certo", "confirmo"), retorne done:true e confirmed:true.
+${pending.length === effectiveKeys.length
+  ? `PRIMEIRO TURNO — nenhum dado coletado ainda:
+   O usuário acaba de iniciar. Convide-o a falar TUDO de uma vez, listando os campos de forma compacta.
+   Exemplo: "Pode me contar tudo de uma vez: nome, data de nascimento, estado civil, CPF, telefone, endereço... Vou anotando tudo e só peço o que faltar!"
+   NÃO faça perguntas de campo específico neste turno.`
+  : `1. Extraia TODOS os dados que o usuário mencionar em cada mensagem.
+2. Agrupe os campos ainda faltantes e pergunte todos juntos: "Faltam só: X, Y e Z. Pode me passar?"
+3. Quando tudo estiver ✓, diga "Confirma os dados acima?"
+4. Quando o usuário confirmar, retorne done:true e confirmed:true.`}
 
 REGRAS:
 - Aceite dados em QUALQUER ORDEM — não force sequência

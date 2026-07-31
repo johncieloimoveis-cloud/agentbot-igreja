@@ -181,6 +181,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const systemPrompt = buildSystemPrompt(keys, church.name, currentCollected);
 
     let aiJson: { message: string; spoken?: string; collected: Record<string, string>; done: boolean; confirmed: boolean } | null = null;
+    let isSummary = false;
 
     try {
       const completion = await openai.chat.completions.create({
@@ -241,7 +242,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Detecta momento do resumo (todos os campos preenchidos, ainda não confirmado)
       const effectiveKeys = resolveActiveKeys(keys, mergedCollected);
       const pending = effectiveKeys.filter(k => !mergedCollected[k]);
-      const isSummary = pending.length === 0 && !aiJson!.confirmed;
+      isSummary = pending.length === 0 && !aiJson!.confirmed;
 
       // RESUMO GERADO NO SERVIDOR — elimina "[não informado]" definitivamente
       if (isSummary) {

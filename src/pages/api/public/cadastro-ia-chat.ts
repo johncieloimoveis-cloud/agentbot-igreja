@@ -82,49 +82,51 @@ function buildSummaryText(keys: string[], collected: Record<string, string>): st
 
 function buildSystemPrompt(activeKeys: string[], churchName: string, collected: Record<string, string>): string {
   const effectiveKeys = resolveActiveKeys(activeKeys, collected);
+  const pending = effectiveKeys.filter(k => !collected[k]);
+  const allDone = pending.length === 0;
+
   const fieldsList = effectiveKeys
-    .map((k, i) => {
+    .map(k => {
       const done = collected[k] ? ` ✓ (${collected[k]})` : '';
-      return `${i + 1}. ${ALL_FIELDS[k]?.label ?? k}${done}`;
+      return `• ${ALL_FIELDS[k]?.label ?? k}${done}`;
     })
     .join('\n');
 
-  const pending = effectiveKeys.filter(k => !collected[k]);
-  const nextField = pending[0] ? ALL_FIELDS[pending[0]]?.label ?? pending[0] : null;
-  const allDone = pending.length === 0;
+  const missingList = pending.map(k => ALL_FIELDS[k]?.label ?? k).join(', ');
 
-  return `Você é um assistente de cadastro da ${churchName}. Colete as informações em português muito simples.
+  return `Você é um assistente de cadastro da ${churchName}. Seja conversacional e natural — linguagem simples.
 
-CAMPOS (✓ = já coletado):
+CAMPOS (✓ = já obtido):
 ${fieldsList}
 
 ${allDone
-  ? 'TODOS os campos foram coletados. Aguarde confirmação do usuário.'
-  : `PRÓXIMO CAMPO A PERGUNTAR AGORA: "${nextField}" — não peça nenhum outro campo antes deste.`
-}
+  ? 'TODOS os campos foram obtidos. Aguarde o usuário confirmar os dados.'
+  : `AINDA FALTAM: ${missingList}`}
 
-REGRA CRÍTICA — formato de resposta em cada turno:
-A) Quando receber resposta válida: confirme em 1 frase curta E pergunte o próximo campo. Tudo na mesma mensagem.
-B) Quando todos os campos estiverem ✓: diga apenas "Verifique os dados acima e confirme se está tudo certo."
-C) Quando o usuário confirmar ("sim", "pode", "tá certo", "está tudo certo"): retorne done:true e confirmed:true.
+COMO OPERAR:
+1. O usuário pode falar TODOS os dados de uma vez ou em partes — extraia tudo que conseguir de cada mensagem.
+2. Após extrair, agrupe os campos ainda faltantes e pergunte todos juntos de forma natural.
+   Ex: "Ótimo! Faltam só: CPF, telefone e endereço. Pode me passar esses?"
+3. Quando todos os campos tiverem ✓, mostre que está tudo anotado e diga "Confirma os dados acima?"
+4. Quando o usuário confirmar ("sim", "pode", "está certo", "confirmo"), retorne done:true e confirmed:true.
 
-REGRAS DE LINGUAGEM:
-- Linguagem simples (público de baixa escolaridade)
-- Aceite respostas informais ("tenho 35 anos" → calcule o ano; "casado" → Casado(a))
+REGRAS:
+- Aceite dados em QUALQUER ORDEM — não force sequência
+- Aceite respostas informais: "tenho 35 anos" → calcule o ano de nascimento; "casado" → Casado(a)
 - CAMPOS CONDICIONAIS: se solteiro/divorciado/viúvo, NÃO pergunte cônjuge nem data de casamento
-- EMAIL: "arroba"→"@", "ponto"→".". NUNCA adicione underscore automaticamente — só se o usuário disser "underline"/"sublinhado". Remova espaços da parte local: "john lobo arroba gmail ponto com"→"johnlobo@gmail.com". Email em minúsculo.
-- CPF: aceite qualquer sequência de 11 dígitos sem validação matemática
+- EMAIL: "arroba"→"@", "ponto"→".". NUNCA adicione underscore sem o usuário pedir. Remova espaços na parte local: "john lobo arroba gmail"→"johnlobo@gmail.com". Sempre minúsculo.
+- CPF: aceite qualquer sequência de 11 dígitos — sem validação matemática
 - DATAS nas mensagens: SEMPRE por extenso ("19 de julho de 1964"), NUNCA YYYY-MM-DD
 
 Retorne SOMENTE JSON:
-{"message":"texto curto","spoken":"igual ao message","collected":{"campo":"valor"},"done":false,"confirmed":false}
+{"message":"texto da resposta","spoken":"versão curta para áudio (máx 2 frases)","collected":{"campo":"valor"},"done":false,"confirmed":false}
 
 ARMAZENAMENTO em "collected":
 - Datas: YYYY-MM-DD (só ano → YYYY-01-01; mês/ano → YYYY-MM-01)
 - Email: correto com @ e ponto
 - CPF: só dígitos (ex: 55671772915)
 - Telefone: só dígitos com DDD (ex: 43996446224)
-- "collected" DEVE ter TODOS os campos anteriores — NUNCA omita campos já coletados`
+- "collected" DEVE conter TODOS os campos já obtidos — nunca omita campos anteriores`
 }
 
 function mapCollectedToDb(collected: Record<string, string>): Record<string, unknown> {

@@ -287,8 +287,8 @@ export default function CadastroIa() {
             Cadastro por voz
           </h2>
           <p className="text-gray-500 dark:text-gray-400 max-w-sm">
-            Uma assistente vai conversar com você e fazer algumas perguntas para completar
-            seu cadastro {churchName ? `na ${churchName}` : 'na igreja'}.
+            Fale seus dados de uma vez — nome, data de nascimento, estado civil, CPF etc.
+            A assistente anota tudo e só pede o que faltar.
           </p>
           {speechSupported && (
             <p className="mt-3 text-sm text-green-600 dark:text-green-400 flex items-center justify-center gap-1">
@@ -305,7 +305,7 @@ export default function CadastroIa() {
         {activeFields.length > 0 && (
           <div className="text-left bg-gray-50 dark:bg-slate-800 rounded-xl p-4 w-full max-w-sm">
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-              Informações que serão coletadas
+              Fale tudo de uma vez, em qualquer ordem
             </p>
             <div className="flex flex-wrap gap-1.5">
               {activeFields.map(f => (
@@ -412,7 +412,7 @@ export default function CadastroIa() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
-                placeholder="Digite sua resposta..."
+                placeholder="Escreva seus dados livremente..."
                 disabled={processing || listening}
                 className="flex-1 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
               />
@@ -441,8 +441,8 @@ export default function CadastroIa() {
             {speechSupported && (
               <p className="text-center text-xs text-gray-400 mt-2">
                 {listening
-                  ? '🔴 Ouvindo... clique novamente quando terminar'
-                  : 'Clique 🎤 para falar ou use o teclado'}
+                  ? '🔴 Gravando... fale tudo e clique novamente para enviar'
+                  : '🎤 Clique e fale seus dados — pode falar tudo de uma vez!'}
               </p>
             )}
           </div>

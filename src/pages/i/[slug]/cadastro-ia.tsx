@@ -15,6 +15,7 @@ interface AIResponse {
   done: boolean;
   confirmed: boolean;
   saved: boolean;
+  isSummary?: boolean;
 }
 
 export default function CadastroIa() {
@@ -34,6 +35,7 @@ export default function CadastroIa() {
   const [started, setStarted] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [erro, setErro] = useState('');
+  const [isSummaryPending, setIsSummaryPending] = useState(false);
 
   const recognitionRef = useRef<any>(null);
   const transcriptRef  = useRef('');
@@ -131,6 +133,8 @@ export default function CadastroIa() {
 
       if (data.done) setDone(true);
       if (data.saved) setSaved(true);
+      if (data.isSummary) setIsSummaryPending(true);
+      else setIsSummaryPending(false);
 
       speak(data.spoken ?? data.message);
     } catch {
@@ -220,6 +224,7 @@ export default function CadastroIa() {
     setStarted(false);
     setErro('');
     setListening(false);
+    setIsSummaryPending(false);
     transcriptRef.current = '';
   };
 
@@ -377,8 +382,41 @@ export default function CadastroIa() {
           <div ref={bottomRef} />
         </div>
 
+        {/* Botão de confirmação destacado quando o resumo foi exibido */}
+        {isSummaryPending && !done && (
+          <div className="pt-3 border-t border-gray-200 dark:border-slate-700">
+            <button
+              onClick={() => { setIsSummaryPending(false); sendMessage('Sim, confirmo os dados.'); }}
+              disabled={processing}
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white rounded-xl font-bold text-base transition-colors shadow"
+            >
+              <CheckCircle className="w-5 h-5" />
+              Confirmar e salvar cadastro
+            </button>
+            <p className="text-center text-xs text-gray-400 mt-2">Ou corrija algo digitando abaixo</p>
+            <div className="flex items-end gap-2 mt-2">
+              <input
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
+                placeholder="Corrija algo antes de confirmar..."
+                disabled={processing}
+                className="flex-1 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+              />
+              <button
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || processing}
+                className="p-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-40 text-white rounded-xl transition-colors"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Input */}
-        {!done && (
+        {!isSummaryPending && !done && (
           <div className="pt-3 border-t border-gray-200 dark:border-slate-700">
             <div className="flex items-end gap-2">
               <input

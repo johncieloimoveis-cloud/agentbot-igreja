@@ -233,6 +233,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         aiJson!.spoken = aiJson!.message;
       }
 
+      // Segurança: a IA não pode setar done=true sem confirmed=true
+      if (aiJson!.done && !aiJson!.confirmed) {
+        aiJson!.done = false;
+      }
+
       // Detecta momento do resumo (todos os campos preenchidos, ainda não confirmado)
       const effectiveKeys = resolveActiveKeys(keys, mergedCollected);
       const pending = effectiveKeys.filter(k => !mergedCollected[k]);
@@ -293,7 +298,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    return res.status(200).json({ ...aiJson, saved: false });
+    return res.status(200).json({ ...aiJson, saved: false, isSummary });
   }
 
   return res.status(405).end();

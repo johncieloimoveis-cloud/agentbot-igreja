@@ -88,7 +88,7 @@ function buildSystemPrompt(activeKeys: string[], churchName: string, collected: 
   const fieldsList = effectiveKeys
     .map(k => {
       const done = collected[k] ? ` ✓ (${collected[k]})` : '';
-      return `• ${ALL_FIELDS[k]?.label ?? k}${done}`;
+      return `• ${ALL_FIELDS[k]?.label ?? k} [chave:"${k}"]${done}`;
     })
     .join('\n');
 
@@ -129,12 +129,13 @@ REGRAS:
 Retorne SOMENTE JSON:
 {"message":"texto da resposta","spoken":"versão curta para áudio (máx 2 frases)","collected":{"campo":"valor"},"done":false,"confirmed":false}
 
-ARMAZENAMENTO em "collected":
+ARMAZENAMENTO em "collected" — USE EXATAMENTE as chaves entre colchetes acima:
 - Datas: YYYY-MM-DD (só ano → YYYY-01-01; mês/ano → YYYY-MM-01)
 - Email: correto com @ e ponto
 - CPF: só dígitos (ex: 55671772915)
 - Telefone: só dígitos com DDD (ex: 43996446224)
 - "collected" DEVE conter TODOS os campos já obtidos — nunca omita campos anteriores
+- NUNCA invente chaves — use somente as chaves listadas acima (ex: "full_name" não "nome_completo")
 ${hasCollected ? `
 ⚠️ MEMÓRIA ATUAL — OBRIGATÓRIO: copie EXATAMENTE este JSON no campo "collected" da sua resposta, acrescentando apenas os campos novos extraídos da mensagem do usuário. NUNCA omita campos desta memória:
 ${collectedJson}` : ''}

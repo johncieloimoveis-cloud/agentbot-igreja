@@ -94,6 +94,10 @@ function buildSystemPrompt(activeKeys: string[], churchName: string, collected: 
 
   const missingList = pending.map(k => ALL_FIELDS[k]?.label ?? k).join(', ');
 
+  // Serializa o collected atual para incluir no prompt — a IA DEVE copiar isso de volta
+  const collectedJson = JSON.stringify(collected);
+  const hasCollected = Object.keys(collected).length > 0;
+
   return `Você é um assistente de cadastro da ${churchName}. Seja conversacional e natural — linguagem simples.
 
 CAMPOS (✓ = já obtido):
@@ -130,7 +134,11 @@ ARMAZENAMENTO em "collected":
 - Email: correto com @ e ponto
 - CPF: só dígitos (ex: 55671772915)
 - Telefone: só dígitos com DDD (ex: 43996446224)
-- "collected" DEVE conter TODOS os campos já obtidos — nunca omita campos anteriores`
+- "collected" DEVE conter TODOS os campos já obtidos — nunca omita campos anteriores
+${hasCollected ? `
+⚠️ MEMÓRIA ATUAL — OBRIGATÓRIO: copie EXATAMENTE este JSON no campo "collected" da sua resposta, acrescentando apenas os campos novos extraídos da mensagem do usuário. NUNCA omita campos desta memória:
+${collectedJson}` : ''}
+`
 }
 
 function mapCollectedToDb(collected: Record<string, string>): Record<string, unknown> {
@@ -268,7 +276,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Nome ausente: volta a pedir em vez de mostrar erro
       if (!dbFields.full_name) {
-        console.error('Cadastro IA: full_name ausente', aiJson.collected);
+        console.error('Cadastro IA: full_name ausente', JSON.stringify({ currentCollected, merged: aiJson.collected }));
         return res.status(200).json({
           ...aiJson,
           saved: false,

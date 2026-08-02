@@ -134,6 +134,7 @@ ARMAZENAMENTO em "collected" — USE EXATAMENTE as chaves entre colchetes acima:
 - Email: correto com @ e ponto
 - CPF: só dígitos (ex: 55671772915)
 - Telefone: só dígitos com DDD (ex: 43996446224)
+- Sexo: SOMENTE "M" ou "F" (uma letra maiúscula — "Masculino"→"M", "Feminino"→"F")
 - "collected" DEVE conter TODOS os campos já obtidos — nunca omita campos anteriores
 - NUNCA invente chaves — use somente as chaves listadas acima (ex: "full_name" não "nome_completo")
 ${hasCollected ? `
@@ -150,6 +151,10 @@ function mapCollectedToDb(collected: Record<string, string>): Record<string, unk
     if (DATE_FIELDS.includes(key)) {
       const m = val.match(/(\d{4})-(\d{2})-(\d{2})/);
       db[key] = m ? val : null;
+    } else if (key === 'sex') {
+      // Coluna varchar(1) — normaliza para 'M' ou 'F'
+      const v = val.trim().toLowerCase();
+      db[key] = v.startsWith('f') ? 'F' : 'M';
     } else {
       db[key] = val;
     }

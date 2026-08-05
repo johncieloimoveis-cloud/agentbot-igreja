@@ -15,6 +15,7 @@ const personSchema = z.object({
   date_of_birth: z.any().optional(),
   address: z.any().optional(),
   address_number: z.any().optional(),
+  neighborhood: z.any().optional(),
   city: z.any().optional(),
   notes: z.any().optional(),
   lat: z.any().optional(),
@@ -190,6 +191,17 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
         </div>
       </div>
 
+      {/* Bairro */}
+      <div>
+        <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Bairro
+          <HelpTooltip text="Bairro da residência." />
+        </label>
+        <input {...register('neighborhood')} type="text"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          placeholder="Centro" />
+      </div>
+
       {/* Cidade */}
       <div>
         <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -198,7 +210,7 @@ export function PersonForm({ initialData, onSubmit, loading }: PersonFormProps) 
         </label>
         <input {...register('city')} type="text"
           className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-950 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          placeholder="São Paulo" />
+          placeholder="Ibaiti - PR" />
       </div>
 
       {/* Coordenadas manuais */}

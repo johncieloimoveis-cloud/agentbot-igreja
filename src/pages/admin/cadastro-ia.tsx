@@ -29,7 +29,9 @@ const MASTER_FIELDS: FieldDef[] = [
   { key: 'data_batismo',   label: 'Data de batismo',    hint: 'ex: 06/2015' },
   { key: 'email',          label: 'E-mail',             hint: 'ex: joao@gmail.com' },
   { key: 'phone',          label: 'Telefone',           hint: 'ex: 11 91234-5678' },
-  { key: 'address',        label: 'Endereço (rua)',      hint: 'ex: Rua das Flores, 123' },
+  { key: 'address',        label: 'Endereço (rua)',      hint: 'ex: Rua das Flores' },
+  { key: 'address_number', label: 'Número',             hint: 'ex: 123' },
+  { key: 'neighborhood',   label: 'Bairro',             hint: 'ex: Centro' },
   { key: 'city',           label: 'Cidade',             hint: 'ex: Campinas - SP' },
 ];
 

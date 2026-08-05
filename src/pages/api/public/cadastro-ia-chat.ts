@@ -28,8 +28,10 @@ const ALL_FIELDS: Record<string, { label: string; hint: string }> = {
   data_batismo:    { label: 'Data de batismo',        hint: 'ex: junho de 2015' },
   email:           { label: 'E-mail',                 hint: 'ex: joao@gmail.com' },
   phone:           { label: 'Telefone',               hint: 'ex: 11 91234-5678' },
-  address:         { label: 'Endereço (rua)',         hint: 'ex: Rua das Flores, 123' },
-  city:            { label: 'Cidade',                 hint: 'ex: Campinas - SP' },
+  address:         { label: 'Endereço (rua/logradouro)', hint: 'ex: Rua das Flores' },
+  address_number:  { label: 'Número',                 hint: 'ex: 123' },
+  neighborhood:    { label: 'Bairro',                 hint: 'ex: Centro' },
+  city:            { label: 'Cidade',                 hint: 'ex: Ibaiti - PR' },
 };
 
 const SKIP_IF: Record<string, (collected: Record<string, string>) => boolean> = {

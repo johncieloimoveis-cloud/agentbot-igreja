@@ -12,6 +12,7 @@ interface Pessoa {
   date_of_birth: string | null;
   address: string | null;
   address_number: string | null;
+  neighborhood: string | null;
   city: string | null;
 }
 
@@ -303,7 +304,7 @@ Que Deus abençoe a todos! 🙏`;
                   <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5">
                     {(p.address || p.city) ? (
                       <span className="text-xs text-gray-400 dark:text-gray-500">
-                        📍 {[p.address, p.address_number, p.city].filter(Boolean).join(', ')}
+                        📍 {[p.address, p.address_number, p.neighborhood, p.city].filter(Boolean).join(', ')}
                       </span>
                     ) : (
                       <span className="text-xs text-red-400 dark:text-red-500 italic">sem endereço</span>

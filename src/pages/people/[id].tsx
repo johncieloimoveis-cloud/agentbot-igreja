@@ -17,6 +17,7 @@ interface Person {
   date_of_birth?: string;
   address?: string;
   address_number?: string;
+  neighborhood?: string;
   city?: string;
   notes?: string;
   oficial?: string;
@@ -192,7 +193,7 @@ No proximo login voce sera solicitado a criar uma senha pessoal.`;
   };
 
   const addrStr = (p: any) =>
-    [p?.address, p?.address_number, p?.city].filter(Boolean).join(', ');
+    [p?.address, p?.address_number, p?.neighborhood, p?.city].filter(Boolean).join(', ');
 
   const handleAddRelationship = async () => {
     if (!relSelectedPerson || !person) return;
@@ -249,6 +250,7 @@ No proximo login voce sera solicitado a criar uma senha pessoal.`;
       const payload: any = {
         address: (src as any).address || null,
         address_number: (src as any).address_number || null,
+        neighborhood: (src as any).neighborhood || null,
         city: (src as any).city || null,
         lat: (src as any).lat || null,
         lon: (src as any).lon || null,
@@ -352,7 +354,8 @@ No proximo login voce sera solicitado a criar uma senha pessoal.`;
       const addressChanged =
         (data.address ?? '') !== (person.address ?? '') ||
         (data.address_number ?? '') !== (person.address_number ?? '') ||
-        (data.city ?? '') !== (person.city ?? '');
+        (data.city ?? '') !== (person.city ?? '') ||
+        ((data as any).neighborhood ?? '') !== ((person as any).neighborhood ?? '');
       const geocodeFailed = (person as any).geocode_status === 'failed';
     const needsGeocode = !hasManualCoords && (
       addressChanged ||
@@ -386,6 +389,7 @@ No proximo login voce sera solicitado a criar uma senha pessoal.`;
         date_of_birth: data.date_of_birth || null,
         address: data.address || null,
         address_number: data.address_number || null,
+        neighborhood: (data as any).neighborhood || null,
         city: data.city || null,
         notes: data.notes || null,
         oficial: data.oficial || 'NAO',

@@ -296,18 +296,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       try {
-        const { error: dbErr } = await supabaseAdmin.from('people').insert({
-          church_id: church.id,
+        // Evita duplicidade: busca por CPF ou telefone na mesma igreja
+        const cpf   = dbFields.cpf   as string | undefined;
+        const phone = dbFields.phone as string | undefined;
+
+        let existingId: string | null = null;
+        if (cpf || phone) {
+          const orParts: string[] = [];
+          if (cpf)   orParts.push(`cpf.eq.${cpf}`);
+          if (phone) orParts.push(`phone.eq.${phone}`);
+
+          const { data: found } = await supabaseAdmin
+            .from('people')
+            .select('id')
+            .eq('church_id', church.id)
+            .or(orParts.join(','))
+            .limit(1)
+            .maybeSingle();
+
+          existingId = found?.id ?? null;
+        }
+
+        const payload = {
           status: 'active_member',
           is_active: true,
           cadastro_atualizado_em: new Date().toISOString(),
           ...dbFields,
-        });
+        };
+
+        let dbErr: any = null;
+        if (existingId) {
+          // Atualiza registro existente
+          ({ error: dbErr } = await supabaseAdmin.from('people').update(payload).eq('id', existingId));
+          console.log('Cadastro IA atualizado:', existingId, dbFields.full_name);
+        } else {
+          // Insere novo registro
+          ({ error: dbErr } = await supabaseAdmin.from('people').insert({ church_id: church.id, ...payload }));
+          console.log('Cadastro IA inserido:', church.id, dbFields.full_name);
+        }
+
         if (dbErr) {
           console.error('DB erro:', dbErr.message, dbErr.details, dbErr.hint);
           return res.status(200).json({ ...aiJson, saved: false, message: `Erro ao salvar: ${dbErr.message}` });
         }
-        console.log('Cadastro IA salvo:', church.id, dbFields.full_name);
         return res.status(200).json({ ...aiJson, saved: true });
       } catch (insertErr: any) {
         console.error('Exceção ao salvar:', insertErr?.message);
